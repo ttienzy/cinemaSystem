@@ -1,0 +1,17 @@
+E:\DACS4\cinemaSystem\Application\bin\Debug\net8.0\Application.deps.json
+E:\DACS4\cinemaSystem\Application\bin\Debug\net8.0\Application.dll
+E:\DACS4\cinemaSystem\Application\bin\Debug\net8.0\Application.pdb
+E:\DACS4\cinemaSystem\Application\bin\Debug\net8.0\Domain.dll
+E:\DACS4\cinemaSystem\Application\bin\Debug\net8.0\Shared.dll
+E:\DACS4\cinemaSystem\Application\bin\Debug\net8.0\Domain.pdb
+E:\DACS4\cinemaSystem\Application\bin\Debug\net8.0\Shared.pdb
+E:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\Application.csproj.AssemblyReference.cache
+E:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\Application.GeneratedMSBuildEditorConfig.editorconfig
+E:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\Application.AssemblyInfoInputs.cache
+E:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\Application.AssemblyInfo.cs
+E:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\Application.csproj.CoreCompileInputs.cache
+E:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\Applicat.44B5EDA2.Up2Date
+E:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\Application.dll
+E:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\refint\Application.dll
+E:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\Application.pdb
+E:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\ref\Application.dll

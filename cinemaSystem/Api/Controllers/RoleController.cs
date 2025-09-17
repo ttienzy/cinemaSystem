@@ -23,7 +23,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<IEnumerable<RoleModel>>.WithError(response);
+            return ErrorResponse<IEnumerable<RoleModel>>.WithError(response);
         }
         [HttpGet("{roleId}")]
         public async Task<IActionResult> GetRoleByIdAsync(Guid roleId)
@@ -33,7 +33,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<RoleModel>.WithError(response);
+            return ErrorResponse<RoleModel>.WithError(response);
         }
         [HttpPost]
         public async Task<IActionResult> AddRoleAsync([FromBody] string roleName)
@@ -47,7 +47,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<string>.WithError(response);
+            return ErrorResponse<string>.WithError(response);
         }
         [HttpPut("{roleId}")]
         public async Task<IActionResult> UpdateRoleAsync(Guid roleId, [FromBody] string roleName)
@@ -61,7 +61,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<string>.WithError(response);
+            return ErrorResponse<string>.WithError(response);
         }
         [HttpDelete("{roleId}")]
         public async Task<IActionResult> DeleteRoleAsync(Guid roleId)
@@ -71,7 +71,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<string>.WithError(response);
+            return ErrorResponse<string>.WithError(response);
         }
     }
 }

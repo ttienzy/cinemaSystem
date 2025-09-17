@@ -14,11 +14,9 @@ namespace Domain.Entities.SharedAggregates
         public string? ValidDays { get; private set; }
         public PricingTier()
         {
-            Id = Guid.NewGuid();
         }
         public PricingTier(string tierName, decimal multiplier, string? validDays = null)
         {
-            Id = Guid.NewGuid();
             TierName = tierName;
             Multiplier = multiplier;
             ValidDays = validDays;

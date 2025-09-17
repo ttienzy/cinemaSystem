@@ -8,8 +8,8 @@ namespace Shared.Models.DataModels.ShowtimeDtos
 {
     public class ShowtimeQueryParameters
     {
-        public Guid? MovieId { get; set; }
-        public DateTime ShowDate { get; set; } = DateTime.UtcNow;
-        public Guid? CinemaId { get; set; }
+        public Guid MovieId { get; set; }
+        public required DateTime ShowDate { get; set; }
+        public required Guid CinemaId { get; set; }
     }
 }

@@ -10,9 +10,9 @@ namespace Application.Interfaces.Persistences
 {
     public interface IShowtimeService
     {
-        Task<BaseResponse<IEnumerable<ShowtimeDetailsResponse>>> GetShowtimesAsync(ShowtimeQueryParameters parameters);
+        Task<BaseResponse<IEnumerable<ShowtimeFeaturedResponse>>> GetShowtimesAsync(ShowtimeQueryParameters parameters);
         Task<BaseResponse<ShowtimeSeatingPlanResponse>> GetShowtimeSeatingPlanAsync(Guid showtimeId);
-
+        Task<BaseResponse<ShowtimeFeaturedResponse>> GetShowtimeFeaturedAsync(ShowtimeQueryParameters parameters);
         Task<BaseResponse<ShowtimeResponse>> CreateShowtimeAsync(ShowtimeRequest request);
         Task<BaseResponse<ShowtimePricingResponse>> AddPricingToShowtimeAsync(Guid showtimeId, ShowtimePricingRequest request);
 

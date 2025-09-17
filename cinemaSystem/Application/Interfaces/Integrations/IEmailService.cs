@@ -1,4 +1,4 @@
-﻿using Shared.Models;
+﻿using Shared.Models.ExtenalModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;

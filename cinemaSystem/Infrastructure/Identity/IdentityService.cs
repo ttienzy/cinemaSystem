@@ -2,6 +2,7 @@
 using Application.Interfaces.Persistences;
 using Application.Interfaces.Security;
 using Infrastructure.Identity.Constants;
+using Infrastructure.Redis.Constants;
 using Microsoft.AspNetCore.Identity;
 using Shared.Common.Base;
 using Shared.EmailTemplates;
@@ -99,11 +100,11 @@ namespace Infrastructure.Identity
 #pragma warning disable CS8601 // Possible null reference assignment.
                 var response = new UserProfileResponse
                 {
-                    UserId = userProfile.Id,
                     UserName = userProfile.UserName,
                     Email = userProfile.Email,
                     PhoneNumber = userProfile.PhoneNumber,
-                    Role = (await _userManager.GetRolesAsync(userProfile)).FirstOrDefault() ?? string.Empty
+                    Roles = (await _userManager.GetRolesAsync(userProfile)).ToList(),
+                    CreatedAt = userProfile.CreatedAt
                 };
 #pragma warning restore CS8601 // Possible null reference assignment.
 
@@ -128,33 +129,25 @@ namespace Infrastructure.Identity
                 var result = await _userManager.CheckPasswordAsync(user, request.Password);
                 if (!result)
                 {
-                    return BaseResponse<LoginResponse>.Failure(Error.Unauthorized("Invalid password."));
+                    return BaseResponse<LoginResponse>.Failure(Error.BadRequest("Invalid password."));
                 }
                 var roles = await _userManager.GetRolesAsync(user);
                 // Generate token using the token claim service
-                var accessToken = _tokenClaimService.GenerateAccessTokenn(user.Id, user.Email!, roles.ToList());
+                var accessToken = _tokenClaimService.GenerateAccessTokenn(user.Id, user.UserName, user.Email!, roles.ToList());
                 var refreshToken = _tokenClaimService.GenerateRefreshToken();
                 var refreshTokenExpiry = _tokenClaimService.GetRefreshTokenExpirationTime();
-                var userResponse = new UserProfileResponse
-                {
-                    UserId = user.Id,
-                    UserName = user.UserName,
-                    Email = user.Email,
-                    PhoneNumber = user.PhoneNumber,
-                    Role = roles.FirstOrDefault() ?? string.Empty
-                };
+
                 var tokenResponse = new TokenResponse
                 {
                     AccessToken = accessToken,
                     RefreshToken = refreshToken,
                 };
-
+                
                 // Store the refresh token in cache with expiration
-                await _cacheService.SetAsync($"refresh_token_{user.Id}", new RefreshTokenModel { RefreshToken = refreshToken, Expiration = refreshTokenExpiry }, refreshTokenExpiry - DateTime.UtcNow);
+                await _cacheService.SetAsync($"{CacheKey.RefreshToken(user.Id)}", new RefreshTokenModel { RefreshToken = refreshToken, Expiration = refreshTokenExpiry }, refreshTokenExpiry - DateTime.UtcNow);
 
                 return BaseResponse<LoginResponse>.Success(new LoginResponse
                 {
-                    UserProfile = userResponse,
                     Token = tokenResponse
                 });
             }
@@ -173,6 +166,7 @@ namespace Infrastructure.Identity
                     UserName = request.Username,
                     Email = request.Email,
                     PhoneNumber = request.PhoneNumber,
+                    CreatedAt = DateTime.UtcNow,
                 };
                 var result = await _userManager.CreateAsync(user, request.Password);
                 if (!result.Succeeded)

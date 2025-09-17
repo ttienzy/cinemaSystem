@@ -8,8 +8,8 @@ namespace Domain.Entities.CinemaAggreagte.Enum
 {
     public enum CinemaStatus
     {
-        Active = 1,
-        Maintenance = 2,
-        Closed = 3
+        Active,
+        Maintenance,
+        Closed
     }
 }

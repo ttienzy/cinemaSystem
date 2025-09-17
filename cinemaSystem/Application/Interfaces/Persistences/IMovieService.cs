@@ -1,6 +1,8 @@
 ﻿using Shared.Common.Base;
 using Shared.Common.Paging;
+using Shared.Models.DataModels.CinemaDtos;
 using Shared.Models.DataModels.MovieDtos;
+using Shared.Models.DataModels.StatisticDto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +13,12 @@ namespace Application.Interfaces.Persistences
 {
     public interface IMovieService
     {
+        Task<BaseResponse<IEnumerable<MovieSectionResponse>>> GetMoviesSectionAsync();
         Task<BaseResponse<PaginatedList<MovieResponse>>> GetMoviesAsync(MovieQueryParameters parameters);
         Task<BaseResponse<MovieDetailsResponse>> GetMovieByIdAsync(Guid movieId);
-
-
+        Task<BaseResponse<IEnumerable<MovieComingSoonResponse>>> GetMovieComingSoonAsync();
+        Task<BaseResponse<HighlightStat>> GetHighlightStatAsync();
+        Task<BaseResponse<IEnumerable<MovieResponse>>> GetMovieListAsync();
         Task<BaseResponse<MovieDetailsResponse>> CreateMovieAsync(MovieRequest request);
         Task<BaseResponse<IEnumerable<MovieCastCrewResponse>>> AddCastCrewToMovie(Guid movieId, IEnumerable<MovieCastCrewRequest> requests);
         Task<BaseResponse<IEnumerable<MovieCertificationResponse>>> AddCertificationsToMovie(Guid movieId, IEnumerable<MovieCertificationRequest> requests);

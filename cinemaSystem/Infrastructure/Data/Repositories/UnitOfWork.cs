@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces.Persistences.Repo;
 using Domain.Entities.BookingAggregate;
 using Domain.Entities.MovieAggregate;
+using Domain.Entities.SharedAggregates;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,8 @@ namespace Infrastructure.Data.Repositories
 
         public IRepository<Booking> Bookings => new EfRepository<Booking>(_context);
         public IRepository<Movie> Movies => new EfRepository<Movie>(_context);
+
+        public IRepository<SeatType> SeatTypes => new EfRepository<SeatType>(_context);
 
         public async Task BeginTractionAsync() => await _context.Database.BeginTransactionAsync();
 

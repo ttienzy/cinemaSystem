@@ -11,6 +11,7 @@ namespace Application.Interfaces.Integrations
         Task<T?> GetAsync<T>(string key);
         Task<List<T>> GetAsync<T>(List<string> keys);
         Task SetAsync<T>(string key, T value, TimeSpan? expiration = null);
+        Task UpdateAsync<T>(string key, T value);
         Task RemoveAsync(string key);
         Task<bool> ExistsAsync(string key);
     }

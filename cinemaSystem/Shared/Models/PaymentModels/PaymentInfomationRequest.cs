@@ -9,10 +9,9 @@ namespace Shared.Models.PaymentModels
 {
     public class PaymentInfomationRequest
     {
-        public Guid UserId { get; set; }
-        public Guid ShowtimeId { get; set; }
+        public required Guid UserId { get; set; }
+        public required Guid ShowtimeId { get; set; }
         public Guid? BookingId { get; set; }
-        public decimal TotalAmount { get; set; }
-        public List<SeatsSelectedResponse> SelectedSeats { get; set; }
+        public required List<SeatsSelectedResponse> SelectedSeats { get; set; }
     }
 }

@@ -21,11 +21,10 @@ namespace Domain.Entities.CinemaAggreagte
 
         public Screen()
         {
-            Id = Guid.NewGuid();
         }
-        public Screen( string screenName, ScreenType type, ScreenStatus status)
+        public Screen(Guid movieId, string screenName, ScreenType type, ScreenStatus status)
         {
-            Id = Guid.NewGuid();
+            CinemaId = movieId;
             ScreenName = screenName;
             Type = type;
             Status = status;
@@ -52,7 +51,14 @@ namespace Domain.Entities.CinemaAggreagte
         }
         public void AddItems(List<Seat> seats)
         {
-            _seats.AddRange(seats);
+            foreach (var seat in seats)
+            {
+                // check duplicate {rowName+Number}
+                if (!_seats.Any(s => s.RowName == seat.RowName && s.Number == seat.Number))
+                {
+                    _seats.Add(seat);
+                }
+            }
         }
         public void RemoveSeats(List<Guid> seatIds)
         {

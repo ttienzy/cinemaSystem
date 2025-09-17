@@ -9,7 +9,7 @@ namespace Application.Interfaces.Security
 {
     public interface ITokenClaimService
     {
-        public string GenerateAccessTokenn(Guid userId, string email, List<string> roles);
+        public string GenerateAccessTokenn(Guid userId, string userName, string email, List<string> roles);
         public string GenerateRefreshToken();
         public DateTime GetRefreshTokenExpirationTime();
         public ClaimsPrincipal GetPrincipalFromExpiredToken(string token);

@@ -13,11 +13,9 @@ namespace Domain.Entities.BookingAggregate
 
         public BookingTicket()
         {
-            Id = Guid.NewGuid();
         }
         public BookingTicket(Guid seatId, decimal ticketPrice)
         {
-            Id = Guid.NewGuid();
             SeatId = seatId;
             TicketPrice = ticketPrice;
         }

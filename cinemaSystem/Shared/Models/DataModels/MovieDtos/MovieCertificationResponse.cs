@@ -11,5 +11,6 @@ namespace Shared.Models.DataModels.MovieDtos
         public required Guid Id { get; set; }
         public required string CertificationBody { get; set; }
         public required string Rating { get; set; }
+        public required DateTime IssueDate { get; set; }
     }
 }

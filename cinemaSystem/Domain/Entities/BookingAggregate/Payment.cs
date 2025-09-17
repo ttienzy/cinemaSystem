@@ -19,13 +19,11 @@ namespace Domain.Entities.BookingAggregate
         public DateTime PaymentTime { get; private set; }
         public Payment()
         {
-            Id = Guid.NewGuid();
             Currency = "VND";
             PaymentTime = DateTime.UtcNow;
         }
         public Payment(decimal amount)
         {
-            Id = Guid.NewGuid();
             PaymentMethod = "VnPay";
             PaymentProvider = "VnPay";
             Amount = amount;

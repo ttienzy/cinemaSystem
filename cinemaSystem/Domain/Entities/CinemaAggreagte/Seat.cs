@@ -19,16 +19,15 @@ namespace Domain.Entities.CinemaAggreagte
 
         public Seat()
         {
-            Id = Guid.NewGuid();
         }
-        public Seat(Guid seatTypeId, string rowName, int number, bool isActive, bool isBlocked)
+        public Seat(Guid seatTypeId, string rowName, int number, bool isActive, bool isBlocked, Guid screenId)
         {
-            Id = Guid.NewGuid();
             SeatTypeId = seatTypeId;
             RowName = rowName;
             Number = number;
             IsActive = isActive;
             IsBlocked = isBlocked;
+            ScreenId = screenId;
         }
         public void UpdateDetails(Guid seatTypeId, string rowName, int number, bool isActive, bool isBlocked)
         {

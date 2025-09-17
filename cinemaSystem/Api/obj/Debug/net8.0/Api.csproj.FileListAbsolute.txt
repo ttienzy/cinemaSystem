@@ -174,4 +174,6 @@ E:\DACS4\cinemaSystem\Api\bin\Debug\net8.0\zh-Hant\Microsoft.CodeAnalysis.Worksp
 E:\DACS4\cinemaSystem\Api\bin\Debug\net8.0\FluentValidation.dll
 E:\DACS4\cinemaSystem\Api\bin\Debug\net8.0\FluentValidation.AspNetCore.dll
 E:\DACS4\cinemaSystem\Api\bin\Debug\net8.0\FluentValidation.DependencyInjectionExtensions.dll
+E:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\Api.sourcelink.json
 E:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\Api.MvcApplicationPartsAssemblyInfo.cs
+E:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

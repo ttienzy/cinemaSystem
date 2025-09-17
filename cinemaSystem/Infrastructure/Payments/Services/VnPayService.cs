@@ -35,12 +35,12 @@ namespace Infrastructure.Payments.Services
             pay.AddRequestData("vnp_Version", _vnPaySettings.Vnp_Version);
             pay.AddRequestData("vnp_Command", _vnPaySettings.Vnp_Command);
             pay.AddRequestData("vnp_TmnCode", _vnPaySettings.Vnp_TmnCode);
-            pay.AddRequestData("vnp_Amount", ((int)request.TotalAmount * 100).ToString());
+            pay.AddRequestData("vnp_Amount", ((int)request.SelectedSeats.Sum(s => s.Price) * 100).ToString());
             pay.AddRequestData("vnp_CreateDate", currentTime.ToString("yyyyMMddHHmmss"));
             pay.AddRequestData("vnp_CurrCode", _vnPaySettings.Vnp_CurrCode);
             pay.AddRequestData("vnp_IpAddr", pay.GetIpAddress(context));
             pay.AddRequestData("vnp_Locale", _vnPaySettings.Vnp_Locale);
-            pay.AddRequestData("vnp_OrderInfo", $"{request.ShowtimeId}");
+            pay.AddRequestData("vnp_OrderInfo", $"{request.BookingId}");
             pay.AddRequestData("vnp_OrderType", "DIG");
             pay.AddRequestData("vnp_ReturnUrl", urlCallback);
             pay.AddRequestData("vnp_ExpireDate", currentTime.AddMinutes(PaymentConstants.ExpireInMinutes).ToString("yyyyMMddHHmmss"));

@@ -12,6 +12,8 @@ namespace Domain.Entities.MovieAggregate
     {
         public string Title { get; private set; }
         public int DurationMinutes { get; private set; }
+        public RatingStatus Rating { get; private set; }
+        public string Trailer { get; private set; }
         public DateTime ReleaseDate { get; private set; }
         public string Description { get; private set; }
         public string PosterUrl { get; private set; }
@@ -33,7 +35,6 @@ namespace Domain.Entities.MovieAggregate
         public IReadOnlyCollection<MovieGenre> MovieGenres => _movieGenres.AsReadOnly();
         public Movie()
         {
-            Id = Guid.NewGuid();
             CreatedAt = DateTime.UtcNow;
             UpdatedAt = DateTime.UtcNow;
             _copyrights = new List<MovieCopyright>();
@@ -42,15 +43,16 @@ namespace Domain.Entities.MovieAggregate
             _movieGenres = new List<MovieGenre>();
         }
 
-        public Movie(string title, int durationMinutes, DateTime releaseDate, MovieStatus movieStatus, string description, string posterUrl)
+        public Movie(string title, int durationMinutes, DateTime releaseDate, MovieStatus movieStatus, string description, RatingStatus rating, string posterUrl, string trailer = "N/A")
         {
-            Id = Guid.NewGuid();
             Title = title;
             DurationMinutes = durationMinutes;
             ReleaseDate = releaseDate;
             Description = description;
             PosterUrl = posterUrl;
             Status = movieStatus;
+            Rating = rating;
+            Trailer = trailer;
             CreatedAt = DateTime.UtcNow;
             UpdatedAt = DateTime.UtcNow;
             _copyrights = new List<MovieCopyright>();
@@ -59,7 +61,7 @@ namespace Domain.Entities.MovieAggregate
             _movieGenres = new List<MovieGenre>();
         }
         
-        public void UpdateDetail(string title, int durationMinutes, DateTime releaseDate, string description, string posterUrl)
+        public void UpdateDetail(string title, int durationMinutes, DateTime releaseDate, string description, string posterUrl, RatingStatus rating, string trailer)
         {
             Title = title;
             DurationMinutes = durationMinutes;
@@ -67,6 +69,8 @@ namespace Domain.Entities.MovieAggregate
             Description = description;
             PosterUrl = posterUrl;
             UpdatedAt = DateTime.UtcNow;
+            Rating = rating;
+            Trailer = trailer;
         }
         ///------------CastCrew--------------------------------------
         public MovieCastCrew? GetCastCrewById(Guid castCrewId)
@@ -75,27 +79,22 @@ namespace Domain.Entities.MovieAggregate
         }
         public void AddCastCrew(string personName, string roleType)
         {
-            var movieCastCrew = new MovieCastCrew(personName, roleType);
-            _castCrew.Add(movieCastCrew);
-            UpdatedAt = DateTime.UtcNow;
+            var castCrew = new MovieCastCrew(this.Id, personName, roleType);
+            _castCrew.Add(castCrew);
+            //UpdatedAt = DateTime.UtcNow;
         }
+
         public void AddRangeCastCrew(List<MovieCastCrew> castCrews)
         {
-            foreach (var item in castCrews)
-            {
-                if (!_castCrew.Any(c => c.PersonName == item.PersonName && c.RoleType == item.RoleType))
-                {
-                   AddCastCrew(item.PersonName, item.RoleType);
-                }
-            }
+            _castCrew.AddRange(castCrews);
             UpdatedAt = DateTime.UtcNow;
         }
-        public bool UpdateCastCrew(Guid castCrewId, string personName, string roleType)
+        public bool UpdateCastCrew(Guid castCrewId,Guid movieId, string personName, string roleType)
         {
             var getCastCrew = GetCastCrewById(castCrewId);
             if (getCastCrew is null)
                 return false;
-            getCastCrew.UpdateDetails(personName, roleType);
+            getCastCrew.UpdateDetails(movieId, personName, roleType);
             return true;
         }
         public void RemoveRangeCastCrew()

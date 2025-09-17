@@ -15,18 +15,18 @@ namespace Domain.Entities.MovieAggregate
 
         public MovieCastCrew()
         {
-            Id = Guid.NewGuid();
         }
-        public MovieCastCrew(string personName, string roleType)
+        public MovieCastCrew(Guid movieId, string personName, string roleType)
         {
-            Id = Guid.NewGuid();
+            MovieId = movieId;
             PersonName = personName;
             RoleType = roleType;
         }
-        public void UpdateDetails(string personName, string roleType)
+        public void UpdateDetails(Guid movieId, string personName, string roleType)
         {
             PersonName = personName;
             RoleType = roleType;
+            MovieId = movieId;
         }
     }
 }

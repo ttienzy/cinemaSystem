@@ -16,7 +16,20 @@ namespace Domain.Entities.InventoryAggregate
         public int MinimumStock { get; private set; }
         public decimal UnitPrice { get; private set; }
         public decimal CostPrice { get; private set; }
-        public string SupplierInfo { get; private set; }
-        public DateTime LastRestocked { get; private set; }
+        public string? ImageUrl { get; private set; }
+        public InventoryItem() { }
+
+        public InventoryItem(Guid cinemaId, string itemName, string? itemCategory, int currentStock, int minimumStock, decimal unitPrice, decimal costPrice, string? imageUrl)
+        {
+            CinemaId = cinemaId;
+            ItemName = itemName;
+            ItemCategory = itemCategory;
+            CurrentStock = currentStock;
+            MinimumStock = minimumStock;
+            UnitPrice = unitPrice;
+            CostPrice = costPrice;
+            ImageUrl = imageUrl;
+        }
+        
     }
 }

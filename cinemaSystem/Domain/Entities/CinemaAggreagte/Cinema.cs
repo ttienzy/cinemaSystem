@@ -14,7 +14,7 @@ namespace Domain.Entities.CinemaAggreagte
         public string Address { get; private set; }
         public string? Phone { get; private set; }
         public string? Email { get; private set; }
-        public string? Website { get; private set; }
+        public string? Image { get; private set; }
         public string ManagerName { get; private set; }
         public CinemaStatus Status { get; private set; }
 
@@ -23,25 +23,24 @@ namespace Domain.Entities.CinemaAggreagte
 
         public Cinema()
         {
-            Id = Guid.NewGuid();
         }
-        public Cinema(string cinemaName, string address, string? phone, string? email, string? website, string managerName, CinemaStatus status)
+        public Cinema(string cinemaName, string address, string? phone, string? email, string? image, string managerName, CinemaStatus status)
         {
             CinemaName = cinemaName;
             Address = address;
             Phone = phone;
             Email = email;
-            Website = website;
+            Image = image;
             ManagerName = managerName;
             Status = status;
         }
-        public void UpdateDetails(string cinemaName, string address, string? phone, string? email, string? website, string managerName, CinemaStatus status)
+        public void UpdateDetails(string cinemaName, string address, string? phone, string? email, string? image, string managerName, CinemaStatus status)
         {
             CinemaName = cinemaName;
             Address = address;
             Phone = phone;
             Email = email;
-            Website = website;
+            Image = image;
             ManagerName = managerName;
             Status = status;
         }

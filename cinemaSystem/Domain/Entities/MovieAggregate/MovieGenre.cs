@@ -15,11 +15,10 @@ namespace Domain.Entities.MovieAggregate
 
         public MovieGenre()
         {
-            Id = Guid.NewGuid();
         }
-        public MovieGenre(Guid genreId)
+        public MovieGenre(Guid genreId, Guid movieId)
         {
-            Id = Guid.NewGuid();
+            MovieId = movieId;
             GenreId = genreId;
         }
         public void UpdateDetail(Guid genreId)

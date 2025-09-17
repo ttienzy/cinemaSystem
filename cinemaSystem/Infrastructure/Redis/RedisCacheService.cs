@@ -56,7 +56,12 @@ namespace Infrastructure.Redis
         public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)
         {
             var serializedValue = JsonConvert.SerializeObject(value);
-            await _database.StringSetAsync(key, serializedValue, expiration);
+            await _database.StringSetAsync(key, serializedValue, expiration, keepTtl:true);
+        }
+        public async Task UpdateAsync<T>(string key, T value)
+        {
+            var serializedValue = JsonConvert.SerializeObject(value);
+            await _database.StringSetAsync(key, serializedValue, keepTtl: true);
         }
     }
 }

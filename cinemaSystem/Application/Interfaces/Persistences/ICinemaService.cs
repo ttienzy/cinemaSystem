@@ -13,6 +13,8 @@ namespace Application.Interfaces.Persistences
     {
         Task<BaseResponse<PaginatedList<CinemaResponse>>> GetCinemasWithScreensAsync(CinemaQueryParameters parameters);
         Task<BaseResponse<IEnumerable<SeatResponse>>> GetSeatsForScreenAsync(Guid cinemaId, Guid screenId);
+        Task<BaseResponse<IEnumerable<CinemaPublicResponse>>> GetCinemaPublicAsync();
+        Task<BaseResponse<CinemaPublicDetailsResponse>> GetCinemaByIdAsync(Guid cinemaId);
 
         Task<BaseResponse<CinemaResponse>> CreateCinemaAsync(CinemaRequest request);
         Task<BaseResponse<ScreenResponse>> AddScreenToCinemaAsync(Guid cinemaId, ScreenRequest request);

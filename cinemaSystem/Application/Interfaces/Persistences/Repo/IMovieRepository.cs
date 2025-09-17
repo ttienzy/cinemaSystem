@@ -12,5 +12,6 @@ namespace Application.Interfaces.Persistences.Repo
     public interface IMovieRepository
     {
         IQueryable<MovieResponse> GetMovies(string? title, MovieStatus movieStatus);
+        //Task<MovieResponse> GetMoviesAsync(List<Guid> movieIds);
     }
 }

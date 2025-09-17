@@ -13,7 +13,8 @@ namespace Application.Specifications.BookingSpec
         public BookingWithPaymentSpec(Guid bookingId)
         {
             Query.Where(b => b.Id == bookingId)
-                 .Include(b => b.Payments);
+                 .Include(b => b.Payments)
+                 .Include(b => b.BookingTickets);
         }
     }
 }

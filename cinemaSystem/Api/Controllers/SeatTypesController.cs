@@ -24,7 +24,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<IEnumerable<SeatType>>.WithError(response);
+            return ErrorResponse<IEnumerable<SeatType>>.WithError(response);
         }
         [HttpGet("{seatTypeId}")]
         public async Task<IActionResult> GetByIdAsync(Guid seatTypeId)
@@ -34,7 +34,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<SeatType>.WithError(response);
+            return ErrorResponse<SeatType>.WithError(response);
         }
         [HttpPost]
         public async Task<IActionResult> CreateAsync([FromBody] SeatTypeRequest request)
@@ -46,9 +46,9 @@ namespace Api.Controllers
             var response = await _seatTypeService.CreateSeatTypeAsync(request);
             if (response.IsSuccess)
             {
-                return CreatedAtAction(nameof(GetByIdAsync), new { seatTypeId = response.Value.Id }, response.Value);
+                return Ok(response.Value);
             }
-            return ErrorReponse<SeatType>.WithError(response);
+            return ErrorResponse<SeatType>.WithError(response);
         }
         [HttpPut("{seatTypeId}")]
         public async Task<IActionResult> UpdateAsync(Guid seatTypeId, [FromBody] SeatTypeRequest request)
@@ -62,7 +62,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<SeatType>.WithError(response);
+            return ErrorResponse<SeatType>.WithError(response);
         }
         [HttpDelete("{seatTypeId}")]
         public async Task<IActionResult> DeleteAsync(Guid seatTypeId)
@@ -72,7 +72,7 @@ namespace Api.Controllers
             {
                 return NoContent();
             }
-            return ErrorReponse<object>.WithError(response);
+            return ErrorResponse<object>.WithError(response);
         }
     }
 }

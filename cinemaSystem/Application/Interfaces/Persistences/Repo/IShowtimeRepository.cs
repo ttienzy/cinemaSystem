@@ -10,7 +10,7 @@ namespace Application.Interfaces.Persistences.Repo
 {
     public interface IShowtimeRepository
     {
-        Task<List<ShowtimeDetailsResponse>> GetShowtimeByQuerryAsync(Guid? cinemaId, Guid? movieId, DateTime showDate);
-        //Task<ShowtimeSeatingPlanResponse> GetShowtimeSeatingPlanAsync(Guid showtimeId);
+        Task<List<ShowtimeFeaturedResponse>> GetShowtimeByQuerryAsync(Guid? cinemaId, DateTime showDate);
+        Task<ShowtimeFeaturedResponse> GetShowtimeFeaturedAsync(ShowtimeQueryParameters parameters);
     }
 }

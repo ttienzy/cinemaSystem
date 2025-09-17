@@ -14,6 +14,8 @@ namespace Shared.Models.DataModels.MovieDtos
         public required DateTime ReleaseDate { get; set; } = DateTime.UtcNow;
         public required string PosterUrl { get; set; }
         public string? Description { get; set; }
+        public required RatingStatus RatingStatus { get; set; }
+        public required string Trailer {  get; set; }
         public required MovieStatus Status { get; set; } = MovieStatus.ComingSoon;
     }
 }

@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Shared.Common.Base;
 using Shared.Common.Paging;
+using Shared.Models.DataModels.CinemaDtos;
 using Shared.Models.DataModels.MovieDtos;
+using Shared.Models.DataModels.StatisticDto;
 
 namespace Api.Controllers
 {
@@ -20,7 +22,15 @@ namespace Api.Controllers
             _movieService = movieService;
             _validator = validator;
         }
-        
+        [HttpGet("section")]
+        public async Task<IActionResult> GetMoviesSectionAsync()
+        {
+            var result = await _movieService.GetMoviesSectionAsync();
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            return ErrorResponse<IEnumerable<MovieSectionResponse>>.WithError(result);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetMovies([FromQuery] MovieQueryParameters parameters)
         {
@@ -43,8 +53,39 @@ namespace Api.Controllers
                 return Ok(result);
             }
 
-            return ErrorReponse<PaginatedList<MovieResponse>>.WithError(serviceResponse);
+            return ErrorResponse<PaginatedList<MovieResponse>>.WithError(serviceResponse);
         }
+        [HttpGet("coming-soon")]
+        public async Task<IActionResult> GetMovieComingSoonAsync()
+        {
+            var serviceResponse = await _movieService.GetMovieComingSoonAsync();
+            if (serviceResponse.IsSuccess)
+            {
+                return Ok(serviceResponse.Value);
+            }
+            return ErrorResponse<IEnumerable<MovieComingSoonResponse>>.WithError(serviceResponse);
+        }
+        [HttpGet("feature")]
+        public async Task<IActionResult> GetMovieListAsync()
+        {
+            var serviceResponse = await _movieService.GetMovieListAsync();
+            if (serviceResponse.IsSuccess)
+            {
+                return Ok(serviceResponse.Value);
+            }
+            return ErrorResponse<IEnumerable<MovieResponse>>.WithError(serviceResponse);
+        }
+        [HttpGet("movie-and-cinema-info")]
+        public async Task<IActionResult> GetHighlightStatAsync()
+        {
+            var serviceResponse = await _movieService.GetHighlightStatAsync();
+            if (serviceResponse.IsSuccess)
+            {
+                return Ok(serviceResponse.Value);
+            }
+            return ErrorResponse<HighlightStat>.WithError(serviceResponse);
+        }
+
         [HttpGet("{movieId:guid}")]
         public async Task<IActionResult> GetMovieById(Guid movieId)
         {
@@ -53,7 +94,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<MovieDetailsResponse>.WithError(serviceResponse);
+            return ErrorResponse<MovieDetailsResponse>.WithError(serviceResponse);
         }
         [HttpPost]
         public async Task<IActionResult> CreateMovie([FromBody] MovieRequest request)
@@ -70,9 +111,9 @@ namespace Api.Controllers
             var serviceResponse = await _movieService.CreateMovieAsync(request);
             if (serviceResponse.IsSuccess)
             {
-                return CreatedAtAction(nameof(GetMovieById), new { movieId = serviceResponse.Value.Id }, serviceResponse.Value);
+                return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<MovieDetailsResponse>.WithError(serviceResponse);
+            return ErrorResponse<MovieDetailsResponse>.WithError(serviceResponse);
         }
         [HttpPost("{movieId:guid}/castcrew")]
         public async Task<IActionResult> AddCastCrewToMovie(Guid movieId, [FromBody] IEnumerable<MovieCastCrewRequest> requests)
@@ -82,7 +123,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<IEnumerable<MovieCastCrewResponse>>.WithError(serviceResponse);
+            return ErrorResponse<IEnumerable<MovieCastCrewResponse>>.WithError(serviceResponse);
         }
         [HttpPost("{movieId:guid}/certifications")]
         public async Task<IActionResult> AddCertificationsToMovie(Guid movieId, [FromBody] IEnumerable<MovieCertificationRequest> requests)
@@ -92,7 +133,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<IEnumerable<MovieCertificationResponse>>.WithError(serviceResponse);
+            return ErrorResponse<IEnumerable<MovieCertificationResponse>>.WithError(serviceResponse);
         }
         [HttpPost("{movieId:guid}/copyrights")]
         public async Task<IActionResult> AddCopyrightsToMovie(Guid movieId, [FromBody] IEnumerable<MovieCopyrightRequest> requests)
@@ -102,7 +143,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<IEnumerable<MovieCopyrightResponse>>.WithError(serviceResponse);
+            return ErrorResponse<IEnumerable<MovieCopyrightResponse>>.WithError(serviceResponse);
         }
         [HttpPost("{movieId:guid}/genres")]
         public async Task<IActionResult> AddGenreToMovie(Guid movieId, [FromBody] IEnumerable<MovieGenreRequest> requests)
@@ -112,7 +153,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<IEnumerable<MovieGenreResponse>>.WithError(serviceResponse);
+            return ErrorResponse<IEnumerable<MovieGenreResponse>>.WithError(serviceResponse);
         }
         [HttpPut("{movieId:guid}")]
         public async Task<IActionResult> UpdateMovie(Guid movieId, [FromBody] MovieRequest request)
@@ -122,7 +163,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<MovieDetailsResponse>.WithError(serviceResponse);
+            return ErrorResponse<MovieDetailsResponse>.WithError(serviceResponse);
         }
         [HttpPut("{movieId:guid}/castcrew/{castCrewId:guid}")]
         public async Task<IActionResult> UpdateCastCrewForMovie(Guid movieId, Guid castCrewId, [FromBody] MovieCastCrewRequest request)
@@ -132,7 +173,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<MovieCastCrewResponse>.WithError(serviceResponse);
+            return ErrorResponse<MovieCastCrewResponse>.WithError(serviceResponse);
         }
         [HttpPut("{movieId:guid}/certifications/{certId:guid}")]
         public async Task<IActionResult> UpdateCertificationsForMovie(Guid movieId, Guid certId, [FromBody] MovieCertificationRequest request)
@@ -142,7 +183,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<MovieCertificationResponse>.WithError(serviceResponse);
+            return ErrorResponse<MovieCertificationResponse>.WithError(serviceResponse);
         }
         [HttpPut("{movieId:guid}/copyrights/{copyrightId:guid}")]
         public async Task<IActionResult> UpdateCopyrightsForMovie(Guid movieId, Guid copyrightId, [FromBody] MovieCopyrightRequest request)
@@ -152,7 +193,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<MovieCopyrightResponse>.WithError(serviceResponse);
+            return ErrorResponse<MovieCopyrightResponse>.WithError(serviceResponse);
         }
         [HttpPut("{movieId:guid}/genres/{mGenreId:guid}")]
         public async Task<IActionResult> UpdateGenreForMovie(Guid movieId, Guid mGenreId, [FromBody] MovieGenreRequest request)
@@ -162,7 +203,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<MovieGenreResponse>.WithError(serviceResponse);
+            return ErrorResponse<MovieGenreResponse>.WithError(serviceResponse);
         }
         [HttpDelete("{movieId:guid}")]
         public async Task<IActionResult> DeleteMovie(Guid movieId)
@@ -172,7 +213,7 @@ namespace Api.Controllers
             {
                 return NoContent();
             }
-            return ErrorReponse<object>.WithError(serviceResponse);
+            return ErrorResponse<object>.WithError(serviceResponse);
         }
         [HttpDelete("{movieId:guid}/castcrew")]
         public async Task<IActionResult> DeleteCastCrewForMovie(Guid movieId, [FromBody] IEnumerable<Guid> castCrewIds)
@@ -182,7 +223,7 @@ namespace Api.Controllers
             {
                 return NoContent();
             }
-            return ErrorReponse<object>.WithError(serviceResponse);
+            return ErrorResponse<object>.WithError(serviceResponse);
         }
         [HttpDelete("{movieId:guid}/certifications")]
         public async Task<IActionResult> DeleteCertificationsForMovie(Guid movieId, [FromBody] IEnumerable<Guid> certificationIds)
@@ -192,7 +233,7 @@ namespace Api.Controllers
             {
                 return NoContent();
             }
-            return ErrorReponse<object>.WithError(serviceResponse);
+            return ErrorResponse<object>.WithError(serviceResponse);
         }
         [HttpDelete("{movieId:guid}/copyrights")]
         public async Task<IActionResult> DeleteCopyrightsForMovie(Guid movieId, [FromBody] IEnumerable<Guid> copyrightIds)
@@ -202,7 +243,7 @@ namespace Api.Controllers
             {
                 return NoContent();
             }
-            return ErrorReponse<object>.WithError(serviceResponse);
+            return ErrorResponse<object>.WithError(serviceResponse);
         }
         [HttpDelete("{movieId:guid}/genres")]
         public async Task<IActionResult> DeleteGenreForMovie(Guid movieId, [FromBody] IEnumerable<Guid> genreIds)
@@ -212,7 +253,7 @@ namespace Api.Controllers
             {
                 return NoContent();
             }
-            return ErrorReponse<object>.WithError(serviceResponse);
+            return ErrorResponse<object>.WithError(serviceResponse);
         }
     }
 }

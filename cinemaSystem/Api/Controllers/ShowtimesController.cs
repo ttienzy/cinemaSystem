@@ -25,7 +25,7 @@ namespace Api.Controllers
             {
                 return Ok(result.Value);
             }
-            return ErrorReponse<IEnumerable<ShowtimeDetailsResponse>>.WithError(result);
+            return ErrorResponse<IEnumerable<ShowtimeFeaturedResponse>>.WithError(result);
         }
         [HttpGet("{showtimeId}/seating-plan")]
         public async Task<IActionResult> GetShowtimeSeatingPlan(Guid showtimeId)
@@ -35,7 +35,17 @@ namespace Api.Controllers
             {
                 return Ok(result.Value);
             }
-            return ErrorReponse<ShowtimeSeatingPlanResponse>.WithError(result);
+            return ErrorResponse<ShowtimeSeatingPlanResponse>.WithError(result);
+        }
+        [HttpGet("detail")]
+        public async Task<IActionResult> GetShowtimeFeaturedAsync([FromQuery] ShowtimeQueryParameters parameters)
+        {
+            var result = await _showtimeService.GetShowtimeFeaturedAsync(parameters);
+            if (result.IsSuccess)
+            {
+                return Ok(result.Value);
+            }
+            return ErrorResponse<ShowtimeFeaturedResponse>.WithError(result);
         }
         [HttpPost]
         public async Task<IActionResult> CreateShowtime([FromBody] ShowtimeRequest request)
@@ -45,7 +55,7 @@ namespace Api.Controllers
             {
                 return Ok(result.Value);
             }
-            return ErrorReponse<ShowtimeResponse>.WithError(result);
+            return ErrorResponse<ShowtimeResponse>.WithError(result);
         }
         [HttpPost("{showtimeId}/pricings")]
         public async Task<IActionResult> AddPricingToShowtime(Guid showtimeId, [FromBody] ShowtimePricingRequest request)
@@ -55,7 +65,7 @@ namespace Api.Controllers
             {
                 return Ok(result.Value);
             }
-            return ErrorReponse<ShowtimePricingResponse>.WithError(result);
+            return ErrorResponse<ShowtimePricingResponse>.WithError(result);
         }
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateShowtime(Guid id, [FromBody] ShowtimeRequest request)
@@ -65,7 +75,7 @@ namespace Api.Controllers
             {
                 return Ok(result.Value);
             }
-            return ErrorReponse<ShowtimeResponse>.WithError(result);
+            return ErrorResponse<ShowtimeResponse>.WithError(result);
         }
         [HttpPut("{showtimeId}/pricings/{pricingId}")]
         public async Task<IActionResult> UpdatePricingToShowtime(Guid showtimeId, Guid pricingId, [FromBody] ShowtimePricingRequest request)
@@ -75,7 +85,7 @@ namespace Api.Controllers
             {
                 return Ok(result.Value);
             }
-            return ErrorReponse<ShowtimePricingResponse>.WithError(result);
+            return ErrorResponse<ShowtimePricingResponse>.WithError(result);
         }
         [HttpDelete("{showtimeId}")]
         public async Task<IActionResult> DeleteShowtime(Guid showtimeId)
@@ -85,7 +95,7 @@ namespace Api.Controllers
             {
                 return Ok(new { message = "Showtime deleted successfully." });
             }
-            return ErrorReponse<object>.WithError(result);
+            return ErrorResponse<object>.WithError(result);
         }
         [HttpDelete("{showtimeId}/pricings/{pricingId}")]
         public async Task<IActionResult> DeletePricingFromShowtime(Guid showtimeId, Guid pricingId)
@@ -95,7 +105,7 @@ namespace Api.Controllers
             {
                 return Ok(new { message = "Pricing deleted from showtime successfully." });
             }
-            return ErrorReponse<object>.WithError(result);
+            return ErrorResponse<object>.WithError(result);
         }
     }
 }

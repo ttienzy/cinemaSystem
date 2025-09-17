@@ -21,7 +21,7 @@ namespace Infrastructure.Data.Configs
             builder.Property(c => c.Address).IsRequired().HasMaxLength(255);
             builder.Property(c => c.Phone).HasMaxLength(20);
             builder.Property(c => c.Email).HasMaxLength(100);
-            builder.Property(c => c.Website).HasMaxLength(100);
+            builder.Property(c => c.Image).HasMaxLength(100);
             builder.Property(c => c.ManagerName).HasMaxLength(100);
 
 

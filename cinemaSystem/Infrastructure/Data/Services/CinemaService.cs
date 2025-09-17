@@ -29,14 +29,14 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                var cinemaSpec = new CinemeWithScreensSpecification(cinemaId);
+                var cinemaSpec = new CinemaWithScreensSpecification(cinemaId);
                 var cinemaEntity = await _cinemaRepository.FirstOrDefaultAsync(cinemaSpec);
                 if (cinemaEntity == null)
                 {
                     return BaseResponse<ScreenResponse>.Failure(Error.NotFound($"Cinema with ID {cinemaId} not found"));
                 }
 
-                var screen = new Screen(request.ScreenName, request.Type, request.Status);
+                var screen = new Screen(cinemaEntity.Id, request.ScreenName, request.Type, request.Status);
                 cinemaEntity.AddItem(screen);
                 await _cinemaRepository.UpdateAsync(cinemaEntity);
 
@@ -53,7 +53,7 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                var cinema = new Cinema(request.CinemaName, request.Address, request.Phone, request.Email, request.Website, request.ManagerName, request.Status);
+                var cinema = new Cinema(request.CinemaName, request.Address, request.Phone, request.Email, request.Image, request.ManagerName, request.Status);
                 await _cinemaRepository.AddAsync(cinema);
 
                 var response = new CinemaResponse
@@ -63,7 +63,7 @@ namespace Infrastructure.Data.Services
                     Address = cinema.Address,
                     Phone = cinema.Phone,
                     Email = cinema.Email,
-                    Website = cinema.Website,
+                    Image = cinema.Image,
                     CinemaName = cinema.CinemaName
                 };
                 return BaseResponse<CinemaResponse>.Success(response);
@@ -95,7 +95,7 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                var cinemaWithScreenSpec = new CinemeWithScreensSpecification(cinemaId, screenId);
+                var cinemaWithScreenSpec = new CinemaWithScreensSpecification(cinemaId, screenId);
                 var cinemaWithScreen = await _cinemaRepository.FirstOrDefaultAsync(cinemaWithScreenSpec);
                 if (cinemaWithScreen == null)
                     return BaseResponse<object>.Failure(Error.NotFound("Screen not found"));
@@ -141,12 +141,13 @@ namespace Infrastructure.Data.Services
                 var cinemaWithScreen = await _cinemaRepository.FirstOrDefaultAsync(cinemaWithScreenSpec);
                 if (cinemaWithScreen == null)
                     return BaseResponse<IEnumerable<SeatResponse>>.Failure(Error.NotFound("Screen not found"));
-                var screen = cinemaWithScreen.Screens.FirstOrDefault(sc => sc.Id == screenId);
+
+                var screen = cinemaWithScreen.Screens.FirstOrDefault();
                 if (screen == null)
                     return BaseResponse<IEnumerable<SeatResponse>>.Failure(Error.NotFound("Screen not found"));
 
                 List<Seat> newSeats = new();
-                newSeats.AddRange(requests.Select(r => new Seat( r.SeatTypeId, r.RowName, r.Number, r.IsActive, r.IsBlocked)));
+                newSeats.AddRange(requests.Select(r => new Seat( r.SeatTypeId, r.RowName, r.Number, r.IsActive, r.IsBlocked, screenId)));
                 screen.AddItems(newSeats);
                 await _cinemaRepository.UpdateAsync(cinemaWithScreen);
                 var response = newSeats.Select( s => new SeatResponse { Id = s.Id, RowName = s.RowName, Number = s.Number, IsActive = s.IsActive, IsBlocked = s.IsBlocked, SeatTypeName = seatTypes.FirstOrDefault(x => x.Id == s.SeatTypeId)?.TypeName ?? "Unknown" });
@@ -155,6 +156,41 @@ namespace Infrastructure.Data.Services
             catch (Exception ex)
             {
                 return BaseResponse<IEnumerable<SeatResponse>>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
+        public async Task<BaseResponse<CinemaPublicDetailsResponse>> GetCinemaByIdAsync(Guid cinemaId)
+        {
+            try
+            {
+                var cinemaSpec = new CinemaByIdSpecification(cinemaId);
+                var cinema = await _cinemaRepository.FirstOrDefaultAsync(cinemaSpec);
+                if (cinema == null)
+                    return BaseResponse<CinemaPublicDetailsResponse>.Failure(Error.NotFound("Cinema not found"));
+
+                return BaseResponse<CinemaPublicDetailsResponse>.Success(cinema);
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<CinemaPublicDetailsResponse>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
+        public async Task<BaseResponse<IEnumerable<CinemaPublicResponse>>> GetCinemaPublicAsync()
+        {
+            try
+            {
+                var cinemaSpec = new CinemaPublicSpecification();
+                var cinemas = await _cinemaRepository.ListAsync(cinemaSpec);
+                if (cinemas == null)
+                {
+                    return BaseResponse<IEnumerable<CinemaPublicResponse>>.Success([]);
+                }
+                return BaseResponse<IEnumerable<CinemaPublicResponse>>.Success(cinemas);
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<IEnumerable<CinemaPublicResponse>>.Failure(Error.InternalServerError(ex.Message));
             }
         }
 
@@ -208,7 +244,7 @@ namespace Infrastructure.Data.Services
                 {
                     return BaseResponse<CinemaResponse>.Failure(Error.NotFound($"Cinema with ID {cinemaId} not found"));
                 }
-                cinema.UpdateDetails(request.CinemaName, request.Address, request.Phone, request.Email, request.Website, request.ManagerName, request.Status);
+                cinema.UpdateDetails(request.CinemaName, request.Address, request.Phone, request.Email, request.Image, request.ManagerName, request.Status);
 
                 await _cinemaRepository.UpdateAsync(cinema);
                 var response = new CinemaResponse
@@ -218,7 +254,7 @@ namespace Infrastructure.Data.Services
                     Address = cinema.Address,
                     Phone = cinema.Phone,
                     Email = cinema.Email,
-                    Website = cinema.Website,
+                    Image = cinema.Image,
                     CinemaName = cinema.CinemaName
                 };
                 return BaseResponse<CinemaResponse>.Success(response);
@@ -233,7 +269,7 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                var cinemaSpec = new CinemeWithScreensSpecification(cinemaId, screenId);
+                var cinemaSpec = new CinemaWithScreensSpecification(cinemaId, screenId);
                 var cinemaEntity = await _cinemaRepository.FirstOrDefaultAsync(cinemaSpec);
                 if (cinemaEntity == null)
                 {

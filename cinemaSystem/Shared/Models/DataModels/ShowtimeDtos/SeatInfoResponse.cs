@@ -15,5 +15,6 @@ namespace Shared.Models.DataModels.ShowtimeDtos
         public Guid SeatTypeId { get; set; }
         public string SeatTypeName { get; set; }
         public SeatStatus Status { get; set; }
+        public required DateTime LastUpdated { get; set; }
     }
 }

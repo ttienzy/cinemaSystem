@@ -14,7 +14,8 @@ namespace Application.Specifications.CinemaSpec
         {
             Query.Where(c => c.Id == cinemaId && c.Screens.Any(sc => sc.Id == screenId))
                 .Include(c => c.Screens.Where(sc => sc.Id == screenId))
-                    .ThenInclude(s => s.Seats);
+                    .ThenInclude(s => s.Seats)
+                    .AsSplitQuery();
         }
     }
 }

@@ -25,7 +25,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<IEnumerable<Genre>>.WithError(response);
+            return ErrorResponse<IEnumerable<Genre>>.WithError(response);
         }
         [HttpGet("{genreId}")]
         public async Task<IActionResult> GetGenreByIdAsync(Guid genreId)
@@ -35,7 +35,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<Genre>.WithError(response);
+            return ErrorResponse<Genre>.WithError(response);
         }
         [HttpPost]
         public async Task<IActionResult> CreateGenreAsync([FromBody] GenreRequest request)
@@ -47,9 +47,9 @@ namespace Api.Controllers
             var response = await _genreService.CreateGenreAsync(request);
             if (response.IsSuccess)
             {
-                return CreatedAtAction(nameof(GetGenreByIdAsync), new { genreId = response.Value.Id }, response.Value);
+                return Ok(response.Value);
             }
-            return ErrorReponse<Genre>.WithError(response);
+            return ErrorResponse<Genre>.WithError(response);
         }
         [HttpPut("{genreId}")]
         public async Task<IActionResult> UpdateGenreAsync(Guid genreId, [FromBody] GenreRequest request)
@@ -63,7 +63,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<Genre>.WithError(response);
+            return ErrorResponse<Genre>.WithError(response);
         }
         [HttpDelete("{genreId}")]
         public async Task<IActionResult> DeleteGenreAsync(Guid genreId)
@@ -73,7 +73,7 @@ namespace Api.Controllers
             {
                 return NoContent();
             }
-            return ErrorReponse<object>.WithError(response);
+            return ErrorResponse<object>.WithError(response);
         }
     }
 }

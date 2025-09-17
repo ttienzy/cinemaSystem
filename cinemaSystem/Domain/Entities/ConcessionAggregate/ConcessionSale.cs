@@ -17,7 +17,7 @@ namespace Domain.Entities.ConcessionAggregate
         public Guid StaffId { get; private set; }
         public DateTime SaleDate { get; private set; }
         public decimal TotalAmount { get; private set; }
-        public string PaymentMethod { get; private set; }
+        public string? PaymentMethod { get; private set; }
 
 
         private readonly List<ConcessionSaleItem> _items = new();

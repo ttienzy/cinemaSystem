@@ -8,15 +8,14 @@ namespace Infrastructure.Hubs.Constants
 {
     public class SignalMethodConstants
     {
-        public const string JoinEventGroup = "JoinEventGroup";
-        public const string LeaveEventGroup = "LeaveEventGroup";
-        public const string OnConnectedAsync = "OnConnectedAsync";
-        public const string OnDisconnectedAsync = "OnDisconnectedAsync";
-        public const string UpdateSeatReservation = "UpdateSeatReservation";
-        public const string NotifySeatReleased = "NotifySeatReleased";
-        public const string NotifySeatReserved = "NotifySeatReserved";
-        public const string NotifySeatSold = "NotifySeatSold";
-        public const string NotifyBookingFailed = "NotifyBookingFailed";
-        public const string NotifyTemporaryReservationExpired = "NotifyTemporaryReservationExpired";
+        public const string JoinShowtimeGroup = "ConnectToShowtime";
+        public const string LeaveShowtimeGroup = "DisconnectFromShowtime";
+        //public const string OnConnectedAsync = "OnConnectedAsync";
+        //public const string OnDisconnectedAsync = "OnDisconnectedAsync";
+        public const string OnSeatsReleased = "OnSeatsReleased";
+        public const string OnSeatsBooked = "OnSeatsBooked";
+        public const string OnSeatsReserved = "OnSeatsReserved";
+        public const string OnPaymentSuccessful = "OnPaymentSuccessful";
+        public const string OnPaymentCanceled = "OnPaymentCanceled";
     }
 }

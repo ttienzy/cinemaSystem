@@ -16,16 +16,15 @@ namespace Domain.Entities.MovieAggregate
 
         public MovieCertification()
         {
-            Id = Guid.NewGuid();
         }
-        public MovieCertification(string certificationBody, string rating, DateTime issueDate)
+        public MovieCertification(Guid movieId,string certificationBody, string rating, DateTime issueDate)
         {
-            Id = Guid.NewGuid();
+            MovieId = movieId;
             CertificationBody = certificationBody;
             Rating = rating;
             IssueDate = issueDate;
         }
-        public void UpdateDetail(string certificationBody, string rating, DateTime issueDate)
+        public void UpdateDetail( string certificationBody, string rating, DateTime issueDate)
         {
             CertificationBody = certificationBody;
             Rating = rating;

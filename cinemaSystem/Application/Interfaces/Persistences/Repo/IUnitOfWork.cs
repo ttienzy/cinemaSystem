@@ -1,5 +1,6 @@
 ﻿using Domain.Entities.BookingAggregate;
 using Domain.Entities.MovieAggregate;
+using Domain.Entities.SharedAggregates;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace Application.Interfaces.Persistences.Repo
     {
         IRepository<Booking> Bookings { get; }
         IRepository<Movie> Movies { get; }
+        IRepository<SeatType> SeatTypes { get; }
         Task<int> SaveChangesAsync();
         Task BeginTractionAsync();
         Task CommitTransactionAsync();

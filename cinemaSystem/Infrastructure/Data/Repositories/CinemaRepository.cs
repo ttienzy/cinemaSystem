@@ -26,7 +26,7 @@ namespace Infrastructure.Data.Repositories
                     Address = cinema.Address,
                     Phone = cinema.Phone,
                     Email = cinema.Email,
-                    Website = cinema.Website,
+                    Image = cinema.Image,
                     CinemaName = cinema.CinemaName,
                     Screens = cinema.Screens.Select(screen => new ScreenResponse
                     {

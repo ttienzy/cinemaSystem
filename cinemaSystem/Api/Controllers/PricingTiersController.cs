@@ -24,7 +24,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<IEnumerable<PricingTier>>.WithError(response);
+            return ErrorResponse<IEnumerable<PricingTier>>.WithError(response);
         }
         [HttpGet("{pricingTierId:guid}")]
         public async Task<IActionResult> GetByIdAsync(Guid pricingTierId)
@@ -34,7 +34,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<PricingTier>.WithError(response);
+            return ErrorResponse<PricingTier>.WithError(response);
         }
         [HttpPost]
         public async Task<IActionResult> CreateAsync([FromBody] PricingTierRequest request)
@@ -46,9 +46,9 @@ namespace Api.Controllers
             var response = await _pricingTierService.CreatePricingTierAsync(request);
             if (response.IsSuccess)
             {
-                return CreatedAtAction(nameof(GetByIdAsync), new { pricingTierId = response.Value.Id }, response.Value);
+                return Ok(response.Value);
             }
-            return ErrorReponse<PricingTier>.WithError(response);
+            return ErrorResponse<PricingTier>.WithError(response);
         }
         [HttpPut("{pricingTierId:guid}")]
         public async Task<IActionResult> UpdateAsync(Guid pricingTierId, [FromBody] PricingTierRequest request)
@@ -62,7 +62,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<PricingTier>.WithError(response);
+            return ErrorResponse<PricingTier>.WithError(response);
         }
         [HttpDelete("{pricingTierId:guid}")]
         public async Task<IActionResult> DeleteAsync(Guid pricingTierId)
@@ -72,7 +72,7 @@ namespace Api.Controllers
             {
                 return NoContent();
             }
-            return ErrorReponse<object>.WithError(response);
+            return ErrorResponse<object>.WithError(response);
         }
     }
 }

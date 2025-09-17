@@ -10,10 +10,27 @@ namespace Application.Specifications.MovieSpec
 {
     public class MovieWithMGenreSpecification : Specification<Movie>
     {
+        public MovieWithMGenreSpecification()
+        {
+            Query
+                .Skip(0)
+                .Take(3)
+                .Include(mg => mg.MovieGenres)
+                .OrderByDescending(m => m.CreatedAt)
+                .AsNoTracking();
+        }
         public MovieWithMGenreSpecification(Guid movieId)
         {
             Query.Where(m => m.Id == movieId)
                 .Include(mg => mg.MovieGenres);
+        }
+        public MovieWithMGenreSpecification(List<Guid> movieIds)
+        {
+            Query.Where(m => movieIds.Contains(m.Id))
+                .Include(mg => mg.MovieGenres)
+                .Skip(0)
+                .Take(6)
+                .AsNoTracking();
         }
         public MovieWithMGenreSpecification(Guid movieId, Guid genreId)
         {

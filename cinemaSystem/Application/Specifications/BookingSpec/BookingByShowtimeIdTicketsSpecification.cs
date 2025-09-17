@@ -12,7 +12,7 @@ namespace Application.Specifications.BookingSpec
     {
         public BookingByShowtimeIdTicketsSpecification(Guid showtimeId)
         {
-            Query.Where(b => b.ShowtimeId == showtimeId && b.Status != Domain.Entities.BookingAggregate.Enum.BookingStatus.Pending)
+            Query.Where(b => b.ShowtimeId == showtimeId)
                 .Include(b => b.BookingTickets)
                 .AsNoTracking();
         }

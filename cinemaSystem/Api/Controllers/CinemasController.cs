@@ -16,29 +16,24 @@ namespace Api.Controllers
         {
             _cinemaService = cinemaService ?? throw new ArgumentNullException(nameof(cinemaService), "Cinema service cannot be null");
         }
-        
+
         [HttpGet]
-        public async Task<IActionResult> GetCinemas([FromQuery] CinemaQueryParameters parameters)
+        public async Task<IActionResult> GetCinemasAsync()
         {
-            var serviceResponse = await _cinemaService.GetCinemasWithScreensAsync(parameters);
+            var serviceResponse = await _cinemaService.GetCinemaPublicAsync();
             if (serviceResponse.IsSuccess)
             {
-                var pagingList = serviceResponse.Value;
-                var result = new
-                {
-                    Data = pagingList,
-                    Pagination = new PaginationResponse
-                    {
-                        Pageindex = pagingList.PageIndex,
-                        TotalPages = pagingList.TotalPages,
-                        Count = pagingList.Count,
-                        HasNextPage = pagingList.HasNextPage,
-                        HasPreviousPage = pagingList.HasPreviousPage,
-                    }
-                };
-                return Ok(result);
+                return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<PaginatedList<CinemaResponse>>.WithError(serviceResponse);
+            return ErrorResponse<IEnumerable<CinemaPublicResponse>>.WithError(serviceResponse);
+        }
+        [HttpGet("{cinemaId:guid}")]
+        public async Task<IActionResult> GetCinemaByIdAsync(Guid cinemaId)
+        {
+            var result = await _cinemaService.GetCinemaByIdAsync(cinemaId);
+            if (result.IsSuccess) 
+                return Ok(result.Value);
+            return ErrorResponse<CinemaPublicDetailsResponse>.WithError(result);
         }
         [HttpGet("{cinemaId:guid}/screens/{screenId:guid}/seats")]
         public async Task<IActionResult> GetSeatsForScreen(Guid cinemaId, Guid screenId)
@@ -48,7 +43,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<IEnumerable<SeatResponse>>.WithError(serviceResponse);
+            return ErrorResponse<IEnumerable<SeatResponse>>.WithError(serviceResponse);
         }
         [HttpPost]
         public async Task<IActionResult> CreateCinema([FromBody] CinemaRequest request)
@@ -56,9 +51,9 @@ namespace Api.Controllers
             var serviceResponse = await _cinemaService.CreateCinemaAsync(request);
             if (serviceResponse.IsSuccess)
             {
-                return CreatedAtAction(nameof(GetCinemas), new { cinemaId = serviceResponse.Value.Id }, serviceResponse.Value);
+                return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<CinemaResponse>.WithError(serviceResponse);
+            return ErrorResponse<CinemaResponse>.WithError(serviceResponse);
         }
         [HttpPost("{cinemaId:guid}/screens")]
         public async Task<IActionResult> AddScreenToCinema(Guid cinemaId, [FromBody] ScreenRequest request)
@@ -66,9 +61,9 @@ namespace Api.Controllers
             var serviceResponse = await _cinemaService.AddScreenToCinemaAsync(cinemaId, request);
             if (serviceResponse.IsSuccess)
             {
-                return CreatedAtAction(nameof(GetSeatsForScreen), new { cinemaId = cinemaId, screenId = serviceResponse.Value.Id }, serviceResponse.Value);
+                return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<ScreenResponse>.WithError(serviceResponse);
+            return ErrorResponse<ScreenResponse>.WithError(serviceResponse);
         }
         [HttpPost("{cinemaId:guid}/screens/{screenId:guid}/seats/generate")]
         public async Task<IActionResult> GenerateSeatsForScreen(Guid cinemaId, Guid screenId, [FromBody] IEnumerable<SeatGenerateRequest> requests)
@@ -78,7 +73,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<IEnumerable<SeatResponse>>.WithError(serviceResponse);
+            return ErrorResponse<IEnumerable<SeatResponse>>.WithError(serviceResponse);
         }
         [HttpPut("{cinemaId:guid}")]
         public async Task<IActionResult> UpdateCinema(Guid cinemaId, [FromBody] CinemaRequest request)
@@ -88,7 +83,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<CinemaResponse>.WithError(serviceResponse);
+            return ErrorResponse<CinemaResponse>.WithError(serviceResponse);
         }
         [HttpPut("{cinemaId:guid}/screens/{screenId:guid}")]
         public async Task<IActionResult> UpdateScreenForCinema(Guid cinemaId, Guid screenId, [FromBody] ScreenRequest request)
@@ -98,7 +93,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<ScreenResponse>.WithError(serviceResponse);
+            return ErrorResponse<ScreenResponse>.WithError(serviceResponse);
         }
         [HttpPut("{cinemaId:guid}/screens/{screenId:guid}/seats/{seatId:guid}")]
         public async Task<IActionResult> UpdateSeatForScreen(Guid cinemaId, Guid screenId, Guid seatId, [FromBody] SeatGenerateRequest request)
@@ -108,7 +103,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<SeatResponse>.WithError(serviceResponse);
+            return ErrorResponse<SeatResponse>.WithError(serviceResponse);
         }
         [HttpPut("{cinemaId:guid}/screens/{screenId:guid}/seats/updatestatuses")]
         public async Task<IActionResult> UpdateSeatStatuses(Guid cinemaId, Guid screenId, [FromBody] IEnumerable<Guid> seatIds)
@@ -118,7 +113,7 @@ namespace Api.Controllers
             {
                 return Ok(serviceResponse.Value);
             }
-            return ErrorReponse<IEnumerable<SeatResponse>>.WithError(serviceResponse);
+            return ErrorResponse<IEnumerable<SeatResponse>>.WithError(serviceResponse);
         }
         [HttpDelete("{cinemaId:guid}")]
         public async Task<IActionResult> DeleteCinema(Guid cinemaId)
@@ -128,7 +123,7 @@ namespace Api.Controllers
             {
                 return NoContent();
             }
-            return ErrorReponse<object>.WithError(serviceResponse);
+            return ErrorResponse<object>.WithError(serviceResponse);
         }
         [HttpDelete("{cinemaId:guid}/screens/{screenId:guid}")]
         public async Task<IActionResult> DeleteScreenFromCinema(Guid cinemaId, Guid screenId)
@@ -138,7 +133,7 @@ namespace Api.Controllers
             {
                 return NoContent();
             }
-            return ErrorReponse<object>.WithError(serviceResponse);
+            return ErrorResponse<object>.WithError(serviceResponse);
         }
         [HttpDelete("{cinemaId:guid}/screens/{screenId:guid}/seats")]
         public async Task<IActionResult> DeleteSeatsFromScreen(Guid cinemaId, Guid screenId, [FromBody] IEnumerable<Guid> seatIds)
@@ -148,7 +143,7 @@ namespace Api.Controllers
             {
                 return NoContent();
             }
-            return ErrorReponse<object>.WithError(serviceResponse);
+            return ErrorResponse<object>.WithError(serviceResponse);
         }
 
     }

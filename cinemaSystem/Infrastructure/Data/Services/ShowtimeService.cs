@@ -1,7 +1,10 @@
-﻿using Application.Interfaces.Persistences;
+﻿using Application.Interfaces.Integrations;
+using Application.Interfaces.Persistences;
 using Application.Interfaces.Persistences.Repo;
 using Application.Specifications.BookingSpec;
 using Application.Specifications.CinemaSpec;
+using Application.Specifications.GenreSpec;
+using Application.Specifications.MovieSpec;
 using Application.Specifications.ShowtimeSpec;
 using Domain.Entities.BookingAggregate;
 using Domain.Entities.CinemaAggreagte;
@@ -9,6 +12,8 @@ using Domain.Entities.CinemaAggreagte.Enum;
 using Domain.Entities.MovieAggregate;
 using Domain.Entities.SharedAggregates;
 using Domain.Entities.ShowtimeAggregate;
+using Infrastructure.Hubs;
+using Infrastructure.Redis.Constants;
 using Shared.Common.Base;
 using Shared.Models.DataModels.ShowtimeDtos;
 using System;
@@ -28,7 +33,10 @@ namespace Infrastructure.Data.Services
         private readonly IRepository<Cinema> _cinemaRepository;
         private readonly IRepository<Movie> _movieRepository;
         private readonly IRepository<TimeSlot> _timeSlotRepository;
+        private readonly IRepository<Genre> _genreRepository;
         private readonly IShowtimeRepository _customShowtimeRepository;
+        private readonly ICacheService _cacheService;
+        private readonly ISeatNotificationService _seatNotificationService;
         public ShowtimeService
             (IRepository<Showtime> showtimeRepository, 
             IRepository<Booking> bookingRepository,
@@ -37,7 +45,10 @@ namespace Infrastructure.Data.Services
             IRepository<Cinema> cinemaRepository,
             IRepository<Movie> movieRepository,
             IRepository<TimeSlot> timeSlotRepository,
-            IShowtimeRepository showtimeRepository1)
+            IRepository<Genre> genreRepository,
+            IShowtimeRepository showtimeRepository1,
+            ICacheService cacheService,
+            ISeatNotificationService seatNotificationService)
         {
             _showtimeRepository = showtimeRepository;
             _bookingRepository = bookingRepository;
@@ -46,7 +57,10 @@ namespace Infrastructure.Data.Services
             _cinemaRepository = cinemaRepository;
             _movieRepository = movieRepository;
             _timeSlotRepository = timeSlotRepository;
+            _genreRepository = genreRepository;
             _customShowtimeRepository = showtimeRepository1;
+            _cacheService = cacheService;
+            _seatNotificationService = seatNotificationService;
         }
         public async Task<BaseResponse<ShowtimePricingResponse>> AddPricingToShowtimeAsync(Guid showtimeId, ShowtimePricingRequest request)
         {
@@ -92,7 +106,7 @@ namespace Infrastructure.Data.Services
                 {
                     return BaseResponse<ShowtimeResponse>.Failure(Error.NotFound("Movie not found"));
                 }
-                var cinemaScreen = new CinemeWithScreensSpecification(request.CinemaId, request.ScreenId);
+                var cinemaScreen = new CinemaWithScreensSpecification(request.CinemaId, request.ScreenId);
                 var cinema = await _cinemaRepository.FirstOrDefaultAsync(cinemaScreen);
 
                 if (cinema == null)
@@ -131,7 +145,15 @@ namespace Infrastructure.Data.Services
                     ShowDate = showtime.ShowDate,
                     ActualStartTime = showtime.ActualStartTime,
                     ActualEndTime = showtime.ActualEndTime,
-                    Status = showtime.Status
+                    Status = showtime.Status,
+                    CinemaName = cinema.CinemaName,
+                    MovieTitle = movie.Title,
+                    MoviePosterUrl = movie.PosterUrl,
+                    MovieDurationMinutes = movie.DurationMinutes,
+                    ScreenName = screen.ScreenName,
+                    PricingTierName = pricingTier.TierName,
+                    PricingTierMultiplier = pricingTier.Multiplier,
+                    
                 };
                 return BaseResponse<ShowtimeResponse>.Success(response);
             }
@@ -191,18 +213,42 @@ namespace Infrastructure.Data.Services
             }
         }
 
-        public async Task<BaseResponse<IEnumerable<ShowtimeDetailsResponse>>> GetShowtimesAsync(ShowtimeQueryParameters parameters)
+        public async Task<BaseResponse<ShowtimeFeaturedResponse>> GetShowtimeFeaturedAsync(ShowtimeQueryParameters parameters)
+        {
+            try
+            {
+                var movieGenres = new MovieWithMGenreSpecification(parameters.MovieId);
+                var movie = await _movieRepository.FirstOrDefaultAsync(movieGenres);
+                if (movie == null)
+                    return BaseResponse<ShowtimeFeaturedResponse>.Failure(Error.NotFound("Movie not found"));
+
+                var genreIds = movie.MovieGenres.Select(m => m.GenreId).ToList();
+                var genresSpec = new GenresWithMovieSpecification(genreIds);
+                var genres = await _genreRepository.ListAsync(genresSpec);
+                var result = await _customShowtimeRepository.GetShowtimeFeaturedAsync(parameters);
+                if (result is null)
+                    return BaseResponse<ShowtimeFeaturedResponse>.Failure(Error.NotFound("Showtime not found"));
+                result.Genres = genres.Select(x => x.GenreName).ToList();
+                return BaseResponse<ShowtimeFeaturedResponse>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<ShowtimeFeaturedResponse>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
+        public async Task<BaseResponse<IEnumerable<ShowtimeFeaturedResponse>>> GetShowtimesAsync(ShowtimeQueryParameters parameters)
         {
 
             try
             {
-                var showtimes = await _customShowtimeRepository.GetShowtimeByQuerryAsync(parameters.CinemaId, parameters.MovieId, parameters.ShowDate);
-                return BaseResponse<IEnumerable<ShowtimeDetailsResponse>>.Success(showtimes);
+                var showtimes = await _customShowtimeRepository.GetShowtimeByQuerryAsync(parameters.CinemaId, parameters.ShowDate);
+                return BaseResponse<IEnumerable<ShowtimeFeaturedResponse>>.Success(showtimes);
 
             }
             catch (Exception ex)
             {
-                return BaseResponse<IEnumerable<ShowtimeDetailsResponse>>.Failure(Error.InternalServerError(ex.Message));
+                return BaseResponse<IEnumerable<ShowtimeFeaturedResponse>>.Failure(Error.InternalServerError(ex.Message));
             }
         }
 
@@ -210,6 +256,12 @@ namespace Infrastructure.Data.Services
         {
             try
             {
+                //// Check cache first
+                var cachedSeatingPlan = await _cacheService.GetAsync<ShowtimeSeatingPlanResponse>(CacheKey.SeatingPlan(showtimeId));
+                if (cachedSeatingPlan != null)
+                {
+                    return BaseResponse<ShowtimeSeatingPlanResponse>.Success(cachedSeatingPlan);
+                }
                 // Get showtime with pricings
                 var showtimeWithPricingsSpec = new ShowtimeWithPricingSpecification(showtimeId);
                 var showtime = await _showtimeRepository.FirstOrDefaultAsync(showtimeWithPricingsSpec);
@@ -229,14 +281,18 @@ namespace Infrastructure.Data.Services
                 var movie = await _movieRepository.GetByIdAsync(showtime.MovieId);
 
                 // get cinema with screen and seats
-                var cinemaScreenWithSeatsSpec = new CinemeWithScreensSpecification(showtime.CinemaId, showtime.ScreenId);
+                var cinemaScreenWithSeatsSpec = new CinemaScreenAndSeatsSpecification(showtime.CinemaId, showtime.ScreenId);
                 var cinema = await _cinemaRepository.FirstOrDefaultAsync(cinemaScreenWithSeatsSpec);
 
 
                 var pricings  = showtime.GetAllShowtimePricings();
                 var screen = cinema.Screens.FirstOrDefault();
+
+                //---------------------
                 var seats = screen.GetAllSeats();
-                var bookedSeatIds = bookings.SelectMany(b => b.BookingTickets).Select(t => t.SeatId).ToHashSet();
+                var seatIdAsBookeds = bookings.Where(b => b.Status == Domain.Entities.BookingAggregate.Enum.BookingStatus.Completed).SelectMany(b => b.BookingTickets).Select(t => t.SeatId).ToHashSet();
+                var seatIdAsReserveds = bookings.Where(b => b.Status == Domain.Entities.BookingAggregate.Enum.BookingStatus.Pending).SelectMany(b => b.BookingTickets).Select(t => t.SeatId).ToHashSet();
+
 
                 var response = new ShowtimeSeatingPlanResponse
                 {
@@ -250,8 +306,8 @@ namespace Infrastructure.Data.Services
                         MovieTitle = movie.Title,
                         ScreenName = screen.ScreenName
                     },
-                    Pricings = pricings.Select(pricing => new ShowtimePricingInfoResponse 
-                    { 
+                    Pricings = pricings.Select(pricing => new ShowtimePricingInfoResponse
+                    {
                         SeatTypeId = pricing.SeatTypeId,
                         FinalPrice = pricing.FinalPrice,
                     }).ToList(),
@@ -262,9 +318,15 @@ namespace Infrastructure.Data.Services
                         Number = seat.Number,
                         SeatTypeId = seat.SeatTypeId,
                         SeatTypeName = seatTypes.FirstOrDefault(st => st.Id == seat.SeatTypeId)?.TypeName!,
-                        Status = bookedSeatIds.Contains(seat.Id) ? SeatStatus.Booked : SeatStatus.Available,
+                        Status = seatIdAsBookeds.Contains(seat.Id) ? SeatStatus.Booked :
+                                seatIdAsReserveds.Contains(seat.Id) ? SeatStatus.Reserved : SeatStatus.Available,
+                        LastUpdated = DateTime.UtcNow,
                     }).ToList(),
                 };
+
+                var expiry = showtime.ShowDate.AddDays(1).ToUniversalTime() - DateTime.UtcNow;
+                await _cacheService.SetAsync($"showtime:{showtimeId}:seating-plan", response, expiry);
+
                 return BaseResponse<ShowtimeSeatingPlanResponse>.Success(response);
             }
             catch (Exception ex)

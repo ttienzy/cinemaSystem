@@ -1,19 +1,25 @@
 ﻿using Application.Interfaces.Integrations;
 using Application.Interfaces.Persistences;
 using Application.Interfaces.Persistences.Repo;
+using Application.Specifications.CinemaSpec;
 using Application.Specifications.GenreSpec;
 using Application.Specifications.MovieSpec;
+using Application.Specifications.ShowtimeSpec;
 using Ardalis.Specification.EntityFrameworkCore;
+using Domain.Entities.CinemaAggreagte;
 using Domain.Entities.MovieAggregate;
 using Domain.Entities.SharedAggregates;
+using Domain.Entities.ShowtimeAggregate;
+using Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Shared.Common.Base;
 using Shared.Common.Paging;
+using Shared.Models.DataModels.CinemaDtos;
 using Shared.Models.DataModels.MovieDtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Shared.Models.DataModels.StatisticDto;
+
 
 namespace Infrastructure.Data.Services
 {
@@ -22,20 +28,23 @@ namespace Infrastructure.Data.Services
         private readonly IRepository<Movie> _movieRepository;
         private readonly IRepository<Genre> _genreRepository;
         private readonly IMovieRepository _movieCustomRepository;
-        private readonly ICacheService _cacheService;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IRepository<Cinema> _cinemaRepository;
+        private readonly IRepository<Showtime> _showtimeRepository;
+        private readonly UserManager<ApplicationUser> _userManager;
         public MovieService(
             IRepository<Movie> movieRepository, 
             IRepository<Genre> genreRepository,
             IMovieRepository movieCustomRepository,
-            ICacheService cacheService,
-            IUnitOfWork unitOfWork)
+            IRepository<Cinema> cinemaRepository,
+            IRepository<Showtime> showtimeRepository,
+            UserManager<ApplicationUser> userManager)
         {
             _movieRepository = movieRepository;
             _genreRepository = genreRepository;
             _movieCustomRepository = movieCustomRepository;
-            _cacheService = cacheService;
-            _unitOfWork = unitOfWork;
+            _cinemaRepository = cinemaRepository;
+            _showtimeRepository = showtimeRepository;
+            _userManager = userManager;
         }
         public async Task<BaseResponse<MovieDetailsResponse>> GetMovieByIdAsync(Guid movieId)
         {
@@ -54,24 +63,25 @@ namespace Infrastructure.Data.Services
 
                 var response = new MovieDetailsResponse
                 {
-                    Id = movie.Id,
-                    Title = movie.Title,
-                    DurationMinutes = movie.DurationMinutes,
-                    ReleaseDate = movie.ReleaseDate,
-                    PosterUrl = movie.PosterUrl,
-                    Description = movie.Description,
-                    Genres = movie.MovieGenres.Select(mg => new MovieGenreResponse
+                    Movie = new MovieDetail
                     {
-                        Id = mg.GenreId,
-                        GenreName = genres.FirstOrDefault(g => g.Id == mg.GenreId)?.GenreName ?? "Unknown"
-                    }).ToList(),
+                        Title = movie.Title,
+                        Description = movie.Description,
+                        PosterUrl = movie.PosterUrl,
+                        DurationMinutes = movie.DurationMinutes,
+                        ReleaseDate = movie.ReleaseDate,
+                        CreatedAt = movie.CreatedAt,
+                    },
+                    Genres = genres,
+                    
                     Certifications = movie.Certifications.Select(mc => new MovieCertificationResponse
                     {
                         Id = mc.Id,
                         CertificationBody = mc.CertificationBody,
                         Rating = mc.Rating,
+                        IssueDate = mc.IssueDate,
                     }).ToList(),
-                    CastCrew = movie.CastCrew.Select(mc => new MovieCastCrewResponse
+                    CastCrews = movie.CastCrew.Select(mc => new MovieCastCrewResponse
                     {
                         Id = mc.Id,
                         PersonName = mc.PersonName,
@@ -109,6 +119,7 @@ namespace Infrastructure.Data.Services
         {
             try
             {
+                List<MovieCastCrew> castCrewList = requests.Select(request => new MovieCastCrew(movieId, request.PersonName, request.RoleType)).ToList();
                 var movieCastCrewSpec = new MovieWithCastCrewSpeccification(movieId);
                 var movieWithCastCrew = await _movieRepository.FirstOrDefaultAsync(movieCastCrewSpec);
                 if (movieWithCastCrew == null)
@@ -116,10 +127,12 @@ namespace Infrastructure.Data.Services
                     return BaseResponse<IEnumerable<MovieCastCrewResponse>>.Failure(Error.NotFound($"Movie with ID {movieId} not found."));
                 }
                 
-                List<MovieCastCrew> castCrewList = requests.Select(request => new MovieCastCrew(request.PersonName, request.RoleType)).ToList();
+                
                 movieWithCastCrew.AddRangeCastCrew(castCrewList);
 
-                await _unitOfWork.Movies.UpdateAsync(movieWithCastCrew);
+                await _movieRepository.SaveChangesAsync();
+                //await _unitOfWork.SaveChangesAsync();
+
 
                 var response = castCrewList.Select(mc => new MovieCastCrewResponse
                 {
@@ -145,7 +158,7 @@ namespace Infrastructure.Data.Services
                 {
                     return BaseResponse<IEnumerable<MovieCertificationResponse>>.Failure(Error.NotFound($"Movie with ID {movieId} not found."));
                 }
-                List<MovieCertification> certificationsList = requests.Select(request => new MovieCertification(request.CertificationBody, request.Rating, request.IssueDate)).ToList();
+                List<MovieCertification> certificationsList = requests.Select(request => new MovieCertification(movieCertifications.Id, request.CertificationBody, request.Rating, request.IssueDate)).ToList();
                 movieCertifications.AddRangeCertifications(certificationsList);
                 await _movieRepository.UpdateAsync(movieCertifications);
                 var response = certificationsList.Select(mc => new MovieCertificationResponse
@@ -153,6 +166,7 @@ namespace Infrastructure.Data.Services
                     Id = mc.Id,
                     CertificationBody = mc.CertificationBody,
                     Rating = mc.Rating,
+                    IssueDate = mc.IssueDate,
                 }).ToList();
                 return BaseResponse<IEnumerable<MovieCertificationResponse>>.Success(response);
             }
@@ -172,7 +186,7 @@ namespace Infrastructure.Data.Services
                 {
                     return BaseResponse<IEnumerable<MovieCopyrightResponse>>.Failure(Error.NotFound($"Movie with ID {movieId} not found."));
                 }
-                List<MovieCopyright> copyrightsList = requests.Select(request => new MovieCopyright(request.DistributorCompany, request.LicenseStartDate, request.LicenseEndDate, request.Status)).ToList();
+                List<MovieCopyright> copyrightsList = requests.Select(request => new MovieCopyright(movieWithCopyrights.Id, request.DistributorCompany, request.LicenseStartDate, request.LicenseEndDate, request.Status)).ToList();
                 movieWithCopyrights.AddRangeCopyrights(copyrightsList);
                 await _movieRepository.UpdateAsync(movieWithCopyrights);
                 var response = copyrightsList.Select(mc => new MovieCopyrightResponse
@@ -200,12 +214,18 @@ namespace Infrastructure.Data.Services
                 {
                     return BaseResponse<IEnumerable<MovieGenreResponse>>.Failure(Error.NotFound($"Movie with ID {movieId} not found."));
                 }
-                List<MovieGenre> genresList = requests.Select(request => new MovieGenre(request.GenreId)).ToList();
+                List<MovieGenre> genresList = requests.Select(request => new MovieGenre(request.GenreId, movieWithGenres.Id)).ToList();
                 movieWithGenres.AddRangeGenres(genresList);
 
                 var genreIds = genresList.Select(g => g.GenreId).ToList();
                 var genreSpec = new GenresWithMovieSpecification(genreIds);
                 var genres = await _genreRepository.ListAsync(genreSpec);
+                if (genres.Count != genreIds.Count)
+                {
+                    var existingGenreIds = genres.Select(g => g.Id).ToHashSet();
+                    var missingGenreIds = genreIds.Where(id => !existingGenreIds.Contains(id)).ToList();
+                    return BaseResponse<IEnumerable<MovieGenreResponse>>.Failure(Error.NotFound($"Genres with IDs {string.Join(", ", missingGenreIds)} not found."));
+                }
                 await _movieRepository.UpdateAsync(movieWithGenres);
                 var response = genresList.Select(mc => new MovieGenreResponse
                 {
@@ -224,20 +244,18 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                var movie = new Movie(request.Title, request.DurationMinutes, request.ReleaseDate, request.Status, request.PosterUrl, request.Description);
+                var movie = new Movie(request.Title, request.DurationMinutes, request.ReleaseDate, request.Status, request.Description, request.RatingStatus, request.PosterUrl, request.Trailer);
                 await _movieRepository.AddAsync(movie);
                 var response = new MovieDetailsResponse
                 {
-                    Id = movie.Id,
-                    Title = movie.Title,
-                    DurationMinutes = movie.DurationMinutes,
-                    ReleaseDate = movie.ReleaseDate,
-                    PosterUrl = movie.PosterUrl,
-                    Description = movie.Description,
-                    Genres = new List<MovieGenreResponse>(),
-                    Certifications = new List<MovieCertificationResponse>(),
-                    CastCrew = new List<MovieCastCrewResponse>(),
-                    Copyrights = new List<MovieCopyrightResponse>()
+                    Movie = new MovieDetail
+                    {
+                        Title = movie.Title,
+                        DurationMinutes = movie.DurationMinutes,
+                        ReleaseDate = movie.ReleaseDate,
+                        PosterUrl = movie.PosterUrl,
+                        Description = movie.Description,
+                    }
                 };
                 return BaseResponse<MovieDetailsResponse>.Success(response);
             }
@@ -355,10 +373,10 @@ namespace Infrastructure.Data.Services
                 {
                     return BaseResponse<MovieCastCrewResponse>.Failure(Error.NotFound($"Movie with ID {movieId} or Cast/Crew with ID {castCrewId} not found."));
                 }
-                var result = movieWithCastCrew.UpdateCastCrew(castCrewId, request.PersonName, request.RoleType);
+                var result = movieWithCastCrew.UpdateCastCrew(castCrewId, movieWithCastCrew.Id, request.PersonName, request.RoleType);
                 if (!result)
                 {
-                    return BaseResponse<MovieCastCrewResponse>.Failure(Error.NotFound($"CastCrew witt ID {castCrewId} not found"));
+                    return BaseResponse<MovieCastCrewResponse>.Failure(Error.NotFound($"CastCrew with ID {castCrewId} not found"));
                 }
                 await _movieRepository.UpdateAsync(movieWithCastCrew);
 
@@ -398,6 +416,7 @@ namespace Infrastructure.Data.Services
                     Id = certId,
                     CertificationBody = request.CertificationBody,
                     Rating = request.Rating,
+                    IssueDate = request.IssueDate,
                 };
                 return BaseResponse<MovieCertificationResponse>.Success(response);
             }
@@ -483,23 +502,146 @@ namespace Infrastructure.Data.Services
                 {
                     return BaseResponse<MovieDetailsResponse>.Failure(Error.NotFound($"Movie with ID {movieId} not found."));
                 }
-                movie.UpdateDetail(request.Title, request.DurationMinutes, request.ReleaseDate, request.Description, request.PosterUrl);
+                movie.UpdateDetail(request.Title, request.DurationMinutes, request.ReleaseDate, request.Description, request.PosterUrl, request.RatingStatus, request.Trailer);
                 await _movieRepository.UpdateAsync(movie);
 
                 var response = new MovieDetailsResponse
                 {
-                    Id = movieId,
-                    Title = movie.Title,
-                    DurationMinutes = movie.DurationMinutes,
-                    ReleaseDate = movie.ReleaseDate,
-                    Description = movie.Description,
-                    PosterUrl = movie.PosterUrl
+                    Movie = new MovieDetail
+                    {
+                        Title = movie.Title,
+                        DurationMinutes = movie.DurationMinutes,
+                        ReleaseDate = movie.ReleaseDate,
+                        Description = movie.Description,
+                        PosterUrl = movie.PosterUrl,
+                        CreatedAt = movie.CreatedAt,
+                    }
                 };
                 return BaseResponse<MovieDetailsResponse>.Success(response);
             }
             catch (Exception ex)
             {
                 return BaseResponse<MovieDetailsResponse>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
+        public async Task<BaseResponse<IEnumerable<MovieComingSoonResponse>>> GetMovieComingSoonAsync()
+        {
+            try
+            {
+                var movieWithMGenreSpec = new MovieWithMGenreSpecification();
+                var movies = await _movieRepository.ListAsync(movieWithMGenreSpec);
+
+                if (movies == null)
+                {
+                    return BaseResponse<IEnumerable<MovieComingSoonResponse>>.Success([]);
+                }
+
+                var mGenreIds = movies.SelectMany(m => m.MovieGenres).Select(m => m.GenreId).ToHashSet();
+
+                var genreSpec = new GenresWithMovieSpecification(mGenreIds.ToList());
+                var genres = await _genreRepository.ListAsync(genreSpec);
+
+                var response = movies.Select(m => new MovieComingSoonResponse
+                {
+                    MovieId = m.Id,
+                    Title = m.Title,
+                    Description = m.Description,
+                    Duration = m.DurationMinutes,
+                    PostUrl = m.PosterUrl,
+                    Trailer = m.Trailer,
+                    Genres = m.MovieGenres.Select(mg => genres.FirstOrDefault(g => g.Id == mg.GenreId)?.GenreName ?? "***").ToList()
+                });
+                return BaseResponse<IEnumerable<MovieComingSoonResponse>>.Success(response);
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<IEnumerable<MovieComingSoonResponse>>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
+        public async Task<BaseResponse<HighlightStat>> GetHighlightStatAsync()
+        {
+            try
+            {
+                var baseCinemeSpec = new CinemaBaseSpecification();
+                var baseMovieSpec = new MovieBaseSpecification();
+
+                var cinemas = await _cinemaRepository.ListAsync(baseCinemeSpec);
+                var movies = await _movieRepository.ListAsync(baseMovieSpec);
+
+                var users = await _userManager.Users.CountAsync();
+
+                var response = new HighlightStat
+                {
+                    CinemaBaseResponse = cinemas,
+                    MovieBaseResponse = movies,
+                    StatisticItemResponse = new StatisticItemRessponse
+                    {
+                        TotalCinemas = cinemas.Count,
+                        TotalMovies = movies.Count,
+                        TotalUsers = users
+                    }
+                };
+                return BaseResponse<HighlightStat>.Success(response);
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<HighlightStat>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
+        public async Task<BaseResponse<IEnumerable<MovieResponse>>> GetMovieListAsync()
+        {
+            try
+            {
+                var stMovieSpec = new ShowtimeWithMovieIdSpecification();
+                var movieIds = await _showtimeRepository.ListAsync(stMovieSpec);
+                if (movieIds.Count == 0)
+                {
+                    return BaseResponse<IEnumerable<MovieResponse>>.Success([]);
+                }
+
+                HashSet<Guid> ids = movieIds.ToHashSet();
+
+                var movieSpec = new MovieWithMGenreSpecification(ids.ToList());
+                var movies = await _movieRepository.ListAsync(movieSpec);
+                var genreIds = movies.SelectMany(m => m.MovieGenres).Select(mg => mg.GenreId).ToHashSet();
+
+                var genreSpec = new GenresWithMovieSpecification(genreIds.ToList());
+                var genres = await _genreRepository.ListAsync(genreSpec);
+
+                var response = movies.Select(m => new MovieResponse
+                {
+                    Id = m.Id,
+                    AgeRating = m.Rating,
+                    Description = m.Description,
+                    DurationMinutes = m.DurationMinutes,
+                    PosterUrl = m.PosterUrl,
+                    ReleaseDate = m.ReleaseDate,
+                    Title = m.Title,
+                    Trailer = m.Trailer,
+                    Genres = m.MovieGenres.Select(mg => genres.FirstOrDefault(x => x.Id == mg.GenreId)?.GenreName ?? "***").ToList(),
+                });
+                return BaseResponse<IEnumerable<MovieResponse>>.Success(response);
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<IEnumerable<MovieResponse>>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
+        public async Task<BaseResponse<IEnumerable<MovieSectionResponse>>> GetMoviesSectionAsync()
+        {
+            try
+            {
+                var movieSpec = new MovieSectionSpecification();
+                var movies = await _movieRepository.ListAsync(movieSpec);
+                return BaseResponse<IEnumerable<MovieSectionResponse>>.Success(movies);
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<IEnumerable<MovieSectionResponse>>.Failure(Error.InternalServerError(ex.Message));
             }
         }
     }

@@ -14,7 +14,7 @@ namespace Shared.Models.DataModels.CinemaDtos
         public string Address { get; set; }
         public string? Phone { get; set; }
         public string? Email { get; set; }
-        public string? Website { get; set; }
+        public string? Image { get; set; }
         public CinemaStatus Status { get; set; }
         public List<ScreenResponse> Screens { get; set; } = new();
     }

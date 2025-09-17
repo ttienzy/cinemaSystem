@@ -20,7 +20,6 @@ namespace Domain.Entities.ShowtimeAggregate
         }
         public ShowtimePricing(Guid seatTypeId, decimal basePrice, decimal finalPrice)
         {
-            Id = Guid.NewGuid();
             SeatTypeId = seatTypeId;
             BasePrice = basePrice;
             FinalPrice = finalPrice;

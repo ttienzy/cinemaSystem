@@ -22,11 +22,9 @@ namespace Domain.Entities.BookingAggregate
 
         public Booking()
         {
-            Id = Guid.NewGuid();
         }
         public Booking(Guid? customerId, Guid showtimeId, int totalTickets, decimal totalAmount)
         {
-            Id = Guid.NewGuid();
             CustomerId = customerId;
             ShowtimeId = showtimeId;
             BookingTime = DateTime.UtcNow;
@@ -42,6 +40,7 @@ namespace Domain.Entities.BookingAggregate
         {
             Status = BookingStatus.Completed;
         }
+        
         public void AddTickets(List<BookingTicket> tickets)
         {
             _bookingTickets.AddRange(tickets);

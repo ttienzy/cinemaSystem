@@ -8,7 +8,6 @@ namespace Shared.Models.IdentityModels
 {
     public class LoginResponse
     {
-        public UserProfileResponse UserProfile { get; set; } = new UserProfileResponse();
         public TokenResponse Token { get; set; } = new TokenResponse();
     }
 }

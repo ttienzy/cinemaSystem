@@ -37,5 +37,6 @@ namespace Infrastructure.Data.Repositories
             }).AsQueryable();
             return result;
         }
+
     }
 }

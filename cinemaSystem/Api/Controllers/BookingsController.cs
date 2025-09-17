@@ -1,8 +1,11 @@
 ﻿using Application.Interfaces.Integrations;
 using Application.Interfaces.Persistences;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Bcpg;
 using Shared.Common.Base;
+using Shared.Models.DataModels.BookingDtos;
 using Shared.Models.PaymentModels;
 
 namespace Api.Controllers
@@ -21,6 +24,17 @@ namespace Api.Controllers
             _vnPayService = vnPayService;
         }
 
+        [Authorize]
+        [HttpGet("purchase-history/{userId:guid}")]
+        public async Task<IActionResult> PurchaseAsync(Guid userId)
+        {
+            var result = await _bookingService.PurchaseHistoryAsync(userId);
+            if (result.IsSuccess) 
+                return Ok(result.Value);
+            return ErrorResponse<IEnumerable<PurchaseResponse>>.WithError(result);
+        }
+
+
         [HttpPost("create-booking")]
         public async Task<IActionResult> CreateBooking([FromBody] PaymentInfomationRequest request)
         {
@@ -29,9 +43,9 @@ namespace Api.Controllers
             {
                 return Ok(result.Value);
             }
-            return ErrorReponse<string>.WithError(result);
+            return ErrorResponse<string>.WithError(result);
         }
-        [HttpPost("confirm-payment")]
+        [HttpGet("callback")]
         public async Task<IActionResult> ConfirmPayment()
         {
             var query = HttpContext.Request.Query;
@@ -41,21 +55,23 @@ namespace Api.Controllers
                 var result = await _bookingService.ConfirmPaymentAsync(response);
                 if (result.IsSuccess)
                 {
-                    return Ok(result.Value);
+                    return Redirect($"http://localhost:5173/payment/success?showtimeId={result.Value}");
                 }
-                return ErrorReponse<string>.WithError(result);
+                return ErrorResponse<string>.WithError(result);
             }
             else
             {
                 var result = await _bookingService.CancelPaymentAsync(response);
                 if (result.IsSuccess)
                 {
-                    return Ok(result.Value);
+                    return Redirect($"http://localhost:5173/{result.Value}");
                 }
-                return ErrorReponse<string>.WithError(result);
+                return ErrorResponse<string>.WithError(result);
 
 
             }
         }
+
+        
     }
 }

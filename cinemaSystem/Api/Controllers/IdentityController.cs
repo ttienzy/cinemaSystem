@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Persistences;
 using Application.Interfaces.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Common.Base;
@@ -18,6 +19,7 @@ namespace Api.Controllers
             _identityService = identityService ?? throw new ArgumentNullException(nameof(identityService));
         }
         // User Profile Operations
+        [Authorize]
         [HttpGet("profile/{userId}")]
         public async Task<IActionResult> GetUserProfileAsync(Guid userId)
         {
@@ -30,7 +32,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<UserProfileResponse>.WithError(response);
+            return ErrorResponse<UserProfileResponse>.WithError(response);
         }
         [HttpPut("profile/{userId}")]
         public async Task<IActionResult> UpdateProfileAsync(Guid userId, [FromBody] UpdateProfileRequest updateProfileRequest)
@@ -44,7 +46,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<string>.WithError(response);
+            return ErrorResponse<string>.WithError(response);
         }
 
 
@@ -62,7 +64,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<string>.WithError(response);
+            return ErrorResponse<string>.WithError(response);
         }
         [HttpPost("forgot-password-with-otp")]
         public async Task<IActionResult> ForgotPasswordAsync([FromBody] string email)
@@ -76,7 +78,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<string>.WithError(response);
+            return ErrorResponse<string>.WithError(response);
         }
         [HttpPost("verify-reset-otp")]
         public async Task<IActionResult> VerifyResetOtpAsync([FromBody] VerifyResetOtpRequest request)
@@ -90,7 +92,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<string>.WithError(response);
+            return ErrorResponse<string>.WithError(response);
         }
         [HttpPost("reset-password-with-otp")]
         public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordWithOtpRequest request)
@@ -104,7 +106,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<string>.WithError(response);
+            return ErrorResponse<string>.WithError(response);
         }
     }
 }

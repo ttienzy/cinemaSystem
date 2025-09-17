@@ -15,12 +15,10 @@ namespace Domain.Entities.SharedAggregates
         public bool IsActive { get; private set; }
         public Genre()
         {
-            Id = Guid.NewGuid();
             IsActive = true;
         }
-        public Genre(string genreName, string? description = null)
+        public Genre(string genreName, string? description)
         {
-            Id = Guid.NewGuid();
             GenreName = genreName;
             Description = description;
             IsActive = true;

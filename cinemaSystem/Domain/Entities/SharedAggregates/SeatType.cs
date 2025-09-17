@@ -13,11 +13,9 @@ namespace Domain.Entities.SharedAggregates
         public decimal PriceMultiplier { get; private set; }
         public SeatType()
         {
-            Id = Guid.NewGuid();
         }
         public SeatType(string typeName, decimal priceMultiplier)
         {
-            Id = Guid.NewGuid();
             TypeName = typeName;
             PriceMultiplier = priceMultiplier;
         }

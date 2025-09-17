@@ -5,6 +5,7 @@ using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using Shared.Models;
+using Shared.Models.ExtenalModels;
 using System;
 
 

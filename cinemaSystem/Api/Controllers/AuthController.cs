@@ -34,7 +34,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<string>.WithError(response);
+            return ErrorResponse<string>.WithError(response);
         }
         [HttpPost("login")]
         public async Task<IActionResult> LoginAsync([FromBody] LoginRequest loginRequest)
@@ -48,7 +48,7 @@ namespace Api.Controllers
             {
                 return Ok(response.Value);
             }
-            return ErrorReponse<LoginResponse>.WithError(response);
+            return ErrorResponse<LoginResponse>.WithError(response);
         }
 
 
@@ -69,13 +69,14 @@ namespace Api.Controllers
                     return Unauthorized("Invalid access token");
                 }
                 var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+                var userName = principal.FindFirstValue(ClaimTypes.Name);
                 var email = principal.FindFirstValue(ClaimTypes.Email);
                 var roles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
                 var IsValidRefreshToken = await _tokenClaimService.IsRefreshTokenValidAsync(Guid.Parse(userId), request.RefreshToken);
                 if (IsValidRefreshToken)
                 {
-                    var newAccessToken = _tokenClaimService.GenerateAccessTokenn(Guid.Parse(userId), email, roles);
-                    return Ok(new TokenResponse { AccessToken = newAccessToken });
+                    var newAccessToken = _tokenClaimService.GenerateAccessTokenn(Guid.Parse(userId), userName, email, roles);
+                    return Ok(new { NewAccessToken = newAccessToken });
                 }
                 else
                 {

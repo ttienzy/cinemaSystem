@@ -28,11 +28,9 @@ namespace Domain.Entities.ShowtimeAggregate
 
         public Showtime()
         {
-            Id = Guid.NewGuid();
         }
         public Showtime(Guid cinemaId, Guid movieId, Guid screenId, Guid slotId, Guid pricingTierId, DateTime showDate, DateTime actualStartTime, DateTime actualEndTime, ShowtimeStatus status)
         {
-            Id = Guid.NewGuid();
             CinemaId = cinemaId;
             MovieId = movieId;
             ScreenId = screenId;

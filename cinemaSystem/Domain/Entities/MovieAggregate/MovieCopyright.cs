@@ -18,11 +18,10 @@ namespace Domain.Entities.MovieAggregate
 
         public MovieCopyright()
         {
-            Id = Guid.NewGuid();
         }
-        public MovieCopyright(string distributorCompany, DateTime licenseStartDate, DateTime licenseEndDate, MovieCopyrightStatus status)
+        public MovieCopyright(Guid movieId, string distributorCompany, DateTime licenseStartDate, DateTime licenseEndDate, MovieCopyrightStatus status)
         {
-            Id = Guid.NewGuid();
+            MovieId = movieId;
             DistributorCompany = distributorCompany;
             LicenseStartDate = licenseStartDate;
             LicenseEndDate = licenseEndDate;

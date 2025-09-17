@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Shared.Common.Base;
+using Shared.Models.DataModels.BookingDtos;
 using Shared.Models.PaymentModels;
 using System;
 using System.Collections.Generic;
@@ -14,5 +15,6 @@ namespace Application.Interfaces.Persistences
         Task<BaseResponse<string>> CreateBookingAsync(PaymentInfomationRequest request, HttpContext httpContext);
         Task<BaseResponse<string>> CancelPaymentAsync(PaymentResponse response);
         Task<BaseResponse<string>> ConfirmPaymentAsync(PaymentResponse response);
+        Task<BaseResponse<IEnumerable<PurchaseResponse>>> PurchaseHistoryAsync(Guid userId);
     }
 }

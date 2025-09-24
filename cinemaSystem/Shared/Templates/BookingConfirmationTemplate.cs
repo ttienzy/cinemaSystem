@@ -86,6 +86,14 @@ namespace Shared.Templates
                             </td>
                         </tr>
                         <tr>
+                            <td style='padding: 12px 0; border-bottom: 1px solid #e0e6ff; font-weight: bold; color: #555; width: 40%;'>
+                                🔢 Mã đặt vé:
+                            </td>
+                            <td style='padding: 12px 0; border-bottom: 1px solid #e0e6ff; color: #667eea; font-weight: bold; font-size: 16px; font-family: monospace;'>
+                                {bookingInfo.BookingCode}
+                            </td>
+                        </tr>
+                        <tr>
                             <td style='padding: 15px 0 0 0; font-weight: bold; color: #667eea; font-size: 16px;'>
                                 💰 Tổng tiền:
                             </td>

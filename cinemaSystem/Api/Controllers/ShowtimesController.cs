@@ -1,4 +1,6 @@
 ﻿using Application.Interfaces.Persistences;
+using Infrastructure.Identity.Constants;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Common.Base;
@@ -27,6 +29,7 @@ namespace Api.Controllers
             }
             return ErrorResponse<IEnumerable<ShowtimeFeaturedResponse>>.WithError(result);
         }
+        [Authorize(Roles = $"{RoleConstant.User}")]
         [HttpGet("{showtimeId}/seating-plan")]
         public async Task<IActionResult> GetShowtimeSeatingPlan(Guid showtimeId)
         {
@@ -47,6 +50,7 @@ namespace Api.Controllers
             }
             return ErrorResponse<ShowtimeFeaturedResponse>.WithError(result);
         }
+        [Authorize(Roles = $"{RoleConstant.User}")]
         [HttpPost]
         public async Task<IActionResult> CreateShowtime([FromBody] ShowtimeRequest request)
         {

@@ -31,6 +31,7 @@ namespace Api.Controllers
                 Subject = BookingConfirmationTemplate.BOOKING_CONFIRMATION_SUBJECT,
                 Body = BookingConfirmationTemplate.BookingConfirmation(new EmailConfirmBookingResponse
                 {
+                    BookingCode = Guid.NewGuid(),
                     MovieTitle = "Avengers: Endgame",
                     Showtime = new DateTime(2025, 9, 15, 19, 30, 0), // 15/09/2025 19:30
                     TimeSlot = "19:30 - 22:00",

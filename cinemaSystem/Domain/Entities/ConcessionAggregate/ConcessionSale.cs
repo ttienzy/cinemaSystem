@@ -22,6 +22,22 @@ namespace Domain.Entities.ConcessionAggregate
 
         private readonly List<ConcessionSaleItem> _items = new();
         public IReadOnlyCollection<ConcessionSaleItem> Items => _items.AsReadOnly();
+        public ConcessionSale()
+        {
+        }
+        public ConcessionSale(Guid cinemaId, Guid? bookingId, Guid staffId, decimal totalAmount, string? paymentMethod)
+        {
+            CinemaId = cinemaId;
+            BookingId = bookingId;
+            StaffId = staffId;
+            SaleDate = DateTime.UtcNow;
+            TotalAmount = totalAmount;
+            PaymentMethod = paymentMethod;
+        }
+        public void AddItems(List<ConcessionSaleItem> items)
+        {
+            _items.AddRange(items);
+        }
 
     }
 }

@@ -11,10 +11,10 @@ interface ProfileState {
 
 const initialState: ProfileState = {
     userInfo: {
-        createdAt: '',  
+        createdAt: '',
         email: '',
         phoneNumber: '',
-        role: [],
+        roles: [],
         userName: ''
     },
     purchases: [],

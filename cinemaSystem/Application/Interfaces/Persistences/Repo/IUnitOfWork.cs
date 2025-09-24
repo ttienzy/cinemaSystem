@@ -1,4 +1,6 @@
 ﻿using Domain.Entities.BookingAggregate;
+using Domain.Entities.ConcessionAggregate;
+using Domain.Entities.InventoryAggregate;
 using Domain.Entities.MovieAggregate;
 using Domain.Entities.SharedAggregates;
 using Microsoft.Extensions.Logging;
@@ -15,6 +17,8 @@ namespace Application.Interfaces.Persistences.Repo
         IRepository<Booking> Bookings { get; }
         IRepository<Movie> Movies { get; }
         IRepository<SeatType> SeatTypes { get; }
+        IRepository<InventoryItem> InventoryItems { get; }
+        IRepository<ConcessionSale> ConcessionSales { get; }
         Task<int> SaveChangesAsync();
         Task BeginTractionAsync();
         Task CommitTransactionAsync();

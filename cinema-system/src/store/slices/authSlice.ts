@@ -1,11 +1,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { authServices } from "../../services/auth.services";
+import type { DecodedToken } from "../../types/auth.types";
+import { decodeTokenAndGetUser } from "../../utils/decodeTokenAndGetUser";
 
 interface AuthState {
     accessToken: string | null;
     refreshToken: string | null;
     isAuthenticated: boolean;
+    user: DecodedToken;
     loading: boolean;
     error: string | null;
 }
@@ -13,6 +16,7 @@ const initialState: AuthState = {
     accessToken: localStorage.getItem('accessToken'),
     refreshToken: localStorage.getItem('refreshToken'),
     isAuthenticated: !!localStorage.getItem('accessToken'),  // note: (!!) casts the value to boolean
+    user: decodeTokenAndGetUser(localStorage.getItem('accessToken')) || { nameid: '', unique_name: '', role: [] },
     loading: false,
     error: null,
 };
@@ -56,8 +60,12 @@ const authSlice = createSlice({
             state.accessToken = action.payload.accessToken;
             state.refreshToken = action.payload.refreshToken;
             state.isAuthenticated = true;
+            state.user = decodeTokenAndGetUser(localStorage.getItem('accessToken')) || { nameid: '', unique_name: '', role: [] };
             localStorage.setItem('accessToken', action.payload.accessToken);
             localStorage.setItem('refreshToken', action.payload.refreshToken);
+        },
+        setUser: (state) => {
+            state.user = decodeTokenAndGetUser(localStorage.getItem('accessToken')) || { nameid: '', unique_name: '', role: [] };
         }
     },
     extraReducers: (builder) => {
@@ -74,10 +82,12 @@ const authSlice = createSlice({
                 state.isAuthenticated = true;
                 localStorage.setItem('accessToken', action.payload.token.accessToken);
                 localStorage.setItem('refreshToken', action.payload.token.refreshToken);
+                state.user = decodeTokenAndGetUser(localStorage.getItem('accessToken')) || { nameid: '', unique_name: '', role: [] };
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.error.message || 'Login failed';
+                state.user = { nameid: '', unique_name: '', role: [] };
             })
 
             // Register handling
@@ -102,15 +112,15 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.accessToken = action.payload.accessToken;
                 localStorage.setItem('accessToken', action.payload.accessToken);
+                state.user = decodeTokenAndGetUser(localStorage.getItem('accessToken')) || { nameid: '', unique_name: '', role: [] };
             })
             .addCase(refreshAccessToken.rejected, (state, action) => {
                 setTimeout(() => state.loading = false, 3000);
                 state.loading = false;
                 state.error = action.error.message || 'Failed to refresh access token';
-                //localStorage.clear();
-                //window.location.href = "/login"; // Redirect to login on failure
+                state.user = { nameid: '', unique_name: '', role: [] };
             })
     },
 })
-export const { logout, clearError, setTokens } = authSlice.actions;
+export const { logout, clearError, setTokens, setUser } = authSlice.actions;
 export default authSlice.reducer;

@@ -5,6 +5,7 @@ import movieReducer from "./slices/movieSlice";
 import showtimeReducer from "./slices/showtimeSlice";
 import cinemaReducer from "./slices/cinemaSlice";
 import inventoryReducer from "./slices/inventorySlice";
+import bookingReducer from "./slices/bookingSlice";
 
 export const store = configureStore({
     reducer: {
@@ -13,7 +14,8 @@ export const store = configureStore({
         movie: movieReducer,
         showtime: showtimeReducer,
         cinema: cinemaReducer,
-        inventory: inventoryReducer
+        inventory: inventoryReducer,
+        booking: bookingReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

@@ -13,6 +13,7 @@ namespace Domain.Entities.BookingAggregate
         public int TotalTickets { get; private set; }
         public decimal TotalAmount { get; private set; }
         public BookingStatus Status { get; private set; } 
+        public bool IsCheckedIn { get; private set; } = false;
 
         private readonly List<BookingTicket> _bookingTickets = new();
         public IReadOnlyCollection<BookingTicket> BookingTickets => _bookingTickets.AsReadOnly();
@@ -31,6 +32,23 @@ namespace Domain.Entities.BookingAggregate
             TotalTickets = totalTickets;
             TotalAmount = totalAmount;
             Status = BookingStatus.Pending;
+            IsCheckedIn = false;
+        }
+        public Booking(Guid? customerId, Guid showtimeId, int totalTickets, decimal totalAmount, List<BookingTicket> tickets, Payment payment)
+        {
+            CustomerId = customerId;
+            ShowtimeId = showtimeId;
+            BookingTime = DateTime.UtcNow;
+            TotalTickets = totalTickets;
+            TotalAmount = totalAmount;
+            Status = BookingStatus.Pending;
+            IsCheckedIn = false;
+            _bookingTickets.AddRange(tickets);
+            _payments.Add(payment);
+        }
+        public void CreateId()
+        {
+            Id = Guid.NewGuid();
         }
         public void MarkAsCanceled()
         {
@@ -40,7 +58,11 @@ namespace Domain.Entities.BookingAggregate
         {
             Status = BookingStatus.Completed;
         }
-        
+        public void MarkAsCheckedIn()
+        {
+            IsCheckedIn = true;
+        }
+
         public void AddTickets(List<BookingTicket> tickets)
         {
             _bookingTickets.AddRange(tickets);

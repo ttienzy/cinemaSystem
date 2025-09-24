@@ -1,8 +1,15 @@
 // src/pages/dashboard/employee/EquipmentReport.tsx
 import React from 'react';
 import { FileText } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode';
+import type { DecodedToken } from '../../../types/auth.types';
 
 const EmployeeEquipmentReport: React.FC = () => {
+
+    const accessToken = localStorage.getItem('accessToken');
+
+    const decoded: DecodedToken | null = accessToken ? jwtDecode(accessToken) : null;
+    console.log('Decoded Token:', decoded);
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
             <div className="text-center">

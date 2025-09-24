@@ -25,6 +25,8 @@ namespace Infrastructure.Data.Configs
                 .IsRequired()
                 .HasMaxLength(50)
                 .HasConversion<string>(); // Pending = 0, Confirmed = 1, Cancelled = 2, Completed = 3
+            builder.Property(b => b.IsCheckedIn)
+                .HasDefaultValue(false);
 
             builder.HasOne<Showtime>()
                 .WithMany()

@@ -2,7 +2,7 @@
 import React from 'react';
 import { FileText } from 'lucide-react';
 
-const AdminSeatTypes: React.FC = () => {
+const AdminSeatLayout: React.FC = () => {
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
             <div className="text-center">
@@ -26,4 +26,4 @@ const AdminSeatTypes: React.FC = () => {
     );
 };
 
-export default AdminSeatTypes;
+export default AdminSeatLayout;

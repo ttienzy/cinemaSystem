@@ -49,8 +49,6 @@ namespace Api.Controllers
             return ErrorResponse<string>.WithError(response);
         }
 
-
-
         // OTP Reset Operations and Password Reset Operations
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePasswordAsync([FromBody] ChangePasswordRequest changePasswordRequest)

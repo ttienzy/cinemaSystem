@@ -164,7 +164,7 @@ const Profile: React.FC = () => {
                                             <div>
                                                 <p className="text-sm font-medium text-gray-900">Vai trò</p>
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                    {userInfo?.role}
+                                                    {userInfo?.roles.join(', ')}
                                                 </span>
                                             </div>
                                         </div>

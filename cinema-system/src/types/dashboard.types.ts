@@ -9,14 +9,24 @@ interface MenuItem {
     children?: MenuItem[];
 }
 interface CartItem {
-    id: string;
-    name: string;
+    staffId: string;
+    tickets: TicketCartItem;
+    concessions: ConcessionCartItem[];
+    paymentMethod: 'cash' | 'card';
+}
+interface TicketCartItem {
+    showtimeId?: string;
+    actualStartTime: string;
+    actualEndTime: string;
+    movieTitle: string;
+    selectedSeats: SelectedSeat[];
+}
+interface ConcessionCartItem {
+    itemId: string;
+    itemName: string;
     price: number;
     quantity: number;
-    type: 'ticket' | 'concession';
-    selectedSeats?: SelectedSeat[];
 }
-
 export const menuItems: Record<string, MenuItem[]> = {
     employee: [
         {
@@ -326,4 +336,4 @@ export const menuItems: Record<string, MenuItem[]> = {
     ]
 };
 
-export type { MenuItem, CartItem };
+export type { MenuItem, CartItem, TicketCartItem, ConcessionCartItem };

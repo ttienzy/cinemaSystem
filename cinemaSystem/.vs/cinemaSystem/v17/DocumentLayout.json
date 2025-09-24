@@ -3,92 +3,24 @@
   "WorkspaceRootPath": "E:\\DACS4\\cinemaSystem\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|e:\\dacs4\\cinemasystem\\infrastructure\\data\\services\\showtimeservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|solutionrelative:infrastructure\\data\\services\\showtimeservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\showtimescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\showtimescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|e:\\dacs4\\cinemasystem\\infrastructure\\data\\repositories\\showtimerepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|solutionrelative:infrastructure\\data\\repositories\\showtimerepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|e:\\dacs4\\cinemasystem\\infrastructure\\dependencies.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|solutionrelative:infrastructure\\dependencies.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|e:\\dacs4\\cinemasystem\\application\\specifications\\staffspec\\staffwithshiftsspecification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|solutionrelative:application\\specifications\\staffspec\\staffwithshiftsspecification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\inventoryitemscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\inventoryitemscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|e:\\dacs4\\cinemasystem\\application\\specifications\\bookingspec\\bookingbyidspecification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|solutionrelative:application\\specifications\\bookingspec\\bookingbyidspecification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\bookingscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\bookingscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\convertors\\timespanconverter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\convertors\\timespanconverter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\showtimescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\showtimescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|e:\\dacs4\\cinemasystem\\application\\interfaces\\persistences\\repo\\ishowtimerepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|solutionrelative:application\\interfaces\\persistences\\repo\\ishowtimerepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|e:\\dacs4\\cinemasystem\\infrastructure\\data\\services\\inventoryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|solutionrelative:infrastructure\\data\\services\\inventoryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{C2B1F537-9449-4C9A-9C36-D05CFD4DF53D}|Domain\\Domain.csproj|e:\\dacs4\\cinemasystem\\domain\\entities\\inventoryaggregate\\inventoryitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C2B1F537-9449-4C9A-9C36-D05CFD4DF53D}|Domain\\Domain.csproj|solutionrelative:domain\\entities\\inventoryaggregate\\inventoryitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|e:\\dacs4\\cinemasystem\\application\\interfaces\\persistences\\iinventoryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|solutionrelative:application\\interfaces\\persistences\\iinventoryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F465542E-DA22-44BF-87AC-BD606D07AF97}|Shared\\Shared.csproj|e:\\dacs4\\cinemasystem\\shared\\models\\datamodels\\inventorydtos\\inventoryrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F465542E-DA22-44BF-87AC-BD606D07AF97}|Shared\\Shared.csproj|solutionrelative:shared\\models\\datamodels\\inventorydtos\\inventoryrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F465542E-DA22-44BF-87AC-BD606D07AF97}|Shared\\Shared.csproj|e:\\dacs4\\cinemasystem\\shared\\models\\datamodels\\inventorydtos\\inventoryresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F465542E-DA22-44BF-87AC-BD606D07AF97}|Shared\\Shared.csproj|solutionrelative:shared\\models\\datamodels\\inventorydtos\\inventoryresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\weatherforecastcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\weatherforecastcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|e:\\dacs4\\cinemasystem\\application\\specifications\\inventoryspec\\getconcessionbycinemaidspecification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|solutionrelative:application\\specifications\\inventoryspec\\getconcessionbycinemaidspecification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{C2B1F537-9449-4C9A-9C36-D05CFD4DF53D}|Domain\\Domain.csproj|e:\\dacs4\\cinemasystem\\domain\\entities\\concessionaggregate\\concessionsale.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C2B1F537-9449-4C9A-9C36-D05CFD4DF53D}|Domain\\Domain.csproj|solutionrelative:domain\\entities\\concessionaggregate\\concessionsale.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{C2B1F537-9449-4C9A-9C36-D05CFD4DF53D}|Domain\\Domain.csproj|e:\\dacs4\\cinemasystem\\domain\\entities\\concessionaggregate\\concessionsaleitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C2B1F537-9449-4C9A-9C36-D05CFD4DF53D}|Domain\\Domain.csproj|solutionrelative:domain\\entities\\concessionaggregate\\concessionsaleitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{C2B1F537-9449-4C9A-9C36-D05CFD4DF53D}|Domain\\Domain.csproj|e:\\dacs4\\cinemasystem\\domain\\entities\\staffaggregate\\staff.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C2B1F537-9449-4C9A-9C36-D05CFD4DF53D}|Domain\\Domain.csproj|solutionrelative:domain\\entities\\staffaggregate\\staff.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|e:\\dacs4\\cinemasystem\\infrastructure\\data\\configs\\inventoryitemconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|solutionrelative:infrastructure\\data\\configs\\inventoryitemconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|e:\\dacs4\\cinemasystem\\application\\interfaces\\persistences\\ishowtimeservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|solutionrelative:application\\interfaces\\persistences\\ishowtimeservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F465542E-DA22-44BF-87AC-BD606D07AF97}|Shared\\Shared.csproj|e:\\dacs4\\cinemasystem\\shared\\models\\datamodels\\showtimedtos\\showtimequeryparameters.cs||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{F465542E-DA22-44BF-87AC-BD606D07AF97}|Shared\\Shared.csproj|solutionrelative:shared\\models\\datamodels\\showtimedtos\\showtimequeryparameters.cs||{8B382828-6202-11D1-8870-0000F87579D2}"
+      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\cinemascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\cinemascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -97,8 +29,8 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 284,
-          "SelectedChildIndex": 12,
+          "DockedWidth": 305,
+          "SelectedChildIndex": 7,
           "Children": [
             {
               "$type": "Bookmark",
@@ -130,276 +62,73 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "TimeSpanConverter.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Convertors\\TimeSpanConverter.cs",
-              "RelativeDocumentMoniker": "Api\\Convertors\\TimeSpanConverter.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Convertors\\TimeSpanConverter.cs",
-              "RelativeToolTip": "Api\\Convertors\\TimeSpanConverter.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "StaffWithShiftsSpecification.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Application\\Specifications\\StaffSpec\\StaffWithShiftsSpecification.cs",
+              "RelativeDocumentMoniker": "Application\\Specifications\\StaffSpec\\StaffWithShiftsSpecification.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Application\\Specifications\\StaffSpec\\StaffWithShiftsSpecification.cs",
+              "RelativeToolTip": "Application\\Specifications\\StaffSpec\\StaffWithShiftsSpecification.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAlAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T10:05:37.886Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "Program.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Program.cs",
-              "RelativeDocumentMoniker": "Api\\Program.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Program.cs",
-              "RelativeToolTip": "Api\\Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAADYAAAAiAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T10:05:03.257Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "InventoryItemsController.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\InventoryItemsController.cs",
-              "RelativeDocumentMoniker": "Api\\Controllers\\InventoryItemsController.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\InventoryItemsController.cs",
-              "RelativeToolTip": "Api\\Controllers\\InventoryItemsController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T08:34:02.211Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "Dependencies.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Dependencies.cs",
-              "RelativeDocumentMoniker": "Infrastructure\\Dependencies.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Dependencies.cs",
-              "RelativeToolTip": "Infrastructure\\Dependencies.cs",
-              "ViewState": "AgIAAAsAAAAAAAAAAAAEwBQAAAAYAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T07:47:41.322Z",
+              "WhenOpened": "2025-09-24T17:06:43.294Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
+              "Title": "BookingsController.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\BookingsController.cs",
+              "RelativeDocumentMoniker": "Api\\Controllers\\BookingsController.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\BookingsController.cs",
+              "RelativeToolTip": "Api\\Controllers\\BookingsController.cs",
+              "ViewState": "AgIAADkAAAAAAAAAAAAowEcAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-24T14:59:13.853Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "ShowtimesController.cs",
               "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\ShowtimesController.cs",
               "RelativeDocumentMoniker": "Api\\Controllers\\ShowtimesController.cs",
               "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\ShowtimesController.cs",
               "RelativeToolTip": "Api\\Controllers\\ShowtimesController.cs",
-              "ViewState": "AgIAAAoAAAAAAAAAAADwvyAAAAA8AAAAAAAAAA==",
+              "ViewState": "AgIAAFYAAAAAAAAAAAAswFMAAAAkAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T07:12:52.775Z",
+              "WhenOpened": "2025-09-24T14:56:50.655Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "ShowtimeService.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Services\\ShowtimeService.cs",
-              "RelativeDocumentMoniker": "Infrastructure\\Data\\Services\\ShowtimeService.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Services\\ShowtimeService.cs",
-              "RelativeToolTip": "Infrastructure\\Data\\Services\\ShowtimeService.cs",
-              "ViewState": "AgIAADcBAAAAAAAAAAAEwEcBAAAQAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T07:14:58.469Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "BookingByIdSpecification.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Application\\Specifications\\BookingSpec\\BookingByIdSpecification.cs",
-              "RelativeDocumentMoniker": "Application\\Specifications\\BookingSpec\\BookingByIdSpecification.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Application\\Specifications\\BookingSpec\\BookingByIdSpecification.cs",
-              "RelativeToolTip": "Application\\Specifications\\BookingSpec\\BookingByIdSpecification.cs",
+              "DocumentIndex": 4,
+              "Title": "CinemasController.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\CinemasController.cs",
+              "RelativeDocumentMoniker": "Api\\Controllers\\CinemasController.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\CinemasController.cs",
+              "RelativeToolTip": "Api\\Controllers\\CinemasController.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T10:05:52.099Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "ShowtimeRepository.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Repositories\\ShowtimeRepository.cs",
-              "RelativeDocumentMoniker": "Infrastructure\\Data\\Repositories\\ShowtimeRepository.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Repositories\\ShowtimeRepository.cs",
-              "RelativeToolTip": "Infrastructure\\Data\\Repositories\\ShowtimeRepository.cs",
-              "ViewState": "AgIAABQAAAAAAAAAAAAawDEAAAAzAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T07:17:59.739Z",
+              "WhenOpened": "2025-09-24T14:53:33.2Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "IShowtimeRepository.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Application\\Interfaces\\Persistences\\Repo\\IShowtimeRepository.cs",
-              "RelativeDocumentMoniker": "Application\\Interfaces\\Persistences\\Repo\\IShowtimeRepository.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Application\\Interfaces\\Persistences\\Repo\\IShowtimeRepository.cs",
-              "RelativeToolTip": "Application\\Interfaces\\Persistences\\Repo\\IShowtimeRepository.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAuwBAAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "InventoryItemsController.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\InventoryItemsController.cs",
+              "RelativeDocumentMoniker": "Api\\Controllers\\InventoryItemsController.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\InventoryItemsController.cs",
+              "RelativeToolTip": "Api\\Controllers\\InventoryItemsController.cs",
+              "ViewState": "AgIAABEAAAAAAAAAAAAnwDoAAAA4AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T07:45:52.122Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "IInventoryService.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Application\\Interfaces\\Persistences\\IInventoryService.cs",
-              "RelativeDocumentMoniker": "Application\\Interfaces\\Persistences\\IInventoryService.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Application\\Interfaces\\Persistences\\IInventoryService.cs",
-              "RelativeToolTip": "Application\\Interfaces\\Persistences\\IInventoryService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAuwBAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T08:17:53.093Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "InventoryService.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Services\\InventoryService.cs",
-              "RelativeDocumentMoniker": "Infrastructure\\Data\\Services\\InventoryService.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Services\\InventoryService.cs",
-              "RelativeToolTip": "Infrastructure\\Data\\Services\\InventoryService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACEAAAAnAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T08:22:54.059Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 14,
-              "Title": "WeatherForecastController.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\WeatherForecastController.cs",
-              "RelativeDocumentMoniker": "Api\\Controllers\\WeatherForecastController.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\WeatherForecastController.cs",
-              "RelativeToolTip": "Api\\Controllers\\WeatherForecastController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAxAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T07:46:08.621Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "InventoryRequest.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Shared\\Models\\DataModels\\InventoryDtos\\InventoryRequest.cs",
-              "RelativeDocumentMoniker": "Shared\\Models\\DataModels\\InventoryDtos\\InventoryRequest.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Shared\\Models\\DataModels\\InventoryDtos\\InventoryRequest.cs",
-              "RelativeToolTip": "Shared\\Models\\DataModels\\InventoryDtos\\InventoryRequest.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAhAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T08:40:46.492Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "InventoryItem.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Domain\\Entities\\InventoryAggregate\\InventoryItem.cs",
-              "RelativeDocumentMoniker": "Domain\\Entities\\InventoryAggregate\\InventoryItem.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Domain\\Entities\\InventoryAggregate\\InventoryItem.cs",
-              "RelativeToolTip": "Domain\\Entities\\InventoryAggregate\\InventoryItem.cs",
-              "ViewState": "AgIAAAsAAAAAAAAAAAAAwCAAAAAIAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T08:44:35.64Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 15,
-              "Title": "GetConcessionByCinemaIdSpecification.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Application\\Specifications\\InventorySpec\\GetConcessionByCinemaIdSpecification.cs",
-              "RelativeDocumentMoniker": "Application\\Specifications\\InventorySpec\\GetConcessionByCinemaIdSpecification.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Application\\Specifications\\InventorySpec\\GetConcessionByCinemaIdSpecification.cs",
-              "RelativeToolTip": "Application\\Specifications\\InventorySpec\\GetConcessionByCinemaIdSpecification.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAARAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T08:26:18.152Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "InventoryResponse.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Shared\\Models\\DataModels\\InventoryDtos\\InventoryResponse.cs",
-              "RelativeDocumentMoniker": "Shared\\Models\\DataModels\\InventoryDtos\\InventoryResponse.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Shared\\Models\\DataModels\\InventoryDtos\\InventoryResponse.cs",
-              "RelativeToolTip": "Shared\\Models\\DataModels\\InventoryDtos\\InventoryResponse.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAuwAgAAAAiAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T08:19:40.239Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 16,
-              "Title": "ConcessionSale.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Domain\\Entities\\ConcessionAggregate\\ConcessionSale.cs",
-              "RelativeDocumentMoniker": "Domain\\Entities\\ConcessionAggregate\\ConcessionSale.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Domain\\Entities\\ConcessionAggregate\\ConcessionSale.cs",
-              "RelativeToolTip": "Domain\\Entities\\ConcessionAggregate\\ConcessionSale.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAyAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T08:15:35.108Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 17,
-              "Title": "ConcessionSaleItem.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Domain\\Entities\\ConcessionAggregate\\ConcessionSaleItem.cs",
-              "RelativeDocumentMoniker": "Domain\\Entities\\ConcessionAggregate\\ConcessionSaleItem.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Domain\\Entities\\ConcessionAggregate\\ConcessionSaleItem.cs",
-              "RelativeToolTip": "Domain\\Entities\\ConcessionAggregate\\ConcessionSaleItem.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T08:15:32.059Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 18,
-              "Title": "Staff.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Domain\\Entities\\StaffAggregate\\Staff.cs",
-              "RelativeDocumentMoniker": "Domain\\Entities\\StaffAggregate\\Staff.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Domain\\Entities\\StaffAggregate\\Staff.cs",
-              "RelativeToolTip": "Domain\\Entities\\StaffAggregate\\Staff.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAyAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T08:14:54.62Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 19,
-              "Title": "InventoryItemConfiguration.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Configs\\InventoryItemConfiguration.cs",
-              "RelativeDocumentMoniker": "Infrastructure\\Data\\Configs\\InventoryItemConfiguration.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Configs\\InventoryItemConfiguration.cs",
-              "RelativeToolTip": "Infrastructure\\Data\\Configs\\InventoryItemConfiguration.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAABoAAABEAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T08:13:28.547Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 20,
-              "Title": "IShowtimeService.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Application\\Interfaces\\Persistences\\IShowtimeService.cs",
-              "RelativeDocumentMoniker": "Application\\Interfaces\\Persistences\\IShowtimeService.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Application\\Interfaces\\Persistences\\IShowtimeService.cs",
-              "RelativeToolTip": "Application\\Interfaces\\Persistences\\IShowtimeService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAA+AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T07:17:01.339Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 21,
-              "Title": "ShowtimeQueryParameters.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Shared\\Models\\DataModels\\ShowtimeDtos\\ShowtimeQueryParameters.cs",
-              "RelativeDocumentMoniker": "Shared\\Models\\DataModels\\ShowtimeDtos\\ShowtimeQueryParameters.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Shared\\Models\\DataModels\\ShowtimeDtos\\ShowtimeQueryParameters.cs",
-              "RelativeToolTip": "Shared\\Models\\DataModels\\ShowtimeDtos\\ShowtimeQueryParameters.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAuwAsAAAA3AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-17T07:14:22.51Z"
+              "WhenOpened": "2025-09-24T14:25:25.033Z",
+              "EditorCaption": ""
             }
           ]
         },
         {
-          "DockedWidth": 178,
+          "DockedWidth": 263,
           "SelectedChildIndex": -1,
           "Children": [
             {
@@ -419,7 +148,7 @@
           ]
         },
         {
-          "DockedWidth": 196,
+          "DockedWidth": 178,
           "SelectedChildIndex": -1,
           "Children": [
             {

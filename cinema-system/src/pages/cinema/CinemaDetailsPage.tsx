@@ -4,9 +4,6 @@ import { useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { getCinemaDetails } from '../../store/slices/cinemaSlice';
 
-// Interfaces
-
-
 const CinemaDetailsPage: React.FC = () => {
     const [selectedScreenType, setSelectedScreenType] = useState<string>('All');
     const { id } = useParams<{ id: string }>();
@@ -14,9 +11,7 @@ const CinemaDetailsPage: React.FC = () => {
     const dispatch = useAppDispatch();
     const { cinemaDetails, loading, error } = useAppSelector((state) => state.cinema);
 
-    // Mock data - replace with actual API call
     useEffect(() => {
-        // Simulate API call
         if (!id) return;
         setTimeout(() => {
             dispatch(getCinemaDetails(id));
@@ -26,30 +21,30 @@ const CinemaDetailsPage: React.FC = () => {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Active':
-                return 'bg-green-600 text-white';
+                return 'bg-green-50 text-green-700 border-green-200';
             case 'Inactive':
-                return 'bg-red-600 text-white';
+                return 'bg-red-50 text-red-700 border-red-200';
             case 'Under Maintenance':
-                return 'bg-yellow-600 text-white';
+                return 'bg-yellow-50 text-yellow-700 border-yellow-200';
             default:
-                return 'bg-gray-600 text-white';
+                return 'bg-gray-50 text-gray-700 border-gray-200';
         }
     };
 
     const getScreenTypeColor = (type: string) => {
         switch (type) {
             case 'IMAX':
-                return 'bg-purple-600 text-white';
+                return 'bg-purple-50 text-purple-700 border-purple-200';
             case '4DX':
-                return 'bg-blue-600 text-white';
+                return 'bg-blue-50 text-blue-700 border-blue-200';
             case 'VIP':
-                return 'bg-amber-600 text-white';
+                return 'bg-amber-50 text-amber-700 border-amber-200';
             case 'Premium':
-                return 'bg-emerald-600 text-white';
+                return 'bg-emerald-50 text-emerald-700 border-emerald-200';
             case 'Standard':
-                return 'bg-gray-600 text-white';
+                return 'bg-gray-50 text-gray-700 border-gray-200';
             default:
-                return 'bg-gray-600 text-white';
+                return 'bg-gray-50 text-gray-700 border-gray-200';
         }
     };
 
@@ -65,16 +60,16 @@ const CinemaDetailsPage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                <div className="text-white text-xl">Đang tải thông tin rạp phim...</div>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-gray-700 text-xl">Đang tải thông tin rạp phim...</div>
             </div>
         );
     }
-    console.log(cinemaDetails);
+
     if (!cinemaDetails || error) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                <div className="text-white text-xl">Không tìm thấy thông tin rạp phim</div>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-gray-700 text-xl">Không tìm thấy thông tin rạp phim</div>
             </div>
         );
     }
@@ -92,23 +87,24 @@ const CinemaDetailsPage: React.FC = () => {
     const screenTypes = [...new Set(screens.map(screen => screen.type))];
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white">
+        <div className="min-h-screen bg-gray-50">
             {/* Hero Section */}
-            <div className="relative h-80 overflow-hidden">
-                {cinema.image && (
-                    <img
-                        src={cinema.image}
-                        alt={cinema.cinemaName}
-                        className="w-full h-full object-cover"
-                    />
-                )}
-                <div className="absolute inset-0 bg-black bg-opacity-60"></div>
-                <div className="absolute inset-0 flex items-center">
-                    <div className="container mx-auto px-4">
-                        <div className="max-w-3xl">
-                            <h1 className="text-4xl md:text-6xl font-bold mb-4">{cinema.cinemaName}</h1>
-                            <div className="flex items-center gap-2 mb-4">
-                                <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(cinema.status)}`}>
+            <div className="bg-white border-b border-gray-200">
+                <div className="container mx-auto px-6 py-12">
+                    {cinema.image && (
+                        <div className="mb-8">
+                            <img
+                                src={cinema.image}
+                                alt={cinema.cinemaName}
+                                className="w-full h-64 object-cover rounded-xl border border-gray-200 shadow-lg"
+                            />
+                        </div>
+                    )}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">{cinema.cinemaName}</h1>
+                            <div className="flex items-center gap-2">
+                                <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(cinema.status)}`}>
                                     {cinema.status}
                                 </span>
                             </div>
@@ -117,39 +113,39 @@ const CinemaDetailsPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="container mx-auto px-6 py-12">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
                     {/* Main Content */}
                     <div className="lg:col-span-3">
                         {/* Cinema Overview Stats */}
-                        <section className="mb-8">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="bg-gray-800 rounded-lg p-6 text-center">
-                                    <Monitor className="w-8 h-8 mx-auto mb-2 text-blue-400" />
-                                    <div className="text-2xl font-bold">{screens.length}</div>
-                                    <div className="text-gray-400">Tổng phòng chiếu</div>
+                        <section className="mb-12">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm">
+                                    <Monitor className="w-8 h-8 mx-auto mb-3 text-blue-500" />
+                                    <div className="text-3xl font-bold text-gray-900 mb-1">{screens.length}</div>
+                                    <div className="text-gray-600">Tổng phòng chiếu</div>
                                 </div>
-                                <div className="bg-gray-800 rounded-lg p-6 text-center">
-                                    <Armchair className="w-8 h-8 mx-auto mb-2 text-green-400" />
-                                    <div className="text-2xl font-bold">{totalSeats.toLocaleString()}</div>
-                                    <div className="text-gray-400">Tổng ghế</div>
+                                <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm">
+                                    <Armchair className="w-8 h-8 mx-auto mb-3 text-blue-500" />
+                                    <div className="text-3xl font-bold text-gray-900 mb-1">{totalSeats.toLocaleString()}</div>
+                                    <div className="text-gray-600">Tổng ghế</div>
                                 </div>
-                                <div className="bg-gray-800 rounded-lg p-6 text-center">
-                                    <Clock className="w-8 h-8 mx-auto mb-2 text-purple-400" />
-                                    <div className="text-2xl font-bold">{activeScreens}</div>
-                                    <div className="text-gray-400">Phòng hoạt động</div>
+                                <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm">
+                                    <Clock className="w-8 h-8 mx-auto mb-3 text-blue-500" />
+                                    <div className="text-3xl font-bold text-gray-900 mb-1">{activeScreens}</div>
+                                    <div className="text-gray-600">Phòng hoạt động</div>
                                 </div>
                             </div>
                         </section>
 
                         {/* Screen Type Filter */}
-                        <section className="mb-6">
+                        <section className="mb-8">
                             <div className="flex flex-wrap gap-3">
                                 <button
                                     onClick={() => setSelectedScreenType('All')}
-                                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${selectedScreenType === 'All'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    className={`px-4 py-2 rounded-lg font-medium transition-colors border ${selectedScreenType === 'All'
+                                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                            : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
                                         }`}
                                 >
                                     Tất cả ({screens.length})
@@ -158,9 +154,9 @@ const CinemaDetailsPage: React.FC = () => {
                                     <button
                                         key={type}
                                         onClick={() => setSelectedScreenType(type)}
-                                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${selectedScreenType === type
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        className={`px-4 py-2 rounded-lg font-medium transition-colors border ${selectedScreenType === type
+                                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
                                             }`}
                                     >
                                         {type} ({screens.filter(s => s.type === type).length})
@@ -171,34 +167,33 @@ const CinemaDetailsPage: React.FC = () => {
 
                         {/* Screens List */}
                         <section>
-                            <h2 className="text-2xl font-bold mb-6">Danh sách phòng chiếu</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-8">Danh sách phòng chiếu</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {filteredScreens.map(screen => (
-                                    <div key={screen.id} className="bg-gray-800 rounded-lg p-6 hover:bg-gray-750 transition-colors">
+                                    <div key={screen.id} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
                                         <div className="flex justify-between items-start mb-4">
-                                            <h3 className="text-xl font-semibold">{screen.screenName}</h3>
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(screen.status)}`}>
+                                            <h3 className="text-xl font-semibold text-gray-900">{screen.screenName}</h3>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(screen.status)}`}>
                                                 {screen.status}
                                             </span>
                                         </div>
 
-                                        <div className="flex items-center justify-between mb-3">
-                                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getScreenTypeColor(screen.type)}`}>
+                                        <div className="flex items-center justify-between">
+                                            <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getScreenTypeColor(screen.type)}`}>
                                                 {screen.type}
                                             </span>
-                                            <div className="flex items-center gap-2 text-gray-300">
+                                            <div className="flex items-center gap-2 text-gray-600">
                                                 <Armchair className="w-4 h-4" />
                                                 <span className="font-semibold">{screen.seatCount} ghế</span>
                                             </div>
                                         </div>
-
                                     </div>
                                 ))}
                             </div>
 
                             {filteredScreens.length === 0 && (
-                                <div className="text-center py-12 text-gray-400">
-                                    <Monitor className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                                <div className="text-center py-12 text-gray-500">
+                                    <Monitor className="w-16 h-16 mx-auto mb-4 opacity-30" />
                                     <p>Không có phòng chiếu nào với loại đã chọn</p>
                                 </div>
                             )}
@@ -206,64 +201,64 @@ const CinemaDetailsPage: React.FC = () => {
                     </div>
 
                     {/* Sidebar */}
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                         {/* Cinema Information */}
-                        <section className="bg-gray-800 rounded-lg p-6">
-                            <h3 className="text-xl font-bold mb-4">Thông tin rạp</h3>
-                            <div className="space-y-4">
+                        <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6">Thông tin rạp</h3>
+                            <div className="space-y-6">
                                 <div className="flex items-start gap-3">
-                                    <MapPin className="w-5 h-5 text-red-400 mt-1 flex-shrink-0" />
+                                    <MapPin className="w-5 h-5 text-blue-500 mt-1 flex-shrink-0" />
                                     <div>
-                                        <div className="font-medium mb-1">Địa chỉ</div>
-                                        <div className="text-gray-300 text-sm">{cinema.address}</div>
+                                        <div className="font-medium text-gray-900 mb-1">Địa chỉ</div>
+                                        <div className="text-gray-600 text-sm leading-relaxed">{cinema.address}</div>
                                     </div>
                                 </div>
 
                                 {cinema.phone && (
                                     <div className="flex items-center gap-3">
-                                        <Phone className="w-5 h-5 text-green-400" />
+                                        <Phone className="w-5 h-5 text-blue-500" />
                                         <div>
-                                            <div className="font-medium mb-1">Điện thoại</div>
-                                            <div className="text-gray-300 text-sm">{cinema.phone}</div>
+                                            <div className="font-medium text-gray-900 mb-1">Điện thoại</div>
+                                            <div className="text-gray-600 text-sm">{cinema.phone}</div>
                                         </div>
                                     </div>
                                 )}
 
                                 {cinema.email && (
                                     <div className="flex items-center gap-3">
-                                        <Mail className="w-5 h-5 text-blue-400" />
+                                        <Mail className="w-5 h-5 text-blue-500" />
                                         <div>
-                                            <div className="font-medium mb-1">Email</div>
-                                            <div className="text-gray-300 text-sm">{cinema.email}</div>
+                                            <div className="font-medium text-gray-900 mb-1">Email</div>
+                                            <div className="text-gray-600 text-sm">{cinema.email}</div>
                                         </div>
                                     </div>
                                 )}
 
                                 <div className="flex items-center gap-3">
-                                    <User className="w-5 h-5 text-yellow-400" />
+                                    <User className="w-5 h-5 text-blue-500" />
                                     <div>
-                                        <div className="font-medium mb-1">Quản lý</div>
-                                        <div className="text-gray-300 text-sm">{cinema.managerName}</div>
+                                        <div className="font-medium text-gray-900 mb-1">Quản lý</div>
+                                        <div className="text-gray-600 text-sm">{cinema.managerName}</div>
                                     </div>
                                 </div>
                             </div>
                         </section>
 
                         {/* Screen Type Summary */}
-                        <section className="bg-gray-800 rounded-lg p-6">
-                            <h3 className="text-xl font-bold mb-4">Loại phòng chiếu</h3>
-                            <div className="space-y-3">
+                        <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6">Loại phòng chiếu</h3>
+                            <div className="space-y-4">
                                 {screenTypes.map(type => {
                                     const typeScreens = screens.filter(s => s.type === type);
                                     const typeSeats = typeScreens.reduce((sum, s) => sum + s.seatCount, 0);
                                     return (
-                                        <div key={type} className="flex justify-between items-center">
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${getScreenTypeColor(type)}`}>
+                                        <div key={type} className="flex justify-between items-center py-2">
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getScreenTypeColor(type)}`}>
                                                 {type}
                                             </span>
                                             <div className="text-right">
-                                                <div className="font-semibold">{typeScreens.length} phòng</div>
-                                                <div className="text-gray-400 text-sm">{typeSeats} ghế</div>
+                                                <div className="font-semibold text-gray-900">{typeScreens.length} phòng</div>
+                                                <div className="text-gray-500 text-sm">{typeSeats} ghế</div>
                                             </div>
                                         </div>
                                     );
@@ -272,9 +267,10 @@ const CinemaDetailsPage: React.FC = () => {
                         </section>
 
                         {/* System Information */}
-                        <section className="bg-gray-800 rounded-lg p-6">
-                            <h3 className="text-xl font-bold mb-4">Thông tin hệ thống</h3>
-                            <div className="space-y-3 text-sm">
+                        <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6">Thông tin hệ thống</h3>
+                            <div className="space-y-3 text-sm text-gray-600">
+                                {/* Add system information here if needed */}
                             </div>
                         </section>
                     </div>

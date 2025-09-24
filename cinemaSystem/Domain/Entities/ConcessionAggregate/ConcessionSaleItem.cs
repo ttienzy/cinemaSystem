@@ -15,5 +15,15 @@ namespace Domain.Entities.ConcessionAggregate
         public int Quantity { get; private set; }
         public decimal UnitPrice { get; private set; }
 
+        public ConcessionSaleItem()
+        {
+        }
+        public ConcessionSaleItem( Guid inventoryId, int quantity, decimal unitPrice)
+        {
+            InventoryId = inventoryId;
+            Quantity = quantity;
+            UnitPrice = unitPrice;
+        }
+
     }
 }

@@ -59,6 +59,38 @@
   },
   {
     "ContainingType": "Api.Controllers.BookingsController",
+    "Method": "CheckInAsync",
+    "RelativePath": "api/Bookings/check-in/{bookingId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "bookingId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.BookingsController",
+    "Method": "ConfirmCheckInAsync",
+    "RelativePath": "api/Bookings/confirm-check-in/{bookingId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "bookingId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.BookingsController",
     "Method": "CreateBooking",
     "RelativePath": "api/Bookings/create-booking",
     "HttpMethod": "POST",
@@ -584,6 +616,132 @@
         "Name": "requests",
         "Type": "System.Collections.Generic.IEnumerable\u00601[[Shared.Models.DataModels.InventoryDtos.InventoryRequest, Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.InventoryItemsController",
+    "Method": "AddStaffToCinemaAsync",
+    "RelativePath": "api/InventoryItems/add-staff",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "Shared.Models.DataModels.InventoryDtos.EmployeeCreateRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.InventoryItemsController",
+    "Method": "ConfirmPaymentConcessionAsync",
+    "RelativePath": "api/InventoryItems/confirm-payment/{cinemaId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "Shared.Models.DataModels.InventoryDtos.CartRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.InventoryItemsController",
+    "Method": "GetConcessionRevenueReportAsync",
+    "RelativePath": "api/InventoryItems/revenue-report/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.InventoryItemsController",
+    "Method": "GetConcessionSaleHistoryAsync",
+    "RelativePath": "api/InventoryItems/sale-history/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "FromDate",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "ToDate",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "PaymentMethod",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "PageIndex",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "PageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.InventoryItemsController",
+    "Method": "GetStaffInfoAsync",
+    "RelativePath": "api/InventoryItems/schedules/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.InventoryItemsController",
+    "Method": "GetStaffOnTimeAsync",
+    "RelativePath": "api/InventoryItems/staff-on-time",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "email",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []

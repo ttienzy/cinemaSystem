@@ -15,7 +15,7 @@ const MoviesPage: React.FC = () => {
 
     const currentDate = new Date('2025-09-15');
 
-    const { moviesSection } = useAppSelector(state => state.movie);
+    const { moviesSection, loading, error } = useAppSelector(state => state.movie);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 

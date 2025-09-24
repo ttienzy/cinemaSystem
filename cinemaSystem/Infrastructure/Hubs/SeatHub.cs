@@ -52,18 +52,18 @@ namespace Infrastructure.Hubs
                 LogUserInfo("SeatsReserved");
 
                 // Check if user is authenticated
-                if (!Context.User?.Identity?.IsAuthenticated ?? true)
-                {
-                    await Clients.Caller.SendAsync("AuthenticationRequired", "You must be logged in to reserve seats.");
-                    return;
-                }
+                //if (!Context.User?.Identity?.IsAuthenticated ?? true)
+                //{
+                //    await Clients.Caller.SendAsync("AuthenticationRequired", "You must be logged in to reserve seats.");
+                //    return;
+                //}
 
-                var userId = GetUserId();
-                if (string.IsNullOrEmpty(userId))
-                {
-                    await Clients.Caller.SendAsync("AuthenticationError", "Unable to identify user.");
-                    return;
-                }
+                //var userId = GetUserId();
+                //if (string.IsNullOrEmpty(userId))
+                //{
+                //    await Clients.Caller.SendAsync("AuthenticationError", "Unable to identify user.");
+                //    return;
+                //}
 
                 var results = await _cacheService.GetAsync<ShowtimeSeatingPlanResponse>(CacheKey.SeatingPlan(showtimeId));
                 if (results == null)
@@ -78,8 +78,6 @@ namespace Infrastructure.Hubs
                     {
                         s.Status = Domain.Entities.CinemaAggreagte.Enum.SeatStatus.Reserved;
                         s.LastUpdated = DateTime.UtcNow;
-                        // Có thể lưu thêm userId để track ai đang reserve
-                        // s.ReservedByUserId = userId;
                     }
                 });
 
@@ -89,7 +87,7 @@ namespace Infrastructure.Hubs
                     .Group(showtimeId.ToString())
                     .SendAsync(SignalMethodConstants.OnSeatsReserved, seatIds);
 
-                Console.WriteLine($"User {userId} reserved seats: {string.Join(", ", seatIds)}");
+                //Console.WriteLine($"User {userId} reserved seats: {string.Join(", ", seatIds)}");
             }
             catch (Exception ex)
             {
@@ -103,7 +101,7 @@ namespace Infrastructure.Hubs
             try
             {
                 // Debug user info
-                LogUserInfo("SeatsReleased");
+                //LogUserInfo("SeatsReleased");
 
                 var results = await _cacheService.GetAsync<ShowtimeSeatingPlanResponse>(CacheKey.SeatingPlan(showtimeId));
                 if (results == null)

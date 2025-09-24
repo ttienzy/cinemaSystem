@@ -12,18 +12,18 @@ namespace Application.Interfaces.Security
     public interface IIdentityUserService
     {
         // User Registration, Login, Logout Operations
-        public Task<BaseResponse<string>> RegisterUserAsync(RegisterRequest request);  
-        public Task<BaseResponse<LoginResponse>> LoginUserAsync(LoginRequest request);
+        Task<BaseResponse<string>> RegisterUserAsync(RegisterRequest request);  
+        Task<BaseResponse<LoginResponse>> LoginUserAsync(LoginRequest request);
 
         // User Profile Operations
-        public Task<BaseResponse<UserProfileResponse>> GetUserProfileAsync(Guid userId);
-        public Task<BaseResponse<string>> UpdateProfileAsync(Guid userId, UpdateProfileRequest request);
+        Task<BaseResponse<UserProfileResponse>> GetUserProfileAsync(Guid userId);
+        Task<BaseResponse<string>> UpdateProfileAsync(Guid userId, UpdateProfileRequest request);
 
         // Password Reset Operations - OTP
-        public Task<BaseResponse<string>> ChangePasswordAsync(ChangePasswordRequest request);
-        public Task<BaseResponse<string>> ForgotPasswordAsync(string email);
-        public Task<BaseResponse<string>> VerifyResetOtpAsync(VerifyResetOtpRequest request);
-        public Task<BaseResponse<string>> ResetPasswordAsync(ResetPasswordWithOtpRequest request);
-        public Task<BaseResponse<string>> ResendOtpAsync(string email);
+        Task<BaseResponse<string>> ChangePasswordAsync(ChangePasswordRequest request);
+        Task<BaseResponse<string>> ForgotPasswordAsync(string email);
+        Task<BaseResponse<string>> VerifyResetOtpAsync(VerifyResetOtpRequest request);
+        Task<BaseResponse<string>> ResetPasswordAsync(ResetPasswordWithOtpRequest request);
+        Task<BaseResponse<string>> ResendOtpAsync(string email);
     }
 }

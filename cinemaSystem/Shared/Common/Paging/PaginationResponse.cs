@@ -8,7 +8,7 @@ namespace Shared.Common.Paging
 {
     public class PaginationResponse
     {
-        public int Pageindex { get; set; }
+        public int PageIndex { get; set; }
         public int TotalPages { get; set; }
         public int Count { get; set; }
         public bool HasNextPage { get; set; }

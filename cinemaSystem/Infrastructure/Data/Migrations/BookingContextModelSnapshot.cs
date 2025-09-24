@@ -34,6 +34,11 @@ namespace Infrastructure.Data.Migrations
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("IsCheckedIn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<Guid>("ShowtimeId")
                         .HasColumnType("uniqueidentifier");
 

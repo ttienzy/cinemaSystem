@@ -5,22 +5,20 @@ import { useAppSelector, useAppDispatch } from '../../hooks/redux';
 import { getMovieDetails } from '../../store/slices/movieSlice';
 import { useParams } from 'react-router-dom';
 
-
 const MovieDetailsPage: React.FC = () => {
     const { loading, movieDetail } = useAppSelector((state) => state.movie);
-    console.log(movieDetail);
     const dispatch = useAppDispatch();
     const { id: movieId } = useParams<{ id: string }>();
+
     if (movieId === undefined) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                <div className="text-white text-xl">The movie ID is undefined</div>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-gray-800 text-xl">The movie ID is undefined</div>
             </div>
         );
     }
-    // Mock data - replace with actual API call
+
     useEffect(() => {
-        // Simulate API call
         setTimeout(() => {
             dispatch(getMovieDetails(movieId));
         }, 1000);
@@ -42,16 +40,16 @@ const MovieDetailsPage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                <div className="text-white text-xl">Đang tải thông tin phim...</div>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-gray-700 text-xl">Đang tải thông tin phim...</div>
             </div>
         );
     }
 
     if (!movieDetail) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                <div className="text-white text-xl">Không tìm thấy thông tin phim</div>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-gray-700 text-xl">Không tìm thấy thông tin phim</div>
             </div>
         );
     }
@@ -63,36 +61,48 @@ const MovieDetailsPage: React.FC = () => {
     const writers = castCrews.filter(cc => cc.roleType === 'Writer');
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white">
+        <div className="min-h-screen bg-gray-50">
             {/* Hero Section */}
-            <div className="relative h-96 bg-gradient-to-t from-gray-900 to-transparent">
-                <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-                <div className="relative container mx-auto px-4 h-full flex items-end pb-8">
-                    <div className="flex flex-col md:flex-row gap-6 w-full">
-                        <img
-                            src={movie.posterUrl || 'https://img.freepik.com/free-vector/bird-colorful-logo-gradient-vector_343694-1365.jpg?semt=ais_incoming&w=740&q=80'}
-                            alt={movie.title}
-                            className="w-48 h-72 object-cover rounded-lg shadow-2xl"
-                        />
-                        <div className="flex-1">
-                            <h1 className="text-4xl md:text-6xl font-bold mb-4">{movie.title}</h1>
-                            <div className="flex flex-wrap gap-4 mb-4">
+            <div className="bg-white border-b border-gray-200">
+                <div className="container mx-auto px-6 py-12">
+                    <div className="flex flex-col lg:flex-row gap-8">
+                        <div className="flex-shrink-0">
+                            <img
+                                src={movie.posterUrl || 'https://img.freepik.com/free-vector/bird-colorful-logo-gradient-vector_343694-1365.jpg?semt=ais_incoming&w=740&q=80'}
+                                alt={movie.title}
+                                className="w-64 h-96 object-cover rounded-xl shadow-lg border border-gray-200"
+                            />
+                        </div>
+                        <div className="flex-1 space-y-6">
+                            <div>
+                                <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+                                    {movie.title}
+                                </h1>
+                                <p className="text-lg text-gray-600 leading-relaxed max-w-3xl">
+                                    {movie.description}
+                                </p>
+                            </div>
+
+                            <div className="flex flex-wrap gap-6 text-sm text-gray-600">
                                 <div className="flex items-center gap-2">
-                                    <Calendar className="w-5 h-5" />
+                                    <Calendar className="w-4 h-4 text-blue-500" />
                                     <span>{formatDate(movie.releaseDate)}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Clock className="w-5 h-5" />
+                                    <Clock className="w-4 h-4 text-blue-500" />
                                     <span>{formatDuration(movie.durationMinutes)}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Eye className="w-5 h-5" />
-                                    <span className="px-2 py-1 bg-green-600 rounded text-sm">{movie.status}</span>
+                                    <Eye className="w-4 h-4 text-blue-500" />
+                                    <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                                        {movie.status}
+                                    </span>
                                 </div>
                             </div>
-                            <div className="flex flex-wrap gap-2 mb-4">
+
+                            <div className="flex flex-wrap gap-2">
                                 {genres.map(genre => (
-                                    <span key={genre.id} className="px-3 py-1 bg-blue-600 rounded-full text-sm">
+                                    <span key={genre.id} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
                                         {genre.genreName}
                                     </span>
                                 ))}
@@ -102,30 +112,24 @@ const MovieDetailsPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="container mx-auto px-6 py-12">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                     {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-8">
-                        {/* Description */}
-                        <section>
-                            <h2 className="text-2xl font-bold mb-4">Tóm tắt nội dung</h2>
-                            <p className="text-gray-300 leading-relaxed">{movie.description}</p>
-                        </section>
-
+                    <div className="lg:col-span-2 space-y-12">
                         {/* Cast & Crew */}
                         <section>
-                            <h2 className="text-2xl font-bold mb-6">Diễn viên và Đoàn làm phim</h2>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-8">Diễn viên và Đoàn làm phim</h2>
 
                             {/* Directors */}
                             {directors.length > 0 && (
-                                <div className="mb-6">
-                                    <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
-                                        <Users className="w-5 h-5" />
+                                <div className="mb-8">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <Users className="w-5 h-5 text-blue-500" />
                                         Đạo diễn
                                     </h3>
                                     <div className="flex flex-wrap gap-3">
                                         {directors.map(director => (
-                                            <span key={director.id} className="px-4 py-2 bg-purple-600 rounded-lg">
+                                            <span key={director.id} className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-800 font-medium shadow-sm">
                                                 {director.personName}
                                             </span>
                                         ))}
@@ -135,11 +139,11 @@ const MovieDetailsPage: React.FC = () => {
 
                             {/* Writers */}
                             {writers.length > 0 && (
-                                <div className="mb-6">
-                                    <h3 className="text-xl font-semibold mb-3">Biên kịch</h3>
+                                <div className="mb-8">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Biên kịch</h3>
                                     <div className="flex flex-wrap gap-3">
                                         {writers.map(writer => (
-                                            <span key={writer.id} className="px-4 py-2 bg-orange-600 rounded-lg">
+                                            <span key={writer.id} className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-800 font-medium shadow-sm">
                                                 {writer.personName}
                                             </span>
                                         ))}
@@ -150,10 +154,10 @@ const MovieDetailsPage: React.FC = () => {
                             {/* Actors */}
                             {actors.length > 0 && (
                                 <div>
-                                    <h3 className="text-xl font-semibold mb-3">Diễn viên chính</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Diễn viên chính</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {actors.map(actor => (
-                                            <div key={actor.id} className="px-4 py-2 bg-gray-700 rounded-lg text-center">
+                                            <div key={actor.id} className="px-4 py-3 bg-gray-100 rounded-lg text-center text-gray-800 font-medium">
                                                 {actor.personName}
                                             </div>
                                         ))}
@@ -164,18 +168,18 @@ const MovieDetailsPage: React.FC = () => {
                     </div>
 
                     {/* Sidebar */}
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                         {/* Certifications */}
-                        <section className="bg-gray-800 rounded-lg p-6">
-                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                <Award className="w-5 h-5" />
+                        <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                <Award className="w-5 h-5 text-blue-500" />
                                 Xếp hạng độ tuổi
                             </h3>
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {certifications.map(cert => (
-                                    <div key={cert.id} className="flex justify-between items-center">
-                                        <span className="font-semibold">{cert.certificationBody}</span>
-                                        <span className="px-3 py-1 bg-yellow-600 rounded font-bold">
+                                    <div key={cert.id} className="flex justify-between items-center py-2">
+                                        <span className="text-gray-700 font-medium">{cert.certificationBody}</span>
+                                        <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg font-bold text-sm">
                                             {cert.rating}
                                         </span>
                                     </div>
@@ -184,26 +188,28 @@ const MovieDetailsPage: React.FC = () => {
                         </section>
 
                         {/* Copyright Info */}
-                        <section className="bg-gray-800 rounded-lg p-6">
-                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                <Shield className="w-5 h-5" />
+                        <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                <Shield className="w-5 h-5 text-blue-500" />
                                 Thông tin bản quyền
                             </h3>
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 {copyrights.map(copyright => (
-                                    <div key={copyright.id} className="space-y-2">
+                                    <div key={copyright.id} className="space-y-3 pb-6 border-b border-gray-100 last:border-b-0 last:pb-0">
                                         <div>
-                                            <span className="text-gray-400">Nhà phân phối:</span>
-                                            <div className="font-semibold">{copyright.distributorCompany}</div>
+                                            <span className="text-sm text-gray-500 block mb-1">Nhà phân phối:</span>
+                                            <div className="font-semibold text-gray-900">{copyright.distributorCompany}</div>
                                         </div>
                                         <div>
-                                            <span className="text-gray-400">Thời hạn:</span>
-                                            <div className="text-sm">
+                                            <span className="text-sm text-gray-500 block mb-1">Thời hạn:</span>
+                                            <div className="text-sm text-gray-700">
                                                 {formatDate(copyright.licenseStartDate)} - {formatDate(copyright.licenseEndDate)}
                                             </div>
                                         </div>
                                         <div>
-                                            <span className={`px-2 py-1 rounded text-xs ${copyright.status === 'Active' ? 'bg-green-600' : 'bg-red-600'
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${copyright.status === 'Active'
+                                                    ? 'bg-green-50 text-green-700'
+                                                    : 'bg-red-50 text-red-700'
                                                 }`}>
                                                 {copyright.status}
                                             </span>
@@ -214,16 +220,16 @@ const MovieDetailsPage: React.FC = () => {
                         </section>
 
                         {/* Movie Info */}
-                        <section className="bg-gray-800 rounded-lg p-6">
-                            <h3 className="text-xl font-bold mb-4">Thông tin phim</h3>
-                            <div className="space-y-3 text-sm">
-                                <div>
-                                    <span className="text-gray-400">Thời lượng:</span>
-                                    <span className="ml-2">{formatDuration(movie.durationMinutes)}</span>
+                        <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                            <h3 className="text-lg font-bold text-gray-900 mb-6">Thông tin phim</h3>
+                            <div className="space-y-4">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Thời lượng:</span>
+                                    <span className="font-medium text-gray-900">{formatDuration(movie.durationMinutes)}</span>
                                 </div>
-                                <div>
-                                    <span className="text-gray-400">Ngày tạo:</span>
-                                    <span className="ml-2">{formatDate(movie.createdAt)}</span>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Ngày tạo:</span>
+                                    <span className="font-medium text-gray-900">{formatDate(movie.createdAt)}</span>
                                 </div>
                             </div>
                         </section>

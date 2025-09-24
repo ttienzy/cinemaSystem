@@ -43,7 +43,7 @@ namespace Api.Controllers
                     Data = paginatedList,
                     Pagination = new PaginationResponse
                     {
-                        Pageindex = paginatedList.PageIndex,
+                        PageIndex = paginatedList.PageIndex,
                         TotalPages = paginatedList.TotalPages,
                         Count = paginatedList.Count,
                         HasNextPage = paginatedList.HasNextPage,

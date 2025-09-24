@@ -10,5 +10,6 @@ namespace Application.Interfaces.Persistences.Repo
     public interface IBookingRepository
     {
         Task<IEnumerable<PurchaseResponse>> PurchaseHistoryAsync(Guid userId);
+        Task<BookingCheckedInResponse> CheckInBookingAsync(Guid bookingId);
     }
 }

@@ -121,6 +121,52 @@
         }
       }
     },
+    "/api/Bookings/check-in/{bookingId}": {
+      "get": {
+        "tags": [
+          "Bookings"
+        ],
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Bookings/confirm-check-in/{bookingId}": {
+      "post": {
+        "tags": [
+          "Bookings"
+        ],
+        "parameters": [
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Bookings/create-booking": {
       "post": {
         "tags": [
@@ -1061,6 +1107,208 @@
                 "items": {
                   "$ref": "#/components/schemas/InventoryRequest"
                 }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/InventoryItems/sale-history/{cinemaId}": {
+      "get": {
+        "tags": [
+          "InventoryItems"
+        ],
+        "parameters": [
+          {
+            "name": "cinemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "FromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "ToDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "PaymentMethod",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "PageIndex",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/InventoryItems/schedules/{cinemaId}": {
+      "get": {
+        "tags": [
+          "InventoryItems"
+        ],
+        "parameters": [
+          {
+            "name": "cinemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/InventoryItems/revenue-report/{cinemaId}": {
+      "get": {
+        "tags": [
+          "InventoryItems"
+        ],
+        "parameters": [
+          {
+            "name": "cinemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/InventoryItems/staff-on-time": {
+      "get": {
+        "tags": [
+          "InventoryItems"
+        ],
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/InventoryItems/confirm-payment/{cinemaId}": {
+      "post": {
+        "tags": [
+          "InventoryItems"
+        ],
+        "parameters": [
+          {
+            "name": "cinemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CartRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CartRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CartRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/InventoryItems/add-staff": {
+      "post": {
+        "tags": [
+          "InventoryItems"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeCreateRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeCreateRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeCreateRequest"
               }
             }
           }
@@ -2757,6 +3005,33 @@
   },
   "components": {
     "schemas": {
+      "CartRequest": {
+        "required": [
+          "staffId"
+        ],
+        "type": "object",
+        "properties": {
+          "tickets": {
+            "$ref": "#/components/schemas/TicketCartRequest"
+          },
+          "concessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConcessionCartRequest"
+            },
+            "nullable": true
+          },
+          "paymentMethod": {
+            "type": "string",
+            "nullable": true
+          },
+          "staffId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
       "ChangePasswordRequest": {
         "required": [
           "email",
@@ -2824,6 +3099,76 @@
           "Closed"
         ],
         "type": "string"
+      },
+      "ConcessionCartRequest": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EmployeeCreateRequest": {
+        "required": [
+          "email",
+          "hireDate",
+          "password",
+          "salary"
+        ],
+        "type": "object",
+        "properties": {
+          "cinemaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "fullName": {
+            "type": "string",
+            "nullable": true
+          },
+          "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "position": {
+            "type": "string",
+            "nullable": true
+          },
+          "department": {
+            "type": "string",
+            "nullable": true
+          },
+          "hireDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "salary": {
+            "type": "number",
+            "format": "double"
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "GenreRequest": {
         "required": [
@@ -3247,6 +3592,20 @@
         },
         "additionalProperties": false
       },
+      "SelectedSeat": {
+        "type": "object",
+        "properties": {
+          "seatId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "price": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "ShowtimePricingRequest": {
         "type": "object",
         "properties": {
@@ -3310,6 +3669,23 @@
           "Completed"
         ],
         "type": "string"
+      },
+      "TicketCartRequest": {
+        "type": "object",
+        "properties": {
+          "showTimeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "selectedSeats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SelectedSeat"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "TimeSlotRequest": {
         "type": "object",

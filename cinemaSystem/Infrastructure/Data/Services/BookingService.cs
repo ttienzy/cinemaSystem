@@ -95,6 +95,42 @@ namespace Infrastructure.Data.Services
             }
         }
 
+        public async Task<BaseResponse<BookingCheckedInResponse>> CheckInBookingAsync(Guid bookingId)
+        {
+            try
+            {
+                var chekedInInfo = await _bookingCustomeRepository.CheckInBookingAsync(bookingId);
+                if (chekedInInfo == null || chekedInInfo.BookingTime == default)
+                {
+                    return BaseResponse<BookingCheckedInResponse>.Failure(Error.NotFound("Booking not found"));
+                }
+                return BaseResponse<BookingCheckedInResponse>.Success(chekedInInfo);
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<BookingCheckedInResponse>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
+        public async Task<BaseResponse<string>> ConfirmCheckedIn(Guid bookingId)
+        {
+            try
+            {
+                var booking = await _unitOfWork.Bookings.GetByIdAsync(bookingId);
+                if (booking == null)
+                {
+                    return BaseResponse<string>.Failure(Error.NotFound("Booking not found"));
+                }
+                booking.MarkAsCheckedIn();
+                await _unitOfWork.Bookings.UpdateAsync(booking);
+                return BaseResponse<string>.Success("Check-in confirmed");
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<string>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
         public async Task<BaseResponse<string>> ConfirmPaymentAsync(PaymentResponse response)
         {
             try
@@ -123,6 +159,7 @@ namespace Infrastructure.Data.Services
                 }
                 var emailResponse = new EmailConfirmBookingResponse
                 {
+                    BookingCode = booking.Id,
                     CinemaName = results.ShowtimeInfo.CinemaName,
                     MovieTitle = results.ShowtimeInfo.MovieTitle,
                     ScreenName = results.ShowtimeInfo.ScreenName,

@@ -8,8 +8,8 @@ namespace Domain.Constants
 {
     public class MovieConstants
     {
-        public const string MovieComingSoonConstant = "Coming Soon";
-        public const string MovieNowShowingConstant = "Now Showing";
+        public const string MovieComingSoonConstant = "ComingSoon";
+        public const string MovieNowShowingConstant = "Showing";
         public const string MovieReleasedConstant = "Released";
 
     }

@@ -8,6 +8,7 @@ namespace Shared.Models.ExtenalModels
 {
     public class EmailConfirmBookingResponse
     {
+        public required Guid BookingCode { get; set; }
         public string MovieTitle { get; set; }
         public DateTime Showtime { get; set; }
         public string TimeSlot { get; set; }

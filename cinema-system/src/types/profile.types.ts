@@ -2,13 +2,13 @@ interface UserInfo {
     userName: string;
     email: string;
     phoneNumber: string;
-    role: string[];
+    roles: string[];
     createdAt: string;
 }
 
 interface Purchase {
     bookingId: number;
-    bookingTime: string;    
+    bookingTime: string;
     movieTitle: string;
     totalAmount: number;
     totalTickets: number;

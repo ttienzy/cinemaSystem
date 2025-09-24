@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Integrations;
 using Application.Interfaces.Persistences;
+using Infrastructure.Identity.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +25,7 @@ namespace Api.Controllers
             _vnPayService = vnPayService;
         }
 
-        [Authorize]
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager},{RoleConstant.Employee},{RoleConstant.User}")]
         [HttpGet("purchase-history/{userId:guid}")]
         public async Task<IActionResult> PurchaseAsync(Guid userId)
         {
@@ -33,8 +34,25 @@ namespace Api.Controllers
                 return Ok(result.Value);
             return ErrorResponse<IEnumerable<PurchaseResponse>>.WithError(result);
         }
-
-
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager},{RoleConstant.Employee}")]
+        [HttpGet("check-in/{bookingId:guid}")]
+        public async Task<IActionResult> CheckInAsync(Guid bookingId)
+        {
+            var result = await _bookingService.CheckInBookingAsync(bookingId);
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            return ErrorResponse<BookingCheckedInResponse>.WithError(result);
+        }
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager},{RoleConstant.Employee}")]
+        [HttpPost("confirm-check-in/{bookingId:guid}")]
+        public async Task<IActionResult> ConfirmCheckInAsync(Guid bookingId)
+        {
+            var result = await _bookingService.ConfirmCheckedIn(bookingId);
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            return ErrorResponse<string>.WithError(result);
+        }
+        [Authorize(Roles = $"{RoleConstant.User}")]
         [HttpPost("create-booking")]
         public async Task<IActionResult> CreateBooking([FromBody] PaymentInfomationRequest request)
         {

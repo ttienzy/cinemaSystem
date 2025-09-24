@@ -1,16 +1,19 @@
 import { ShoppingCart } from "lucide-react";
 import CartItemRow from "./CartItemRow";
 import type { CartItem } from "../../types/dashboard.types";
+import TicketDisplay from "./TicketDisplay";
 
 
 interface CartProps {
-    cart: CartItem[];
+    cart: CartItem;
     totalAmount: number;
     onClear: () => void;
     onConfirmPayment: () => void;
-    paymentMethod: 'cash' | 'card' | null;
+    paymentMethod: 'cash' | 'card';
     onPaymentMethodChange: (method: 'cash' | 'card') => void;
     formatCurrency: (amount: number) => string;
+    onUpdateItem?: (itemId: string, action: 'increase' | 'decrease' | 'remove') => void;
+    onRemoveTicket: () => void;
 }
 
 const Cart: React.FC<CartProps> = ({
@@ -20,33 +23,39 @@ const Cart: React.FC<CartProps> = ({
     onConfirmPayment,
     paymentMethod,
     onPaymentMethodChange,
-    formatCurrency
+    formatCurrency,
+    onUpdateItem: handleUpdateItem,
+    onRemoveTicket
 }) => {
+    const cartStatus = cart.concessions.length === 0 && cart.tickets.selectedSeats.length === 0;
     return (
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
             <h3 className="text-lg font-semibold mb-4 flex items-center">
                 <ShoppingCart className="w-5 h-5 mr-2" />
-                Giỏ hàng ({cart.length})
+                Giỏ hàng
             </h3>
 
             <div className="space-y-3 mb-6 max-h-96 overflow-y-auto">
-                {cart.length === 0 ? (
+                {cartStatus ? (
                     <div className="text-center text-gray-500 py-8">
                         <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                         <p>Giỏ hàng trống</p>
                     </div>
-                ) : (
-                    cart.map((item, index) => (
-                        <CartItemRow
-                            key={`${item.id}-${item.type}-${index}`}
-                            item={item}
-                            formatCurrency={formatCurrency}
-                        />
-                    ))
-                )}
+                ) :
+                    <>
+                        {cart.tickets.selectedSeats.length > 0 && <TicketDisplay tickets={cart.tickets} formatCurrency={formatCurrency} onRemoveTicket={onRemoveTicket} />}
+                        {cart.concessions.map(item => (
+                            <CartItemRow
+                                key={Math.random()}
+                                item={item}
+                                formatCurrency={formatCurrency}
+                                onUpdateItem={handleUpdateItem}
+                            />
+                        ))}
+                    </>}
             </div>
 
-            {cart.length > 0 && (
+            {!cartStatus && (
                 <div className="border-t border-gray-200 pt-4">
                     <div className="flex justify-between items-center mb-4">
                         <span className="font-semibold">Tổng cộng:</span>

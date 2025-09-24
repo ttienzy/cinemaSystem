@@ -1,33 +1,80 @@
-// src/pages/dashboard/Sidebar.tsx
 import React from 'react';
-import {
-    ChevronDown,
-    ChevronRight,
-} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { menuItems, type MenuItem } from '../../types/dashboard.types';
 
-
 interface SidebarProps {
-    activeRole: string;
+    userRole: string;
     activeItem: string;
     expandedSections: Record<string, boolean>;
-    setActiveItem: (id: string) => void;
     toggleSection: (id: string) => void;
-    setActiveRole: (role: string) => void;
-    setExpandedSections: (sections: Record<string, boolean>) => void;
 }
 
-
-
 const Sidebar: React.FC<SidebarProps> = ({
-    activeRole,
+    userRole,
     activeItem,
     expandedSections,
-    setActiveItem,
     toggleSection,
-    setActiveRole,
-    setExpandedSections
 }) => {
+    const navigate = useNavigate();
+
+    const getRouteForItem = (itemId: string) => {
+        // Map menu item IDs to their corresponding routes based on user role
+        const routeMap: Record<string, string> = {
+            // Dashboard routes for all roles
+            'dashboard': `/dashboard/${userRole}`,
+
+            // Employee routes
+            'new-sale': '/dashboard/employee/new-sale',
+            'sales-history': '/dashboard/employee/sales-history',
+            'cash-payment': '/dashboard/employee/cash-payment',
+            'card-payment': '/dashboard/employee/card-payment',
+            'checkin': '/dashboard/employee/checkin',
+            'schedule': '/dashboard/employee/schedule',
+            'equipment-report': '/dashboard/employee/equipment-report',
+
+            // Manager routes
+            'create-showtime': '/dashboard/manager/create-showtime',
+            'manage-showtimes': '/dashboard/manager/manage-showtimes',
+            'showtime-pricing': '/dashboard/manager/showtime-pricing',
+            'staff-list': '/dashboard/manager/staff-list',
+            'shift-assignment': '/dashboard/manager/shift-assignment',
+            'staff-performance': '/dashboard/manager/staff-performance',
+            'inventory-list': '/dashboard/manager/inventory-list',
+            'stock-control': '/dashboard/manager/stock-control',
+            'restock': '/dashboard/manager/restock',
+            'equipment-list': '/dashboard/manager/equipment-list',
+            'maintenance-schedule': '/dashboard/manager/maintenance-schedule',
+            'maintenance-history': '/dashboard/manager/maintenance-history',
+            'daily-revenue': '/dashboard/manager/daily-revenue',
+            'monthly-report': '/dashboard/manager/monthly-report',
+            'movie-performance': '/dashboard/manager/movie-performance',
+
+            // Admin routes
+            'cinema-list': '/dashboard/admin/cinema-list',
+            'cinema-create': '/dashboard/admin/cinema-create',
+            'cinema-settings': '/dashboard/admin/cinema-settings',
+            'screen-management': '/dashboard/admin/screen-management',
+            'seat-layout': '/dashboard/admin/seat-layout',
+            'seat-types': '/dashboard/admin/seat-types',
+            'movie-list': '/dashboard/admin/movie-list',
+            'movie-create': '/dashboard/admin/movie-create',
+            'movie-genres': '/dashboard/admin/movie-genres',
+            'movie-cast-crew': '/dashboard/admin/movie-cast-crew',
+            'pricing-tiers': '/dashboard/admin/pricing-tiers',
+            'seat-pricing': '/dashboard/admin/seat-pricing',
+            'time-slots': '/dashboard/admin/time-slots',
+            'overall-revenue': '/dashboard/admin/overall-revenue',
+            'cinema-performance': '/dashboard/admin/cinema-performance',
+            'system-analytics': '/dashboard/admin/system-analytics',
+            'general-settings': '/dashboard/admin/general-settings',
+            'user-roles': '/dashboard/admin/user-roles',
+            'system-backup': '/dashboard/admin/system-backup'
+        };
+
+        return routeMap[itemId] || `/dashboard/${userRole}`;
+    };
+
     const renderMenuItem = (item: MenuItem, depth = 0) => {
         const Icon = item.icon;
         const hasChildren = item.children && item.children.length > 0;
@@ -45,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         if (hasChildren) {
                             toggleSection(item.id);
                         } else {
-                            setActiveItem(item.id);
+                            navigate(getRouteForItem(item.id));
                         }
                     }}
                 >
@@ -55,7 +102,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </div>
                     {hasChildren && (
                         <div className="text-gray-400">
-                            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                            {isExpanded ? (
+                                <ChevronDown className="w-4 h-4" />
+                            ) : (
+                                <ChevronRight className="w-4 h-4" />
+                            )}
                         </div>
                     )}
                 </div>
@@ -68,6 +119,15 @@ const Sidebar: React.FC<SidebarProps> = ({
         );
     };
 
+    const getRoleDisplayName = (role: string) => {
+        const roleNames = {
+            employee: 'Nhân viên',
+            manager: 'Quản lý rạp',
+            admin: 'Quản trị hệ thống'
+        };
+        return roleNames[role as keyof typeof roleNames] || role;
+    };
+
     return (
         <div className="w-80 bg-gray-800 text-white flex flex-col">
             {/* Header */}
@@ -76,31 +136,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <p className="text-gray-400 text-sm mt-1">Hệ thống quản lý rạp chiếu phim</p>
             </div>
 
-            {/* Role Selector */}
-            <div className="p-4 border-b border-gray-700">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Chọn vai trò:
-                </label>
-                <select
-                    title='Select Role'
-                    value={activeRole}
-                    onChange={(e) => {
-                        setActiveRole(e.target.value);
-                        setActiveItem('dashboard');
-                        setExpandedSections({});
-                    }}
-                    className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:border-blue-500 focus:outline-none"
-                >
-                    <option value="employee">Employee (Nhân viên)</option>
-                    <option value="manager">Manager (Quản lý)</option>
-                    <option value="admin">Admin (Quản trị)</option>
-                </select>
-            </div>
-
             {/* Navigation Menu */}
             <nav className="flex-1 overflow-y-auto">
                 <div className="py-4">
-                    {menuItems[activeRole].map(item => renderMenuItem(item))}
+                    {menuItems[userRole] && menuItems[userRole].map(item => renderMenuItem(item))}
                 </div>
             </nav>
 
@@ -109,9 +148,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <div className="text-xs text-gray-400">
                     <div className="font-medium mb-1">Đăng nhập với vai trò:</div>
                     <div className="capitalize text-blue-400 font-medium">
-                        {activeRole === 'employee' && 'Nhân viên'}
-                        {activeRole === 'manager' && 'Quản lý rạp'}
-                        {activeRole === 'admin' && 'Quản trị hệ thống'}
+                        {getRoleDisplayName(userRole)}
                     </div>
                 </div>
             </div>

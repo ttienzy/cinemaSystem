@@ -24,6 +24,26 @@ namespace Domain.Entities.StaffAggregate
 
         private readonly List<Shift> _shifts = new();
         public IReadOnlyCollection<Shift> Shifts => _shifts.AsReadOnly();
+        public Staff()
+        {
+        }
+        public Staff(Guid cinemaId, string? fullName, string? position, string? department, string? phone, string? email, string? address, DateTime hireDate, decimal salary)
+        {
+            CinemaId = cinemaId;
+            FullName = fullName;
+            Position = position;
+            Department = department;
+            Phone = phone;
+            Email = email;
+            Address = address;
+            HireDate = hireDate;
+            Salary = salary;
+            Status = StaffStatus.Active; // Default status
+        }
+        public void MaskAsOnLeave()
+        {
+            Status = StaffStatus.OnLeave;
+        }
 
     }
 }

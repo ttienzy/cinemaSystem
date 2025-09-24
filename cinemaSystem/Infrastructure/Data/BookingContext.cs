@@ -1,5 +1,7 @@
 ﻿using Domain.Entities.BookingAggregate;
 using Domain.Entities.CinemaAggreagte;
+using Domain.Entities.ConcessionAggregate;
+using Domain.Entities.InventoryAggregate;
 using Domain.Entities.MovieAggregate;
 using Domain.Entities.SharedAggregates;
 using Domain.Entities.ShowtimeAggregate;
@@ -31,6 +33,9 @@ namespace Infrastructure.Data
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Showtime> Showtimes { get; set; }
         public DbSet<ShowtimePricing> ShowtimePricings { get; set; }
+        public DbSet<ConcessionSale> ConcessionSales { get; set; }
+        public DbSet<ConcessionSaleItem> ConcessionSaleItems { get; set; }
+        public DbSet<InventoryItem> InventoryItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

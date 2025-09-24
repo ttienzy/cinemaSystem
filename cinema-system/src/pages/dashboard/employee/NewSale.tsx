@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { Seat, SeatsSelectedResponse, SelectedSeat } from '../../../types/showtime.type';
 import TabNavigation from '../../../components/concession/TabNavigation';
 import DateSelector from '../../../components/concession/DateSelector';
@@ -10,25 +10,32 @@ import SeatSelection from '../../../components/concession/SeatSelection';
 import type { CartItem } from '../../../types/dashboard.types';
 import type { InventoryItem } from '../../../types/inventory.types';
 import { useAppDispatch, useAppSelector } from '../../../hooks/redux';
-import { getInventory } from '../../../store/slices/inventorySlice';
+import { confirmConcessionPurchase, getInventory } from '../../../store/slices/inventorySlice';
 import { getMoviesListFeature } from '../../../store/slices/movieSlice';
 import { Coffee, Film } from 'lucide-react';
 import { getShowtimeSeatingPlan } from '../../../store/slices/showtimeSlice';
+import { useSignalR } from '../../../contexts/SignalRContext';
+
 
 
 
 const EmployeeNewSale: React.FC = () => {
+    const cinemaId = useMemo(() => localStorage.getItem('cinemaId'), []);
+    const staffId = useMemo(() => localStorage.getItem('staffId'), []);
+    if (!cinemaId || !staffId) {
+        alert('No cinema assigned. Please contact admin.');
+        return <div className="p-6">No cinema assigned. Please contact admin.</div>;
+    }
     const [activeTab, setActiveTab] = useState<'combo' | 'concession'>('combo');
-    const [cart, setCart] = useState<CartItem[]>([]);
+    const { connection, isConnected } = useSignalR();
+    const [cart, setCart] = useState<CartItem>({ staffId: staffId || '00000000-0000-0000-0000-000000000000', concessions: [], paymentMethod: 'cash', tickets: { showtimeId: '00000000-0000-0000-0000-000000000000', actualStartTime: '', actualEndTime: '', movieTitle: '', selectedSeats: [] } });
     const [showSeatSelection, setShowSeatSelection] = useState(false);
-    const [seatData, setSeatData] = useState<SeatsSelectedResponse | null>(null);
     const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
-    const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | null>(null);
+    const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
 
     const today = new Date();
     const endDate = new Date(today);
     endDate.setDate(today.getDate() + 6);
-
     const dates: Date[] = [];
     let currentDate = new Date(today);
     while (currentDate <= endDate) {
@@ -37,28 +44,34 @@ const EmployeeNewSale: React.FC = () => {
     }
 
     const [selectedDate, setSelectedDate] = useState<string>(today.toISOString().split('T')[0]);
-    useEffect(() => {
-        dispatch(getInventory('779E27FD-DCF4-4F63-9B55-08DDE64DEED3'));
-        dispatch(getMoviesListFeature({ cinemaId: '779E27FD-DCF4-4F63-9B55-08DDE64DEED3', showDate: selectedDate }));
-    }, []);
-    console.log(selectedDate);
 
     const dispatch = useAppDispatch();
     const { moviesListFeature } = useAppSelector(state => state.movie);
     const { items } = useAppSelector(state => state.inventory);
     const { showtimeInfo, pricings, seats } = useAppSelector(state => state.showtime);
 
+    useEffect(() => {
+        dispatch(getInventory(cinemaId));
+        dispatch(getMoviesListFeature({ cinemaId: cinemaId, showDate: selectedDate }));
+    }, []);
     // Simulate fetching seat data when clicking a showtime
-    const fetchSeatData = (showtimeId: string) => {
+    const fetchSeatData = async (showtimeId: string) => {
 
-        dispatch(getShowtimeSeatingPlan(showtimeId))
+        if (isConnected && connection) {
+            try {
+                await connection.invoke('JoinShowtimeGroup', showtimeId);
+            } catch (error) {
+                console.error('Failed to join group:', error);
+            }
+        }
+        await dispatch(getShowtimeSeatingPlan(showtimeId))
 
         const data: SeatsSelectedResponse = {
             showtimeInfo: showtimeInfo,
             pricings: pricings,
             seats: seats,
         }
-        setSeatData(data);
+        console.log(data);
         setShowSeatSelection(true);
     };
 
@@ -66,12 +79,13 @@ const EmployeeNewSale: React.FC = () => {
         if (date === selectedDate) return;
         setSelectedDate(date);
         console.log(date);
-        dispatch(getMoviesListFeature({ cinemaId: '779E27FD-DCF4-4F63-9B55-08DDE64DEED3', showDate: date }));
+        dispatch(getMoviesListFeature({ cinemaId: cinemaId, showDate: date }));
     };
 
     const handleSelectSeat = (seat: Seat) => {
-        if (seat.status !== 'available') return;
-        const pricing = seatData?.pricings.find(p => p.seatTypeId === seat.seatTypeId);
+        if (seat.status !== 'Available') return;
+
+        const pricing = pricings.find(p => p.seatTypeId === seat.seatTypeId);
         if (!pricing) return;
 
         const existingIndex = selectedSeats.findIndex(s => s.seatId === seat.id);
@@ -86,53 +100,104 @@ const EmployeeNewSale: React.FC = () => {
         setSelectedSeats(newSelected);
     };
 
-    const addTicketToCart = () => {
-        if (!seatData || selectedSeats.length === 0) return;
+    const addTicketToCart = async () => {
+        if (selectedSeats.length === 0) return;
 
-        // check duplication
-        const existingItem = cart.find(cartItem => cartItem.id === seatData.showtimeInfo.id && cartItem.type === 'ticket');
-        if (existingItem) return;
+        setCart(prve => {
+            return { ...prve, tickets: { showtimeId: showtimeInfo.id, actualStartTime: showtimeInfo.actualStartTime, actualEndTime: showtimeInfo.actualEndTime, movieTitle: showtimeInfo.movieTitle, selectedSeats: selectedSeats } };
+        });
 
-        const totalPrice = selectedSeats.reduce((sum, s) => sum + s.price, 0);
-        const newItem: CartItem = {
-            id: seatData.showtimeInfo.id,
-            name: `${seatData.showtimeInfo.movieTitle}  (${seatData.showtimeInfo.actualStartTime} - ${seatData.showtimeInfo.actualEndTime})`,
-            price: totalPrice,
-            quantity: selectedSeats.length, // Tickets are per showtime, quantity 1 but with multiple seats
-            type: 'ticket',
-            selectedSeats: selectedSeats
-        };
-        setCart([...cart, newItem]);
+        // ivoke update seat status
+        if (isConnected && connection) {
+            try {
+                await connection.invoke("SeatsReserved", showtimeInfo.id, selectedSeats.map(s => s.seatId));
+            }
+            catch (err) {
+                console.log(err);
+            }
+        }
         setShowSeatSelection(false);
         setSelectedSeats([]);
     };
 
     const addConcessionToCart = (item: InventoryItem) => {
-        const existingItem = cart.find(cartItem => cartItem.id === item.id && cartItem.type === 'concession');
+        const existingItem = cart.concessions.find(cartItem => cartItem.itemId === item.id);
 
         if (existingItem) {
             //check quantity before update
             if (existingItem.quantity >= item.currentStock) return;
-            setCart(cart.map(cartItem =>
-                cartItem.id === item.id && cartItem.type === 'concession'
-                    ? { ...cartItem, quantity: cartItem.quantity + 1 }
-                    : cartItem
-            ));
+            setCart(prev => {
+                return {
+                    ...prev, concessions: prev.concessions.map(cartItem =>
+                        cartItem.itemId === item.id
+                            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+                            : cartItem
+                    )
+                };
+            });
         } else {
-            const newItem: CartItem = {
-                id: item.id,
-                name: item.itemName,
-                price: item.unitPrice,
-                quantity: 1,
-                type: 'concession'
-            };
-            setCart([...cart, newItem]);
+            setCart(prev => ({
+                ...prev,
+                concessions: [...prev.concessions, { itemId: item.id, itemName: item.itemName, price: item.unitPrice, quantity: 1 }]
+            }));
         }
     };
+    const handleUpdateItem = (itemId: string, action: 'increase' | 'decrease' | 'remove') => {
+        setCart(prev => ({
+            ...prev,
+            concessions: prev.concessions
+                .map(item => {
+                    if (item.itemId === itemId) {
+                        let newQuantity = item.quantity;
+                        if (action === 'increase') {
+                            newQuantity = item.quantity + 1;
+                        } else if (action === 'decrease') {
+                            newQuantity = item.quantity > 1 ? item.quantity - 1 : item.quantity;
+                        } else if (action === 'remove') {
+                            newQuantity = 0;
+                        }
+                        return { ...item, quantity: newQuantity };
+                    }
+                    return item;
+                })
+                .filter(item => item.quantity > 0)
+        }));
+    };
+    const handleRemoveTicket = () => {
+        try {
+            if (connection && isConnected) {
+                connection.invoke('SeatsReleased', cart.tickets.showtimeId, cart.tickets.selectedSeats.map(s => s.seatId));
+                setCart(prve => {
+                    return { ...prve, tickets: { showtimeId: '00000000-0000-0000-0000-000000000000', actualStartTime: '', actualEndTime: '', movieTitle: '', selectedSeats: [] } };
+                });
+            }
+        }
+        catch (error) {
+            console.error('Remove ticket error:', error);
+        }
+    }
+
+    const handleClearCart = () => {
+        // Release seats if any
+        if (cart.tickets.selectedSeats.length > 0) {
+            handleRemoveTicket();
+        }
+        setCart({ staffId: staffId || '00000000-0000-0000-0000-000000000000', concessions: [], paymentMethod: 'cash', tickets: { showtimeId: '00000000-0000-0000-0000-000000000000', actualStartTime: '', actualEndTime: '', movieTitle: '', selectedSeats: [] } });
+    }
+
+
 
     const getTotalAmount = () => {
-        return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        let total = 0;
+        cart.tickets.selectedSeats.forEach(seat => {
+            total += seat.price;
+        });
+        cart.concessions.forEach(item => {
+            total += item.price * item.quantity;
+        });
+        return total;
     };
+
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
@@ -151,51 +216,51 @@ const EmployeeNewSale: React.FC = () => {
     };
 
     const getSeatColor = (seat: Seat, isSelected: boolean) => {
-        if (isSelected) return 'bg-blue-500 text-white';
-        switch (seat.status) {
-            case 'available':
-                return 'bg-green-100 hover:bg-green-200';
-            case 'reserved':
-                return 'bg-yellow-100 cursor-not-allowed';
-            case 'booked':
-                return 'bg-red-100 cursor-not-allowed';
-            case 'unavailable':
-                return 'bg-gray-100 cursor-not-allowed';
-            default:
-                return 'bg-gray-100 cursor-not-allowed';
-        }
+        if (isSelected) return 'bg-blue-500 text-white border-blue-500';
+
+        // Base colors for different seat types
+        const getBaseColor = (status: string) => {
+            switch (status.toLowerCase()) {
+                case 'available':
+                    return seat.seatTypeName.toLowerCase() === 'vip'
+                        ? 'bg-purple-50 hover:bg-purple-100 text-purple-800'
+                        : seat.seatTypeName.toLowerCase() === 'couple'
+                            ? 'bg-pink-50 hover:bg-pink-100 text-pink-800'
+                            : 'bg-green-50 hover:bg-green-100 text-green-800';
+                case 'reserved':
+                    return 'bg-yellow-100 text-yellow-800 cursor-not-allowed';
+                case 'booked':
+                    return 'bg-red-100 text-red-800 cursor-not-allowed';
+                case 'unavailable':
+                    return 'bg-gray-100 text-gray-500 cursor-not-allowed';
+                default:
+                    return 'bg-gray-100 text-gray-500 cursor-not-allowed';
+            }
+        };
+
+        return getBaseColor(seat.status);
     };
 
     const confirmPayment = () => {
-        // Output: for each ticket item, log showtimeId and selectedSeats
-        cart.forEach(item => {
-            if (item.type === 'ticket' && item.selectedSeats) {
-                console.log({
-                    showtimeId: item.id,
-                    selectedSeats: item.selectedSeats
-                });
-            }
-        });
-        // Output: for each concession item, log itemId and quantity
-        cart.forEach(item => {
-            if (item.type === 'concession') {
-                console.log({
-                    itemId: item.id,
-                    quantity: item.quantity
-                });
-            }
-        });
-        // Reset cart or handle success
-        setCart([]);
-        setPaymentMethod(null);
-        alert('Thanh toán thành công! Thông tin chi tiết đã được in ra console.');
+        // call api to confirm payment
+        try {
+            dispatch(confirmConcessionPurchase({ cinemaId: cinemaId, cartItem: cart }));
+            alert('Payment confirmed!');
+            // Reset cart or handle success
+            setCart({ staffId: staffId || '00000000-0000-0000-0000-000000000000', concessions: [], paymentMethod: 'cash', tickets: { showtimeId: '00000000-0000-0000-0000-000000000000', actualStartTime: '', actualEndTime: '', movieTitle: '', selectedSeats: [] } });
+            setPaymentMethod('cash');
+        }
+        catch (err) {
+            console.error(err);
+        }
+
     };
 
     const formatVN = (d: Date) =>
         d.toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' });
 
     useEffect(() => {
-        setCart([]);
+        setCart({ staffId: staffId || '00000000-0000-0000-0000-000000000000', concessions: [], paymentMethod: 'cash', tickets: { showtimeId: '00000000-0000-0000-0000-000000000000', actualStartTime: '', actualEndTime: '', movieTitle: '', selectedSeats: [] } });
     }, [activeTab]);
 
     return (
@@ -238,7 +303,7 @@ const EmployeeNewSale: React.FC = () => {
                                     </div>
 
                                     <SeatSelection
-                                        seatData={showSeatSelection ? seatData : null}
+                                        seatData={showSeatSelection ? { showtimeInfo, pricings, seats } : null}
                                         selectedSeats={selectedSeats}
                                         onSelectSeat={handleSelectSeat}
                                         onConfirm={addTicketToCart}
@@ -279,11 +344,13 @@ const EmployeeNewSale: React.FC = () => {
                         <Cart
                             cart={cart}
                             totalAmount={getTotalAmount()}
-                            onClear={() => setCart([])}
+                            onClear={handleClearCart}
                             onConfirmPayment={confirmPayment}
                             paymentMethod={paymentMethod}
                             onPaymentMethodChange={setPaymentMethod}
                             formatCurrency={formatCurrency}
+                            onUpdateItem={handleUpdateItem}
+                            onRemoveTicket={handleRemoveTicket}
                         />
                     </div>
                 </div>

@@ -52,7 +52,7 @@ const bookingSlice = createSlice({
             state.error = null;
         });
         builder.addCase(confirmBookingCheckIn.fulfilled, (state, action) => {
-            state.checkedIn = action.payload;
+            //state.checkedIn = action.payload;
             state.loading = false;
             state.error = null;
         });

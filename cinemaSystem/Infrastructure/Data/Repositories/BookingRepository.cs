@@ -26,6 +26,7 @@ namespace Infrastructure.Data.Repositories
                         join c in _bookingContext.Cinemas on s.CinemaId equals c.Id
                         select new BookingCheckedInResponse
                         {
+                            BookingCode = b.Id,
                             TotalAmount = b.TotalAmount,
                             TotalTickets = b.TotalTickets,
                             BookingTime = b.BookingTime,

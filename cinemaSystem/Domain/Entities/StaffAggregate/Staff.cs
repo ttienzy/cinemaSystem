@@ -21,9 +21,7 @@ namespace Domain.Entities.StaffAggregate
         public DateTime HireDate { get; private set; }
         public decimal Salary { get; private set; }
         public StaffStatus Status { get; private set; } // e.g., active, on_leave, terminated
-
-        private readonly List<Shift> _shifts = new();
-        public IReadOnlyCollection<Shift> Shifts => _shifts.AsReadOnly();
+        public virtual ICollection<WorkSchedule> WorkSchedules { get; set; }
         public Staff()
         {
         }
@@ -39,10 +37,6 @@ namespace Domain.Entities.StaffAggregate
             HireDate = hireDate;
             Salary = salary;
             Status = StaffStatus.Active; // Default status
-        }
-        public void MaskAsOnLeave()
-        {
-            Status = StaffStatus.OnLeave;
         }
 
     }

@@ -32,7 +32,7 @@ namespace Infrastructure
             var redisConnection = configuration.GetConnectionString("RedisConnection");
             services.AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(redisConnection!));
 
-            services.AddTransient(typeof(CleanExpiredReservationWorker));
+            //services.AddHostedService<CleanExpiredReservationWorker>();
 
             services.AddSignalR(options =>
             {
@@ -60,8 +60,8 @@ namespace Infrastructure
             services.AddScoped<IBookingService, BookingService>();
             services.AddScoped<IShowtimeService, ShowtimeService>();
             services.AddScoped<ITimeSlotService, TimeSlotService>();
-            services.AddScoped<IInventoryService, InventoryService>();
-            services.AddScoped<IInventoryService, InventoryService>();
+            services.AddScoped<IInventoryManager, InventoryService>();
+            services.AddScoped<IStaffManager, StaffManager>();
 
 
             services.AddScoped(typeof(IIdentityUserService), typeof(IdentityService));

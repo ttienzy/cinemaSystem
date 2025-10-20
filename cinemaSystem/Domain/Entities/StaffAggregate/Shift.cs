@@ -8,13 +8,22 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities.StaffAggregate
 {
-    public class Shift : BaseEntity
+    public class Shift : BaseEntity, IAggregateRoot
     {
-        public Guid StaffId { get; private set; }
-        public Guid CinemaId { get; private set; } 
-        public TimeSpan StartTime { get; private set; }
-        public TimeSpan EndTime { get; private set; }
-        public DateTime ShiftDate { get; private set; }
+        public Guid CinemaId { get; private set; }
+        public string? Name { get; private set; }
+        public TimeSpan DefaultStartTime { get; private set; }
+        public TimeSpan DefaultEndTime { get; private set; }
+        public virtual ICollection<WorkSchedule> WorkSchedules { get; set; }
 
+
+        public Shift() { }
+        public Shift(Guid cinemaId, string? name, TimeSpan defaultStartTime, TimeSpan defaultEndTime)
+        {
+            CinemaId = cinemaId;
+            Name = name;
+            DefaultStartTime = defaultStartTime;
+            DefaultEndTime = defaultEndTime;
+        }
     }
 }

@@ -9,6 +9,8 @@ namespace Shared.Models.DataModels.BookingDtos
 {
     public class BookingCheckedInResponse
     {
+
+        public Guid BookingCode { get; set; }
         public DateTime BookingTime { get; set; }
         public string MovieTitle { get; set; }
         public string ScreenName { get; set; }

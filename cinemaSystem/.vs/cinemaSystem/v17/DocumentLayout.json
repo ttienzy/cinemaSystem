@@ -3,24 +3,52 @@
   "WorkspaceRootPath": "E:\\DACS4\\cinemaSystem\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|e:\\dacs4\\cinemasystem\\application\\specifications\\staffspec\\staffwithshiftsspecification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|solutionrelative:application\\specifications\\staffspec\\staffwithshiftsspecification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\staffscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\staffscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\inventoryitemscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\inventoryitemscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|e:\\dacs4\\cinemasystem\\infrastructure\\data\\repositories\\bookingrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|solutionrelative:infrastructure\\data\\repositories\\bookingrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|e:\\dacs4\\cinemasystem\\infrastructure\\data\\services\\bookingservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|solutionrelative:infrastructure\\data\\services\\bookingservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\bookingscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\bookingscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\showtimescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\showtimescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{F465542E-DA22-44BF-87AC-BD606D07AF97}|Shared\\Shared.csproj|e:\\dacs4\\cinemasystem\\shared\\models\\datamodels\\bookingdtos\\bookingcheckedinresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F465542E-DA22-44BF-87AC-BD606D07AF97}|Shared\\Shared.csproj|solutionrelative:shared\\models\\datamodels\\bookingdtos\\bookingcheckedinresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\cinemascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\cinemascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|e:\\dacs4\\cinemasystem\\application\\interfaces\\persistences\\ishowtimeservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|solutionrelative:application\\interfaces\\persistences\\ishowtimeservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\democontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\democontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|e:\\dacs4\\cinemasystem\\infrastructure\\extenalservices\\emailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|solutionrelative:infrastructure\\extenalservices\\emailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F465542E-DA22-44BF-87AC-BD606D07AF97}|Shared\\Shared.csproj|e:\\dacs4\\cinemasystem\\shared\\templates\\bookingconfirmationtemplate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F465542E-DA22-44BF-87AC-BD606D07AF97}|Shared\\Shared.csproj|solutionrelative:shared\\templates\\bookingconfirmationtemplate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|e:\\dacs4\\cinemasystem\\application\\interfaces\\integrations\\iemailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B62A3BFC-5859-4AF4-B316-C05170119932}|Application\\Application.csproj|solutionrelative:application\\interfaces\\integrations\\iemailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|e:\\dacs4\\cinemasystem\\infrastructure\\identity\\identityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|solutionrelative:infrastructure\\identity\\identityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F465542E-DA22-44BF-87AC-BD606D07AF97}|Shared\\Shared.csproj|e:\\dacs4\\cinemasystem\\shared\\common\\qrcode\\qrcodehelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F465542E-DA22-44BF-87AC-BD606D07AF97}|Shared\\Shared.csproj|solutionrelative:shared\\common\\qrcode\\qrcodehelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -29,7 +57,7 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 305,
+          "DockedWidth": 382,
           "SelectedChildIndex": 7,
           "Children": [
             {
@@ -54,76 +82,161 @@
             },
             {
               "$type": "Bookmark",
-              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+              "Name": "ST:2:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
             },
             {
               "$type": "Bookmark",
-              "Name": "ST:2:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
             },
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "StaffWithShiftsSpecification.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Application\\Specifications\\StaffSpec\\StaffWithShiftsSpecification.cs",
-              "RelativeDocumentMoniker": "Application\\Specifications\\StaffSpec\\StaffWithShiftsSpecification.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Application\\Specifications\\StaffSpec\\StaffWithShiftsSpecification.cs",
-              "RelativeToolTip": "Application\\Specifications\\StaffSpec\\StaffWithShiftsSpecification.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAlAAAAAAAAAA==",
+              "Title": "StaffsController.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\StaffsController.cs",
+              "RelativeDocumentMoniker": "Api\\Controllers\\StaffsController.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\StaffsController.cs",
+              "RelativeToolTip": "Api\\Controllers\\StaffsController.cs",
+              "ViewState": "AgIAACYAAAAAAAAAAAAgwEIAAAA6AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-24T17:06:43.294Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "BookingsController.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\BookingsController.cs",
-              "RelativeDocumentMoniker": "Api\\Controllers\\BookingsController.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\BookingsController.cs",
-              "RelativeToolTip": "Api\\Controllers\\BookingsController.cs",
-              "ViewState": "AgIAADkAAAAAAAAAAAAowEcAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-24T14:59:13.853Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "ShowtimesController.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\ShowtimesController.cs",
-              "RelativeDocumentMoniker": "Api\\Controllers\\ShowtimesController.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\ShowtimesController.cs",
-              "RelativeToolTip": "Api\\Controllers\\ShowtimesController.cs",
-              "ViewState": "AgIAAFYAAAAAAAAAAAAswFMAAAAkAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-24T14:56:50.655Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "CinemasController.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\CinemasController.cs",
-              "RelativeDocumentMoniker": "Api\\Controllers\\CinemasController.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\CinemasController.cs",
-              "RelativeToolTip": "Api\\Controllers\\CinemasController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-24T14:53:33.2Z",
+              "WhenOpened": "2025-10-20T08:39:35.313Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "InventoryItemsController.cs",
-              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\InventoryItemsController.cs",
-              "RelativeDocumentMoniker": "Api\\Controllers\\InventoryItemsController.cs",
-              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\InventoryItemsController.cs",
-              "RelativeToolTip": "Api\\Controllers\\InventoryItemsController.cs",
-              "ViewState": "AgIAABEAAAAAAAAAAAAnwDoAAAA4AAAAAAAAAA==",
+              "Title": "BookingRepository.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Repositories\\BookingRepository.cs",
+              "RelativeDocumentMoniker": "Infrastructure\\Data\\Repositories\\BookingRepository.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Repositories\\BookingRepository.cs",
+              "RelativeToolTip": "Infrastructure\\Data\\Repositories\\BookingRepository.cs",
+              "ViewState": "AgIAAA4AAAAAAAAAAAAMwBwAAAAvAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-24T14:25:25.033Z",
+              "WhenOpened": "2025-10-20T07:14:24.527Z",
               "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "BookingCheckedInResponse.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Shared\\Models\\DataModels\\BookingDtos\\BookingCheckedInResponse.cs",
+              "RelativeDocumentMoniker": "Shared\\Models\\DataModels\\BookingDtos\\BookingCheckedInResponse.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Shared\\Models\\DataModels\\BookingDtos\\BookingCheckedInResponse.cs",
+              "RelativeToolTip": "Shared\\Models\\DataModels\\BookingDtos\\BookingCheckedInResponse.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-20T07:13:39.183Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "BookingsController.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\BookingsController.cs",
+              "RelativeDocumentMoniker": "Api\\Controllers\\BookingsController.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\BookingsController.cs",
+              "RelativeToolTip": "Api\\Controllers\\BookingsController.cs",
+              "ViewState": "AgIAAB4AAAAAAAAAAAAYwCgAAAA2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-20T07:13:18.938Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "IShowtimeService.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Application\\Interfaces\\Persistences\\IShowtimeService.cs",
+              "RelativeDocumentMoniker": "Application\\Interfaces\\Persistences\\IShowtimeService.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Application\\Interfaces\\Persistences\\IShowtimeService.cs",
+              "RelativeToolTip": "Application\\Interfaces\\Persistences\\IShowtimeService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAABCAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-19T06:40:58.36Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "IdentityService.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Identity\\IdentityService.cs",
+              "RelativeDocumentMoniker": "Infrastructure\\Identity\\IdentityService.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Identity\\IdentityService.cs",
+              "RelativeToolTip": "Infrastructure\\Identity\\IdentityService.cs",
+              "ViewState": "AgIAADwAAAAAAAAAAAAkwE8AAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-19T06:15:09.056Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "BookingService.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Services\\BookingService.cs",
+              "RelativeDocumentMoniker": "Infrastructure\\Data\\Services\\BookingService.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Services\\BookingService.cs",
+              "RelativeToolTip": "Infrastructure\\Data\\Services\\BookingService.cs",
+              "ViewState": "AgIAAC4AAAAAAAAAAAAtwGsAAABLAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-19T05:33:32.218Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "IEmailService.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Application\\Interfaces\\Integrations\\IEmailService.cs",
+              "RelativeDocumentMoniker": "Application\\Interfaces\\Integrations\\IEmailService.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Application\\Interfaces\\Integrations\\IEmailService.cs",
+              "RelativeToolTip": "Application\\Interfaces\\Integrations\\IEmailService.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAcwA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T02:28:15.153Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "EmailService.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Infrastructure\\ExtenalServices\\EmailService.cs",
+              "RelativeDocumentMoniker": "Infrastructure\\ExtenalServices\\EmailService.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Infrastructure\\ExtenalServices\\EmailService.cs",
+              "RelativeToolTip": "Infrastructure\\ExtenalServices\\EmailService.cs",
+              "ViewState": "AgIAAAIAAAAAAAAAAAAYwBcAAABnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T02:24:32.949Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "DemoController.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\DemoController.cs",
+              "RelativeDocumentMoniker": "Api\\Controllers\\DemoController.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\DemoController.cs",
+              "RelativeToolTip": "Api\\Controllers\\DemoController.cs",
+              "ViewState": "AgIAACUAAAAAAAAAAAAuwEMAAAARAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T02:20:19.213Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "QrCodeHelper.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Shared\\Common\\QRCode\\QrCodeHelper.cs",
+              "RelativeDocumentMoniker": "Shared\\Common\\QRCode\\QrCodeHelper.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Shared\\Common\\QRCode\\QrCodeHelper.cs",
+              "RelativeToolTip": "Shared\\Common\\QRCode\\QrCodeHelper.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T02:12:04.013Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "BookingConfirmationTemplate.cs",
+              "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Shared\\Templates\\BookingConfirmationTemplate.cs",
+              "RelativeDocumentMoniker": "Shared\\Templates\\BookingConfirmationTemplate.cs",
+              "ToolTip": "E:\\DACS4\\cinemaSystem\\Shared\\Templates\\BookingConfirmationTemplate.cs",
+              "RelativeToolTip": "Shared\\Templates\\BookingConfirmationTemplate.cs",
+              "ViewState": "AgIAAAIAAAAAAAAAAAAkwA4AAABFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T01:58:30.186Z"
             }
           ]
         },

@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import DashboardEmployee from '../../../components/concession/DashboardEmployee';
 import { useAppDispatch } from '../../../hooks/redux';
-import { getStaffWorkingInfo } from '../../../store/slices/inventorySlice';
+import { getStaffWorkingInfo } from '../../../store/slices/staffSlice';
 import { getEmailFromToken } from '../../../utils/decodeTokenAndGetUser';
 
 

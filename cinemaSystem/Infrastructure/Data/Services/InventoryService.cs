@@ -24,29 +24,23 @@ using Shared.Models.DataModels.StaffDtos;
 
 namespace Infrastructure.Data.Services
 {
-    public class InventoryService : IInventoryService
+    public class InventoryService : IInventoryManager
     {
         private readonly IRepository<InventoryItem> _inventoryRepository;
-        private readonly IRepository<Staff> _staffRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICacheService _cacheService;
         private readonly IHubContext<SeatHub> _seatHubContext;
         private readonly IConcessionSaleRepository _concessionSaleRepository;
-        private readonly UserManager<ApplicationUser> _userManager;
         public InventoryService(IRepository<InventoryItem> repository, 
             IUnitOfWork unitOfWork, ICacheService cacheService, 
             IHubContext<SeatHub> seatHubContext, 
-            IConcessionSaleRepository concessionSaleRepository,
-            IRepository<Staff> repository1,
-            UserManager<ApplicationUser> userManager)
+            IConcessionSaleRepository concessionSaleRepository)
         {
             _inventoryRepository = repository;
             _unitOfWork = unitOfWork;
             _cacheService = cacheService;
             _seatHubContext = seatHubContext;
             _concessionSaleRepository = concessionSaleRepository;
-            _staffRepository = repository1;
-            _userManager = userManager;
         }
 
         public async Task<BaseResponse<IEnumerable<InventoryResponse>>> AddInventoryAsync(IEnumerable<InventoryRequest> requests)
@@ -72,45 +66,7 @@ namespace Infrastructure.Data.Services
             }
         }
 
-        public async Task<BaseResponse<string>> AddStaffToCinema(EmployeeCreateRequest request)
-        {
-            try
-            {
-                if (await _userManager.FindByEmailAsync(request.Email) != null)
-                {
-                    return BaseResponse<string>.Failure(Error.Conflict("Email already in use"));
-                }
-                var user = new ApplicationUser
-                {
-                    UserName = request.FullName,
-                    Email = request.Email,
-                    PhoneNumber = request.PhoneNumber,
-                }; 
-                var result = await _userManager.CreateAsync(user, request.Password);
-                if (!result.Succeeded)
-                {
-                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                    return BaseResponse<string>.Failure(Error.BadRequest(errors));
-                }
-                // Assign role
-                var roles = new List<string> { RoleConstant.User, RoleConstant.Employee };
-                var roleResult = await _userManager.AddToRolesAsync(user, roles);
-                if (!roleResult.Succeeded)
-                {
-                    var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
-                    return BaseResponse<string>.Failure(Error.BadRequest(errors));
-                }
-                var staffByEmailSpec = new StaffByEmailSpecification(request.Email);
-                var existingStaff = await _staffRepository.FirstOrDefaultAsync(staffByEmailSpec);
-                var newStaff = new Staff(request.CinemaId, request.FullName, request.Position, request.Department, request.PhoneNumber, request.Email, request.Address, request.HireDate, request.Salary);
-                await _staffRepository.AddAsync(newStaff);
-                return BaseResponse<string>.Success("Staff added successfully");
-            }
-            catch (Exception ex)
-            {
-                return BaseResponse<string>.Failure(Error.InternalServerError(ex.Message));
-            }
-        }
+        
 
         public async Task<BaseResponse<string>> ConfirmPaymentConcessionAsync(CartRequest request, Guid cinemaId)
         {
@@ -292,45 +248,28 @@ namespace Infrastructure.Data.Services
             }
         }
 
-        public async Task<BaseResponse<IEnumerable<StaffInfoResponse>>> GetStaffInfoAsync(Guid cinemaId)
-        {
-            try
-            {
-                var staffInfo = new StaffWithShiftsSpecification(cinemaId);
-                var result = await _staffRepository.ListAsync(staffInfo);
-                if (result == null || !result.Any())
-                {
-                    return BaseResponse<IEnumerable<StaffInfoResponse>>.Failure(Error.NotFound("No staff found for the given cinema ID."));
-                }
-                return BaseResponse<IEnumerable<StaffInfoResponse>>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return BaseResponse<IEnumerable<StaffInfoResponse>>.Failure(Error.InternalServerError(ex.Message));
-            }
-        }
 
-        public async Task<BaseResponse<StaffReponse>> GetStaffOnTimeAsync(string email)
-        {
-            try
-            {
-                var staffByEmailSpec = new StaffByEmailSpecification(email);
-                var staff = await _staffRepository.FirstOrDefaultAsync(staffByEmailSpec);
-                if (staff == null)
-                {
-                    return BaseResponse<StaffReponse>.Failure(Error.NotFound("Staff not found"));
-                }
-                var resposne = new StaffReponse
-                {
-                    Id = staff.Id,
-                    CinemaId = staff.CinemaId,
-                };
-                return BaseResponse<StaffReponse>.Success(resposne);
-            }
-            catch (Exception ex)
-            {
-                return BaseResponse<StaffReponse>.Failure(Error.InternalServerError(ex.Message));
-            }
-        }
+        //public async Task<BaseResponse<TakeAttendanceOEmpRequest>> TakeAttendanceOEmpAsync(TakeAttendanceOEmpRequest request)
+        //{
+        //    try
+        //    {
+        //        var staffSpec = new StaffByIdSpecification(request.StaffId);
+        //        var staff = await _staffRepository.FirstOrDefaultAsync(staffSpec);
+        //        if(staff == null)
+        //        {
+        //            return BaseResponse<TakeAttendanceOEmpRequest>.Failure(Error.NotFound("Staff not found"));
+        //        }
+
+        //        var shift = new Shift(staff.CinemaId, request.StartTime, request.EndTime, request.ShiftDate);
+        //        staff.AddItem(shift);
+
+        //        await _staffRepository.UpdateAsync(staff);
+        //        return BaseResponse<TakeAttendanceOEmpRequest>.Success(request);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BaseResponse<TakeAttendanceOEmpRequest>.Failure(Error.InternalServerError(ex.Message));
+        //    }
+        //}
     }
 }

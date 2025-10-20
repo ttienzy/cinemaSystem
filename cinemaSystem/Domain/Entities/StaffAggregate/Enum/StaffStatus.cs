@@ -9,7 +9,6 @@ namespace Domain.Entities.StaffAggregate.Enum
     public enum StaffStatus
     {
         Active,
-        OnLeave,
         Terminated
     }
 }

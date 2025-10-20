@@ -82,8 +82,8 @@ namespace Infrastructure.BackgroundTasks
                         unitOfWork.Dispose();
                     }
                 }
+                await Task.Delay(TimeSpan.FromMinutes(PaymentConstants.ExpireInMinutes), stoppingToken);
             }
-            await Task.Delay(TimeSpan.FromMinutes(PaymentConstants.ExpireInMinutes), stoppingToken);
         }
     }
 }

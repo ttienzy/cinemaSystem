@@ -8,6 +8,7 @@ namespace Shared.Models.DataModels.StaffDtos
 {
     public class StaffInfoResponse
     {
+        public Guid Id { get; set; }
         public string FullName { get; set; }
         public string Position { get; set; }
         public string Email { get; set; }
@@ -17,6 +18,7 @@ namespace Shared.Models.DataModels.StaffDtos
     }
     public class ShiftInfoResponse
     {
+        public required Guid ShiftId { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
         public DateTime ShiftDate { get; set; }

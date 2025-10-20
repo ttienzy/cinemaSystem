@@ -11,6 +11,7 @@ using Infrastructure.Redis.Constants;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using Shared.Common.Base;
 using Shared.Models.DataModels.BookingDtos;
 using Shared.Models.DataModels.ShowtimeDtos;
@@ -33,6 +34,7 @@ namespace Infrastructure.Data.Services
         private readonly IBookingRepository _bookingCustomeRepository;
         private readonly IHubContext<SeatHub> _hubContext;
         private readonly IEmailService _emailService;
+        private readonly ILogger<BookingService> _logger;
 
         public BookingService(
             IUnitOfWork unitOfWork,
@@ -40,7 +42,8 @@ namespace Infrastructure.Data.Services
             ICacheService cacheService,
             IBookingRepository bookingRepository,
             IHubContext<SeatHub> hubContext,
-            IEmailService emailService)
+            IEmailService emailService,
+            ILogger<BookingService> logger)
         {
             _unitOfWork = unitOfWork;
             _vnPayService = vnPayService;
@@ -48,6 +51,7 @@ namespace Infrastructure.Data.Services
             _bookingCustomeRepository = bookingRepository;
             _hubContext = hubContext;
             _emailService = emailService;
+            _logger = logger;
         }
 
         public async Task<BaseResponse<string>> CancelPaymentAsync(PaymentResponse response)
@@ -99,6 +103,8 @@ namespace Infrastructure.Data.Services
         {
             try
             {
+                _logger.LogInformation("aaaaaaaaaa");
+
                 var chekedInInfo = await _bookingCustomeRepository.CheckInBookingAsync(bookingId);
                 if (chekedInInfo == null || chekedInInfo.BookingTime == default)
                 {
@@ -108,6 +114,7 @@ namespace Infrastructure.Data.Services
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, ex.Message);
                 return BaseResponse<BookingCheckedInResponse>.Failure(Error.InternalServerError(ex.Message));
             }
         }
@@ -185,12 +192,9 @@ namespace Infrastructure.Data.Services
                 await _hubContext.Clients.Group(booking.ShowtimeId.ToString()).SendAsync(SignalMethodConstants.OnSeatsBooked, booking.BookingTickets.Select(e => e.SeatId).ToList());
                 await _hubContext.Clients.User(booking.CustomerId.ToString() ?? "#").SendAsync(SignalMethodConstants.OnPaymentSuccessful, booking.BookingTickets.Select(e => e.SeatId).ToList());
                 if (booking.CustomerId != null)
-                    await _emailService.SendEmailAsync(new EmailRequest
-                    {
-                        ToEmail = "nguyendientien01062005@gmail.com",
-                        Subject = BookingConfirmationTemplate.BOOKING_CONFIRMATION_SUBJECT,
-                        Body = BookingConfirmationTemplate.BookingConfirmation(emailResponse)
-                    });
+                    await _emailService.SendBookingConfirmationEmailAsync(
+                        toEmail: "nguyendientien01062005@gmail.com",
+                        bookingInfo: emailResponse);
                 return BaseResponse<string>.Success(booking.ShowtimeId.ToString());
             }
             catch (Exception ex)

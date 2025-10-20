@@ -1,8 +1,16 @@
 // src/pages/dashboard/manager/Dashboard.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FileText } from 'lucide-react';
+import { useAppDispatch } from '../../../hooks/redux';
+import { getStaffWorkingInfo } from '../../../store/slices/staffSlice';
+import { getEmailFromToken } from '../../../utils/decodeTokenAndGetUser';
 
 const ManagerDashboard: React.FC = () => {
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        dispatch(getStaffWorkingInfo(getEmailFromToken()));
+    }, [dispatch]);
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
             <div className="text-center">

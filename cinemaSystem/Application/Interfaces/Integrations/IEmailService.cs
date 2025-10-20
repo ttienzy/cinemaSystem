@@ -10,5 +10,6 @@ namespace Application.Interfaces.Integrations
     public interface IEmailService
     {
         Task SendEmailAsync(EmailRequest request);
+        Task SendBookingConfirmationEmailAsync(string toEmail, EmailConfirmBookingResponse bookingInfo);
     }
 }

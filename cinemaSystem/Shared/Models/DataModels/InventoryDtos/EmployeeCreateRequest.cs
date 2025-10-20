@@ -18,5 +18,6 @@ namespace Shared.Models.DataModels.InventoryDtos
         public required DateTime HireDate { get; set; }
         public required decimal Salary { get; set; }
         public required string Password { get; set; } = string.Empty;
+        public required List<string> Roles { get; set; } = new List<string>();
     }
 }

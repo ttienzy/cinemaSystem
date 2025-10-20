@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Calendar, Clock, User, MapPin, Briefcase, Phone, Mail } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../../hooks/redux';
-import { getStaffSchedule } from '../../store/slices/inventorySlice';
+import { getStaffSchedule, getShifts, takeAttendanceOfEmployee } from '../../store/slices/staffSlice';
+import type { TakeAttendanceOfEmployeeRequest } from '../../types/staff.types';
 
 
 
@@ -11,12 +12,20 @@ const EmployeeSchedule: React.FC = () => {
     const [selectedDate, setSelectedDate] = useState<string>(
         new Date().toISOString().split('T')[0]
     );
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedStaff, setSelectedStaff] = useState<{ id: string; name: string } | null>(null);
+    const [shiftForm, setShiftForm] = useState({
+        shiftId: '',
+        startTime: '',
+        endTime: ''
+    });
 
-    const { loading, schedules } = useAppSelector((state) => state.inventory);
+    const { loading, schedules, shiftsInfo } = useAppSelector((state) => state.staff);
     const dispatch = useAppDispatch();
 
     // Lấy cinemaId từ localStorage một cách an toàn
     const cinemaId = useMemo(() => localStorage.getItem('cinemaId'), []);
+    // Hàm format thời gian về dạng "HH:MM"
 
     // -------------------------------------------------------------
     // Data Fetching
@@ -25,9 +34,98 @@ const EmployeeSchedule: React.FC = () => {
         if (cinemaId) {
             // Gọi API khi component mount hoặc khi cinemaId/ngày thay đổi
             // Bạn có thể thêm selectedDate vào dependency array nếu muốn load lại lịch khi đổi ngày
-            dispatch(getStaffSchedule(cinemaId));
+            dispatch(getStaffSchedule({ cinemaId, selectedDate }));
+            dispatch(getShifts(cinemaId));
         }
-    }, [dispatch, cinemaId]); // Thêm selectedDate vào đây nếu cần: [dispatch, cinemaId, selectedDate]
+    }, [dispatch, cinemaId, selectedDate]); // Thêm selectedDate vào đây nếu cần: [dispatch, cinemaId, selectedDate]
+    const handleCheckIn = async () => {
+        if (!selectedStaff) return;
+        if (!shiftForm.shiftId) {
+            alert("Vui lòng chọn một ca làm việc!");
+            return;
+        }
+
+        // Validate thời gian
+        if (!shiftForm.startTime || !shiftForm.endTime) {
+            alert('Vui lòng nhập đầy đủ thời gian!');
+            return;
+        }
+        if (!cinemaId) {
+            alert('Vui lòng chọn rạp chiếu!');
+            return
+        }
+
+        // Kiểm tra format HH:MM
+        const timeRegex = /^([0-1][0-9]|2[0-3]):([0-5][0-9])$/;
+        if (!timeRegex.test(shiftForm.startTime) || !timeRegex.test(shiftForm.endTime)) {
+            alert('Thời gian phải có định dạng HH:MM (ví dụ: 09:00)');
+            return;
+        }
+
+        // Kiểm tra startTime < endTime
+        const [startHour, startMin] = shiftForm.startTime.split(':').map(Number);
+        const [endHour, endMin] = shiftForm.endTime.split(':').map(Number);
+        const startMinutes = startHour * 60 + startMin;
+        const endMinutes = endHour * 60 + endMin;
+
+        if (startMinutes >= endMinutes) {
+            alert('Giờ kết thúc phải sau giờ bắt đầu!');
+            return;
+        }
+
+
+        const requestData: TakeAttendanceOfEmployeeRequest = {
+            staffId: selectedStaff.id,
+            shiftId: shiftForm.shiftId
+        };
+
+        try {
+            //console.log('Request data:', requestData);
+
+            dispatch(takeAttendanceOfEmployee(requestData));
+
+            alert('Điểm danh thành công!');
+            closeModal();
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi điểm danh!');
+        }
+    };
+    const openCheckInModal = (staffId: string, staffName: string) => {
+        setSelectedStaff({ id: staffId, name: staffName });
+
+        setIsModalOpen(true);
+    };
+    // Hàm đóng modal
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setSelectedStaff(null);
+        setShiftForm({ startTime: '', endTime: '', shiftId: '' });
+    };
+
+    // Hàm xử lý thay đổi input
+    const handleShiftSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const selectedShiftId = event.target.value;
+
+        // Tìm đối tượng ca làm việc đầy đủ trong mảng shiftsData
+        const selectedShift = shiftsInfo.find(shift => shift.shiftId === selectedShiftId);
+
+        if (selectedShift) {
+            // Nếu tìm thấy, cập nhật toàn bộ state của form với cả 3 giá trị
+            setShiftForm({
+                shiftId: selectedShift.shiftId,
+                startTime: selectedShift.startTime,
+                endTime: selectedShift.endTime
+            });
+        } else {
+            // Nếu người dùng chọn lại option "-- Vui lòng chọn --", reset state
+            setShiftForm({
+                shiftId: '',
+                startTime: '',
+                endTime: ''
+            });
+        }
+    };
 
     // -------------------------------------------------------------
     // Logic & Tính toán (Sử dụng useMemo để tối ưu)
@@ -156,49 +254,236 @@ const EmployeeSchedule: React.FC = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    schedules.flatMap((staff) =>
-                                        staff.shifts && staff.shifts.length > 0 ? (
-                                            staff.shifts.map((shift, shiftIndex) => (
-                                                <tr key={`${staff.email}-${shift.startTime}`} className="bg-white border-b hover:bg-gray-50 transition-colors duration-200">
-                                                    {shiftIndex === 0 && (
-                                                        <td rowSpan={staff.shifts.length} className="px-6 py-4 font-semibold text-gray-900 border-r align-top">
-                                                            {staff.fullName}
-                                                        </td>
-                                                    )}
-                                                    {shiftIndex === 0 && (
-                                                        <td rowSpan={staff.shifts.length} className="px-6 py-4 border-r align-top">
-                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                                                {staff.department}
+                                    schedules.flatMap((staff) => {
+                                        // --- PHẦN SỬA LỖI BẮT ĐẦU ---
+
+                                        const hasShifts = staff.shifts && staff.shifts.length > 0;
+                                        const isToday = selectedDate === new Date().toISOString().split('T')[0];
+
+                                        // 1. Tính toán rowSpan một cách linh động
+                                        // Nếu có ca làm việc VÀ là ngày hôm nay, cộng thêm 1 cho nút "Thêm ca"
+                                        const rowSpanValue = hasShifts && isToday ? staff.shifts.length + 1 : staff.shifts.length;
+
+                                        // --- PHẦN SỬA LỖI KẾT THÚC ---
+
+                                        if (hasShifts) {
+                                            // Nhân viên có ca làm việc
+                                            return [
+                                                ...staff.shifts.map((shift, shiftIndex) => (
+                                                    <tr key={`${staff.id}`} className="bg-white border-b hover:bg-gray-50 transition-colors duration-200">
+                                                        {/* Sử dụng rowSpanValue đã được tính toán chính xác */}
+                                                        {shiftIndex === 0 && (
+                                                            <td rowSpan={rowSpanValue} className="px-6 py-4 font-semibold text-gray-900 border-r align-top">
+                                                                {staff.fullName}
+                                                            </td>
+                                                        )}
+                                                        {shiftIndex === 0 && (
+                                                            <td rowSpan={rowSpanValue} className="px-6 py-4 border-r align-top">
+                                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                                                    {staff.department}
+                                                                </span>
+                                                            </td>
+                                                        )}
+                                                        {shiftIndex === 0 && (
+                                                            <td rowSpan={rowSpanValue} className="px-6 py-4 border-r align-top">{staff.position}</td>
+                                                        )}
+                                                        <td className="px-6 py-4 font-mono text-blue-600">{formatTime(shift.startTime)}</td>
+                                                        <td className="px-6 py-4 font-mono text-red-600">{formatTime(shift.endTime)}</td>
+                                                        <td className="px-6 py-4">
+                                                            <span className="inline-flex items-center px-2 py-1 rounded bg-gray-200 text-gray-800 text-xs font-medium">
+                                                                {calculateDuration(shift.startTime, shift.endTime)}
                                                             </span>
                                                         </td>
-                                                    )}
-                                                    {shiftIndex === 0 && (
-                                                        <td rowSpan={staff.shifts.length} className="px-6 py-4 border-r align-top">{staff.position}</td>
-                                                    )}
-                                                    <td className="px-6 py-4 font-mono text-blue-600">{formatTime(shift.startTime)}</td>
-                                                    <td className="px-6 py-4 font-mono text-red-600">{formatTime(shift.endTime)}</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className="inline-flex items-center px-2 py-1 rounded bg-gray-200 text-gray-800 text-xs font-medium">
-                                                            {calculateDuration(shift.startTime, shift.endTime)}
+                                                        {shiftIndex === 0 && (
+                                                            <td rowSpan={rowSpanValue} className="px-6 py-4 align-top">
+                                                                <div className="flex items-center gap-2 text-gray-500 hover:text-gray-800">
+                                                                    <Phone size={14} /><a href={`tel:${staff.phone}`}>{staff.phone}</a>
+                                                                </div>
+                                                                <div className="flex items-center gap-2 mt-1 text-gray-500 hover:text-gray-800">
+                                                                    <Mail size={14} /><a href={`mailto:${staff.email}`}>{staff.email}</a>
+                                                                </div>
+                                                            </td>
+                                                        )}
+                                                    </tr>
+                                                )),
+                                                // 2. Chỉ hiển thị nút "Thêm ca" nếu là ngày hôm nay
+                                                isToday && (
+                                                    <tr key={`${staff.id}-add`} className="bg-gray-50 border-b hover:bg-gray-100 transition-colors duration-200">
+                                                        {/* Ô này sẽ khớp với 3 cột (Bắt đầu, Kết thúc, Thời lượng) */}
+                                                        <td colSpan={3} className="px-6 py-3">
+                                                            <button
+                                                                onClick={() => openCheckInModal(staff.id, staff.fullName)}
+                                                                className="inline-flex items-center gap-2 px-3 py-1.5 text-green-700 hover:text-green-800 text-sm font-medium transition-colors duration-200"
+                                                            >
+                                                                <span className="flex items-center justify-center w-5 h-5 bg-green-600 hover:bg-green-700 text-white rounded-full text-lg font-bold transition-colors duration-200">
+                                                                    +
+                                                                </span>
+                                                                Thêm ca làm việc
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            ];
+                                        } else {
+                                            // Nhân viên chưa có ca làm việc (đoạn code này của bạn đã đúng)
+                                            return (
+                                                <tr key={staff.id} className="bg-white border-b hover:bg-gray-50 transition-colors duration-200">
+                                                    <td className="px-6 py-4 font-semibold text-gray-900 border-r align-middle">
+                                                        {staff.fullName}
+                                                    </td>
+                                                    <td className="px-6 py-4 border-r align-middle">
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                                            {staff.department}
                                                         </span>
                                                     </td>
-                                                    {shiftIndex === 0 && (
-                                                        <td rowSpan={staff.shifts.length} className="px-6 py-4 align-top">
-                                                            <div className="flex items-center gap-2 text-gray-500 hover:text-gray-800">
-                                                                <Phone size={14} /><a href={`tel:${staff.phone}`}>{staff.phone}</a>
+                                                    <td className="px-6 py-4 border-r align-middle">{staff.position}</td>
+                                                    <td colSpan={3} className="px-6 py-4 text-center align-middle">
+                                                        {isToday ? (
+                                                            <div className="flex items-center justify-center gap-3">
+                                                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                                                                    Chưa điểm danh hôm nay
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => openCheckInModal(staff.id, staff.fullName)}
+                                                                    className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+                                                                >
+                                                                    <Clock size={16} />
+                                                                    Điểm danh ngay
+                                                                </button>
                                                             </div>
-                                                            <div className="flex items-center gap-2 mt-1 text-gray-500 hover:text-gray-800">
-                                                                <Mail size={14} /><a href={`mailto:${staff.email}`}>{staff.email}</a>
-                                                            </div>
-                                                        </td>
-                                                    )}
+                                                        ) : (
+                                                            <span className="text-gray-500">—</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-4 align-middle">
+                                                        <div className="flex items-center gap-2 text-gray-500 hover:text-gray-800">
+                                                            <Phone size={14} /><a href={`tel:${staff.phone}`}>{staff.phone}</a>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 mt-1 text-gray-500 hover:text-gray-800">
+                                                            <Mail size={14} /><a href={`mailto:${staff.email}`}>{staff.email}</a>
+                                                        </div>
+                                                    </td>
                                                 </tr>
-                                            ))
-                                        ) : null // Bỏ qua nhân viên không có ca làm
-                                    )
+                                            );
+                                        }
+                                    })
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {/* Modal điểm danh */}
+                {isModalOpen && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+                            {/* Header (Giữ nguyên) */}
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-semibold text-gray-900">
+                                    Điểm danh ca làm việc
+                                </h3>
+                                <button
+                                    title='Close'
+                                    onClick={closeModal}
+                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {/* Body */}
+                            <div className="space-y-4">
+                                {/* Tên nhân viên (Giữ nguyên) */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Nhân viên
+                                    </label>
+                                    <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-900 font-medium">
+                                        {selectedStaff?.name}
+                                    </div>
+                                </div>
+
+                                {/* ===== PHẦN THAY ĐỔI BẮT ĐẦU TỪ ĐÂY ===== */}
+
+                                {/* Chọn ca làm việc */}
+                                <div>
+                                    <label htmlFor="shift-select" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Chọn ca làm việc <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        id="shift-select"
+                                        title="Chọn ca làm việc"
+                                        value={shiftForm.shiftId} // Liên kết value với shiftId trong state
+                                        onChange={handleShiftSelectChange} // Gọi hàm xử lý mới
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                    >
+                                        <option value="" disabled>-- Vui lòng chọn ca --</option>
+                                        {shiftsInfo.map((shift) => (
+                                            <option key={shift.shiftId} value={shift.shiftId}>
+                                                {`${shift.startTime} - ${shift.endTime}`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Giờ bắt đầu (Chỉ đọc) */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Giờ bắt đầu
+                                    </label>
+                                    {/* Hiển thị giá trị startTime từ state */}
+                                    <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-800 font-mono">
+                                        {shiftForm.startTime || '--:--'}
+                                    </div>
+                                </div>
+
+                                {/* Giờ kết thúc (Chỉ đọc) */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Giờ kết thúc
+                                    </label>
+                                    {/* Hiển thị giá trị endTime từ state */}
+                                    <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-800 font-mono">
+                                        {shiftForm.endTime || '--:--'}
+                                    </div>
+                                </div>
+
+                                {/* ===== KẾT THÚC PHẦN THAY ĐỔI ===== */}
+
+
+                                {/* Ngày làm việc */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Ngày và giờ làm việc
+                                    </label>
+                                    <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-700">
+                                        {/* Lấy phần ngày */}
+                                        {new Date().toLocaleDateString('vi-VN')}
+                                        {' - '}
+                                        {/* Lấy phần giờ phút giây */}
+                                        {new Date().toLocaleTimeString('vi-VN')}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer (Giữ nguyên) */}
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={closeModal}
+                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    onClick={handleCheckIn}
+                                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                                >
+                                    Xác nhận điểm danh
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
 

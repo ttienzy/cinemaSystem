@@ -22,7 +22,11 @@ interface ConcessionSaleInfo {
         status: string;
     };
 }
-
+interface RevenueEmployee {
+    saleDate: string;
+    totalTransactions: number;
+    totalRevenue: number;
+}
 interface PagingInfo {
     pageIndex: number;
     totalPages: number;
@@ -42,29 +46,7 @@ interface ConcessionSaleQueryParameters {
     pageIndex: number;
     pageSize: number;
 }
-interface Shift {
-    startTime: string;
-    endTime: string;
-    shiftDate: string;
-}
 
-interface Staff {
-    fullName: string;
-    position: string;
-    department: string;
-    phone: string;
-    email: string;
-    shifts: Shift[];
-}
-interface RevenueEmployee {
-    saleDate: string;
-    totalTransactions: number;
-    totalRevenue: number;
-}
 
-interface StaffWorking {
-    id: string;
-    cinemaaId: string;
-}
 
-export type { InventoryItem, ConcessionSaleInfo, ConcessionResponse, ConcessionSaleQueryParameters, PagingInfo, ConcessionSalesItem, Staff, Shift, RevenueEmployee, StaffWorking };
+export type { InventoryItem, ConcessionSaleInfo, ConcessionResponse, ConcessionSaleQueryParameters, PagingInfo, ConcessionSalesItem, RevenueEmployee };

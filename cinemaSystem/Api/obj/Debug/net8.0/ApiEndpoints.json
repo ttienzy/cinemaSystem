@@ -409,6 +409,16 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "Api.Controllers.DemoController",
+    "Method": "GetAsync",
+    "RelativePath": "api/Demo/booking-confirm",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "Api.Controllers.GenresController",
     "Method": "GetAllGenresAsync",
     "RelativePath": "api/Genres",
@@ -622,22 +632,6 @@
   },
   {
     "ContainingType": "Api.Controllers.InventoryItemsController",
-    "Method": "AddStaffToCinemaAsync",
-    "RelativePath": "api/InventoryItems/add-staff",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "request",
-        "Type": "Shared.Models.DataModels.InventoryDtos.EmployeeCreateRequest",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Api.Controllers.InventoryItemsController",
     "Method": "ConfirmPaymentConcessionAsync",
     "RelativePath": "api/InventoryItems/confirm-payment/{cinemaId}",
     "HttpMethod": "POST",
@@ -709,38 +703,6 @@
       {
         "Name": "PageSize",
         "Type": "System.Int32",
-        "IsRequired": false
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Api.Controllers.InventoryItemsController",
-    "Method": "GetStaffInfoAsync",
-    "RelativePath": "api/InventoryItems/schedules/{cinemaId}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "cinemaId",
-        "Type": "System.Guid",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Api.Controllers.InventoryItemsController",
-    "Method": "GetStaffOnTimeAsync",
-    "RelativePath": "api/InventoryItems/staff-on-time",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "email",
-        "Type": "System.String",
         "IsRequired": false
       }
     ],
@@ -1580,6 +1542,139 @@
         "Name": "CinemaId",
         "Type": "System.Guid",
         "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.StaffsController",
+    "Method": "GetShiftsAsync",
+    "RelativePath": "api/Staffs/{cinemaId}/shifts",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.StaffsController",
+    "Method": "AddShiftToEmployee",
+    "RelativePath": "api/Staffs/add-shift-to-employee",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "Shared.Models.DataModels.StaffDtos.TakeAttendanceOEmpRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.StaffsController",
+    "Method": "AddShiftsToCinema",
+    "RelativePath": "api/Staffs/add-shifts-to-cinema",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "requests",
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[Shared.Models.DataModels.StaffDtos.ShiftRequest, Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.StaffsController",
+    "Method": "AddStaffToCinemaAsync",
+    "RelativePath": "api/Staffs/add-staff-to-cinema",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "Shared.Models.DataModels.InventoryDtos.EmployeeCreateRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.StaffsController",
+    "Method": "GetStaffInfoAsync",
+    "RelativePath": "api/Staffs/schedules/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "ShiftDate",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.StaffsController",
+    "Method": "GetShiftsMnAsync",
+    "RelativePath": "api/Staffs/shifts-manager/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.StaffsController",
+    "Method": "GetStaffOnTimeAsync",
+    "RelativePath": "api/Staffs/staff-on-time",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "email",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.StaffsController",
+    "Method": "GetStaffsAsync",
+    "RelativePath": "api/Staffs/staffs-manager/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []

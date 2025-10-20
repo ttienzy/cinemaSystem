@@ -2,7 +2,8 @@ import React, { useEffect, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { ShoppingCart, DollarSign, ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
-import { getInventory, getReportRevenueAndStock, getStaffWorkingInfo } from '../../store/slices/inventorySlice';
+import { getInventory, getReportRevenueAndStock } from '../../store/slices/inventorySlice';
+import { getStaffWorkingInfo } from '../../store/slices/staffSlice';
 import type { InventoryItem } from '../../types/inventory.types';
 import { getEmailFromToken } from '../../utils/decodeTokenAndGetUser';
 

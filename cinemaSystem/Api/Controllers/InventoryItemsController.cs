@@ -10,13 +10,13 @@ using Shared.Models.DataModels.StaffDtos;
 
 namespace Api.Controllers
 {
-    [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager},{RoleConstant.Employee}")]
+    //[Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager},{RoleConstant.Employee}")]
     [Route("api/[controller]")]
     [ApiController]
     public class InventoryItemsController : ControllerBase
     {
-        private readonly IInventoryService _inventoryService;
-        public InventoryItemsController(IInventoryService inventoryService)
+        private readonly IInventoryManager _inventoryService;
+        public InventoryItemsController(IInventoryManager inventoryService)
         {
             _inventoryService = inventoryService;
         }
@@ -53,14 +53,6 @@ namespace Api.Controllers
             }
             return ErrorResponse<PaginatedList<ConcessionSaleHistoryResponse>>.WithError(result);
         }
-        [HttpGet("schedules/{cinemaId:guid}")]
-        public async Task<IActionResult> GetStaffInfoAsync(Guid cinemaId)
-        {
-            var result = await _inventoryService.GetStaffInfoAsync(cinemaId);
-            if (result.IsSuccess)
-                return Ok(result.Value);
-            return ErrorResponse<IEnumerable<StaffInfoResponse>>.WithError(result);
-        }
 
         [HttpGet("revenue-report/{cinemaId:guid}")]
         public async Task<IActionResult> GetConcessionRevenueReportAsync(Guid cinemaId)
@@ -69,14 +61,6 @@ namespace Api.Controllers
             if (result.IsSuccess)
                 return Ok(result.Value);
             return ErrorResponse<IEnumerable<ConcessionRevenueResponse>>.WithError(result);
-        }
-        [HttpGet("staff-on-time")]
-        public async Task<IActionResult> GetStaffOnTimeAsync([FromQuery] string email)
-        {
-            var result = await _inventoryService.GetStaffOnTimeAsync(email);
-            if (result.IsSuccess)
-                return Ok(result.Value);
-            return ErrorResponse<StaffReponse>.WithError(result);
         }
 
         [HttpPost]
@@ -92,14 +76,6 @@ namespace Api.Controllers
         public async Task<IActionResult> ConfirmPaymentConcessionAsync(Guid cinemaId, [FromBody] CartRequest request)
         {
             var result = await _inventoryService.ConfirmPaymentConcessionAsync(request, cinemaId);
-            if (result.IsSuccess)
-                return Ok(result.Value);
-            return ErrorResponse<string>.WithError(result);
-        }
-        [HttpPost("add-staff")]
-        public async Task<IActionResult> AddStaffToCinemaAsync([FromBody] EmployeeCreateRequest request)
-        {
-            var result = await _inventoryService.AddStaffToCinema(request);
             if (result.IsSuccess)
                 return Ok(result.Value);
             return ErrorResponse<string>.WithError(result);

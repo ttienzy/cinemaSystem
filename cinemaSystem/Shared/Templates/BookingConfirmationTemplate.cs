@@ -1,4 +1,5 @@
-﻿using Shared.Models.ExtenalModels;
+﻿using Shared.Common.QRCode;
+using Shared.Models.ExtenalModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,11 +9,13 @@ using System.Threading.Tasks;
 namespace Shared.Templates
 {
     public class BookingConfirmationTemplate
-    {
+    {   
         public const string BOOKING_CONFIRMATION_SUBJECT = "✅ Xác nhận đặt vé thành công";
 
         public static string BookingConfirmation(EmailConfirmBookingResponse bookingInfo)
         {
+            byte[] qrCodeBytes = QrCodeHelper.GenerateQrCodeBytes(bookingInfo.BookingCode.ToString());
+            string qrCodeBase64 = Convert.ToBase64String(qrCodeBytes);
             return $@"
         <div style='font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto; background: #fff;'>
             <!-- Header -->
@@ -103,7 +106,17 @@ namespace Shared.Templates
                         </tr>
                     </table>
                 </div>
-
+                <!-- QR Code Section -->
+                <div style='background: #fff; border: 2px solid #667eea; border-radius: 10px; padding: 25px; margin-bottom: 25px; text-align: center;'>
+                    <h3 style='color: #667eea; margin: 0 0 15px 0; font-size: 18px;'>📱 Mã QR để nhận vé</h3>
+                    <p style='color: #666; margin: 0 0 20px 0; font-size: 14px;'>Quét mã QR này tại quầy để nhận vé nhanh chóng</p>
+                    <div style='display: inline-block; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);'>
+                        <img src='cid:qrcode' alt='QR Code' style='width: 200px; height: 200px; display: block;' />
+                    </div>
+                    <p style='color: #667eea; margin: 15px 0 0 0; font-size: 14px; font-weight: 600;'>
+                        Mã đặt vé: {bookingInfo.BookingCode}
+                    </p>
+                </div>
                 <!-- Lưu ý quan trọng -->
                 <div style='background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 25px;'>
                     <h3 style='color: #856404; margin: 0 0 15px 0; font-size: 18px;'>⚠️ Lưu ý quan trọng:</h3>

@@ -17,16 +17,9 @@ export const inventoryServices = {
         const response = await api.get(`/inventoryItems/sale-history/${cinemaId}`, { params: queryParams });
         return response.data;
     },
-    getStaffSchedule: async (cinemaId: string) => {
-        const response = await api.get(`/inventoryItems/schedules/${cinemaId}`);
-        return response.data;
-    },
     getReportRevenueAndStock: async (cinemaId: string) => {
         const response = await api.get(`/inventoryItems/revenue-report/${cinemaId}`);
         return response.data;
     },
-    getStaffOnOnWork: async (email: string) => {
-        const response = await api.get(`/inventoryItems/staff-on-time?email=${email}`)
-        return response.data;
-    }
+
 };

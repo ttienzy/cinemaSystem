@@ -740,23 +740,18 @@ namespace Infrastructure.Data.Migrations
                     b.Property<Guid>("CinemaId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<TimeSpan>("EndTime")
+                    b.Property<TimeSpan>("DefaultEndTime")
                         .HasColumnType("time");
 
-                    b.Property<DateTime>("ShiftDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("StaffId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<TimeSpan>("StartTime")
+                    b.Property<TimeSpan>("DefaultStartTime")
                         .HasColumnType("time");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CinemaId");
-
-                    b.HasIndex("StaffId");
 
                     b.ToTable("Shifts", (string)null);
                 });
@@ -810,6 +805,33 @@ namespace Infrastructure.Data.Migrations
                     b.HasIndex("CinemaId");
 
                     b.ToTable("Staffs", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.StaffAggregate.WorkSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ActualCheckInTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ShiffId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("StaffId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("WorkDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShiffId");
+
+                    b.HasIndex("StaffId");
+
+                    b.ToTable("WorkSchedules", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.BookingAggregate.Booking", b =>
@@ -1037,12 +1059,6 @@ namespace Infrastructure.Data.Migrations
                         .HasForeignKey("CinemaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("Domain.Entities.StaffAggregate.Staff", null)
-                        .WithMany("Shifts")
-                        .HasForeignKey("StaffId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Domain.Entities.StaffAggregate.Staff", b =>
@@ -1052,6 +1068,25 @@ namespace Infrastructure.Data.Migrations
                         .HasForeignKey("CinemaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.StaffAggregate.WorkSchedule", b =>
+                {
+                    b.HasOne("Domain.Entities.StaffAggregate.Shift", "Shift")
+                        .WithMany("WorkSchedules")
+                        .HasForeignKey("ShiffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.StaffAggregate.Staff", "Staff")
+                        .WithMany("WorkSchedules")
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Shift");
+
+                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("Domain.Entities.BookingAggregate.Booking", b =>
@@ -1097,9 +1132,14 @@ namespace Infrastructure.Data.Migrations
                     b.Navigation("ShowtimePricings");
                 });
 
+            modelBuilder.Entity("Domain.Entities.StaffAggregate.Shift", b =>
+                {
+                    b.Navigation("WorkSchedules");
+                });
+
             modelBuilder.Entity("Domain.Entities.StaffAggregate.Staff", b =>
                 {
-                    b.Navigation("Shifts");
+                    b.Navigation("WorkSchedules");
                 });
 #pragma warning restore 612, 618
         }

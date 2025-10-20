@@ -16,17 +16,21 @@ namespace Api.Controllers
     public class DemoController : ControllerBase
     {
         private readonly IEmailService _emailService;
-        public DemoController(IEmailService emailService)
+        private readonly ILogger<DemoController> _logger;
+        public DemoController(IEmailService emailService, ILogger<DemoController> logger)
         {
             _emailService = emailService;
+            _logger = logger;
         }
 
 
         [HttpGet]
         public async Task<IActionResult> Get()
         {
+            _logger.LogInformation("jfg");
             var data = new EmailRequest
             {
+
                 ToEmail = "nguyendientien01062005@gmail.com",
                 Subject = BookingConfirmationTemplate.BOOKING_CONFIRMATION_SUBJECT,
                 Body = BookingConfirmationTemplate.BookingConfirmation(new EmailConfirmBookingResponse
@@ -44,6 +48,26 @@ namespace Api.Controllers
             };
             await _emailService.SendEmailAsync(data);
             return Ok("Send email successful");
+        }
+        [HttpGet("booking-confirm")]
+        public async Task<IActionResult> GetAsync()
+        {
+            await _emailService.SendBookingConfirmationEmailAsync(
+                toEmail: "nguyendientien01062005@gmail.com",
+                bookingInfo: new EmailConfirmBookingResponse
+                {
+                    BookingCode = Guid.NewGuid(),
+                    MovieTitle = "Avengers: Endgame",
+                    Showtime = DateTime.Now.AddDays(1),
+                    TimeSlot = "19:30",
+                    CinemaName = "CGV Vincom",
+                    ScreenName = "Phòng 3",
+                    TotalTickets = 2,
+                    SeatsList = new List<string> { "A5", "A6" },
+                    TotalAmount = 200000
+                }
+            );
+            return Ok("Success");
         }
     }
 }

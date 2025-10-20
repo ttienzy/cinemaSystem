@@ -36,10 +36,6 @@ namespace Infrastructure.Data.Configs
                 .HasForeignKey(s => s.CinemaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
-
-            builder.Metadata.FindNavigation(nameof(Staff.Shifts))
-                ?.SetPropertyAccessMode(PropertyAccessMode.Field);
         }
     }
 }

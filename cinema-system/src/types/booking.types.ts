@@ -1,4 +1,5 @@
 interface BookingCheckedInResponse {
+    bookingCode: string;
     bookingTime: string;
     movieTitle: string;
     screenName: string;

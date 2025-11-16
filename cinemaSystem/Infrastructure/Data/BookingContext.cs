@@ -6,6 +6,7 @@ using Domain.Entities.MovieAggregate;
 using Domain.Entities.SharedAggregates;
 using Domain.Entities.ShowtimeAggregate;
 using Microsoft.EntityFrameworkCore;
+using Shared.Models.DataModels.DashboardDtos.Subs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +42,11 @@ namespace Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+            modelBuilder.Entity<CinemaTicketTempModel>().HasNoKey();
+            modelBuilder.Entity<ShowtimeOccupancyDto>().HasNoKey();
+            modelBuilder.Entity<StaffCheckTempModel>().HasNoKey();
+
         }
     }
 }

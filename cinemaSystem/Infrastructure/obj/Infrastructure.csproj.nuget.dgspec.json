@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "E:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj": {}
+    "D:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj": {}
   },
   "projects": {
-    "E:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
+    "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\DACS4\\cinemaSystem\\Application\\Application.csproj",
+        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj",
         "projectName": "Application",
-        "projectPath": "E:\\DACS4\\cinemaSystem\\Application\\Application.csproj",
+        "projectPath": "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "E:\\DACS4\\cinemaSystem\\Application\\obj\\",
+        "outputPath": "D:\\DACS4\\cinemaSystem\\Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -32,11 +32,11 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "E:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
-                "projectPath": "E:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
+              "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
               },
-              "E:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
-                "projectPath": "E:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"
+              "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"
               }
             }
           }
@@ -51,7 +51,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -94,18 +94,18 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "E:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+    "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
+        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
         "projectName": "Domain",
-        "projectPath": "E:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
+        "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "E:\\DACS4\\cinemaSystem\\Domain\\obj\\",
+        "outputPath": "D:\\DACS4\\cinemaSystem\\Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -138,7 +138,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -159,18 +159,18 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "E:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj": {
+    "D:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj",
+        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj",
         "projectName": "Infrastructure",
-        "projectPath": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj",
+        "projectPath": "D:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "E:\\DACS4\\cinemaSystem\\Infrastructure\\obj\\",
+        "outputPath": "D:\\DACS4\\cinemaSystem\\Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -191,14 +191,14 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "E:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
-                "projectPath": "E:\\DACS4\\cinemaSystem\\Application\\Application.csproj"
+              "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj"
               },
-              "E:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
-                "projectPath": "E:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
+              "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
               },
-              "E:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
-                "projectPath": "E:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"
+              "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"
               }
             }
           }
@@ -213,7 +213,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -284,18 +284,18 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "E:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
+    "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj",
+        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj",
         "projectName": "Shared",
-        "projectPath": "E:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj",
+        "projectPath": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "E:\\DACS4\\cinemaSystem\\Shared\\obj\\",
+        "outputPath": "D:\\DACS4\\cinemaSystem\\Shared\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -316,8 +316,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "E:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
-                "projectPath": "E:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
+              "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
               }
             }
           }
@@ -332,7 +332,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
@@ -367,7 +367,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

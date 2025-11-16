@@ -112,6 +112,24 @@ namespace Infrastructure.Data.Services
             }
         }
 
+        public async Task<BaseResponse<string>> DeleteShiftToCinemaAsync(Guid shiftId)
+        {
+            try
+            {
+                var shift = await _shiftRepository.GetByIdAsync(shiftId);
+                if (shift == null)
+                {
+                    return BaseResponse<string>.Failure(Error.NotFound("Shift not found"));
+                }
+                await _shiftRepository.DeleteAsync(shift);
+                return BaseResponse<string>.Success("Delete success");
+            }
+            catch(Exception ex)
+            {
+                return BaseResponse<string>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
         public async Task<BaseResponse<IEnumerable<ShiftInfoResponse>>> GetShiftsInfoAsync(Guid cinemaId)
         {
             try
@@ -214,6 +232,25 @@ namespace Infrastructure.Data.Services
             catch (Exception ex)
             {
                 return BaseResponse<IEnumerable<GetStaffToCinemaResponse>>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
+        public async Task<BaseResponse<string>> UpdateShiftToCinemaAsync(Guid shiftId, ShiftRequest request)
+        {
+            try
+            {
+                var shift = await _shiftRepository.GetByIdAsync(shiftId);
+                if (shift == null)
+                {
+                    return BaseResponse<string>.Failure(Error.NotFound("Shift not found"));
+                }
+                shift.UpdateShift(request.CinemaId, request.Name, request.StartTime, request.EndTime);
+                await _shiftRepository.UpdateAsync(shift);
+                return BaseResponse<string>.Success("Updated successfully");
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<string>.Failure(Error.InternalServerError(ex.Message));
             }
         }
     }

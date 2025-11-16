@@ -18,5 +18,11 @@ namespace Shared.Models.DataModels.ShowtimeDtos
         public DateTime ActualStartTime { get; set; }
         public DateTime ActualEndTime { get; set; }
         public ShowtimeStatus Status { get; set; }
+        public List<ShowtimePricingInfoRequest> ShowtimePricings { get; set; } = new List<ShowtimePricingInfoRequest>();
+    }
+    public class ShowtimePricingInfoRequest
+    {
+        public Guid SeatTypeId { get; set; }
+        public decimal BasePrice { get; set; }
     }
 }

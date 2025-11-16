@@ -25,5 +25,12 @@ namespace Domain.Entities.StaffAggregate
             DefaultStartTime = defaultStartTime;
             DefaultEndTime = defaultEndTime;
         }
+        public void UpdateShift(Guid cinemaId, string? name, TimeSpan defaultStartTime, TimeSpan defaultEndTime)
+        {
+            CinemaId = cinemaId;
+            Name = name;
+            DefaultStartTime = defaultStartTime;
+            DefaultEndTime = defaultEndTime;
+        }
     }
 }

@@ -5,6 +5,7 @@ using Application.Specifications.BookingSpec;
 using Application.Specifications.CinemaSpec;
 using Application.Specifications.GenreSpec;
 using Application.Specifications.MovieSpec;
+using Application.Specifications.SharedSpec;
 using Application.Specifications.ShowtimeSpec;
 using Domain.Entities.BookingAggregate;
 using Domain.Entities.CinemaAggreagte;
@@ -129,9 +130,31 @@ namespace Infrastructure.Data.Services
                 {
                     return BaseResponse<ShowtimeResponse>.Failure(Error.NotFound("Pricing tier not found"));
                 }
+                
 
+                var seatTypesSpec = new GetAllSeatTypesSpecification(request.ShowtimePricings.Select(e => e.SeatTypeId).ToList());
+                var seatTypes = await _seatTypeRepository.ListAsync(seatTypesSpec);
+                if (seatTypes.Count != request.ShowtimePricings.Count)
+                {
+                    return BaseResponse<ShowtimeResponse>.Failure(Error.NotFound("One or more seat types not found"));
+                }
+
+                var pricingTierCheck = await _pricingTierRepository.GetByIdAsync(request.PricingTierId);
+                if (pricingTierCheck == null)
+                {
+                    return BaseResponse<ShowtimeResponse>.Failure(Error.NotFound("Pricing tier not found"));
+                }
 
                 var showtime = new Showtime(request.CinemaId, request.MovieId, request.ScreenId, request.SlotId, request.PricingTierId, request.ShowDate, request.ActualStartTime, request.ActualEndTime, request.Status);
+
+                HashSet<Guid> seatIds = request.ShowtimePricings.Select(sp => sp.SeatTypeId).ToHashSet();
+                foreach (var seatType in request.ShowtimePricings)
+                {
+                    var basePrice = seatType.BasePrice;
+                    var finalPrice = Math.Ceiling(basePrice * seatTypes.First(st => st.SeatTypeId == seatType.SeatTypeId).Multiplier * pricingTier.Multiplier);
+                    var showtimePricing = new ShowtimePricing(seatType.SeatTypeId, basePrice, finalPrice);
+                    showtime.AddShowtimePricing(showtimePricing);
+                }
                 await _showtimeRepository.AddAsync(showtime);
 
                 var response = new ShowtimeResponse
@@ -188,28 +211,104 @@ namespace Infrastructure.Data.Services
             }
         }
 
-        public async Task<BaseResponse<object>> DeleteShowtimeAsync(Guid showtimeId)
+        public async Task<BaseResponse<object>> CancelledShowtimeAsync(Guid showtimeId)
         {
 
             try
             {
-                var checkBooingsSpec = new BookingByShowtimeIdSpecification(showtimeId);
-                var existingBookings = await _bookingRepository.ListAsync(checkBooingsSpec);
-                if (existingBookings.Any())
-                {
-                    return BaseResponse<object>.Failure(Error.Conflict("Cannot delete showtime with existing bookings"));
-                }
                 var showtime = await _showtimeRepository.GetByIdAsync(showtimeId);
                 if (showtime == null)
                 {
                     return BaseResponse<object>.Failure(Error.NotFound("Showtime not found"));
                 }
-                await _showtimeRepository.DeleteAsync(showtime);
+                showtime.MarkAsCancelled();
+                await _showtimeRepository.UpdateAsync(showtime);
                 return BaseResponse<object>.Success();
             }
             catch (Exception ex)
             {
                 return BaseResponse<object>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+        public async Task<BaseResponse<object>> ConfirmedShowtimeAsync(Guid showtimeId)
+        {
+
+            try
+            {
+                var showtime = await _showtimeRepository.GetByIdAsync(showtimeId);
+                if (showtime == null)
+                {
+                    return BaseResponse<object>.Failure(Error.NotFound("Showtime not found"));
+                }
+                showtime.MarkAsConfirmed();
+                await _showtimeRepository.UpdateAsync(showtime);
+                return BaseResponse<object>.Success();
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<object>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
+        public async Task<BaseResponse<ShowtimeResponse>> GetShowtimeByIdAsync(Guid id)
+        {
+            try
+            {
+                var showtime = await _showtimeRepository.GetByIdAsync(id);
+                if (showtime == null)
+                {
+                    return BaseResponse<ShowtimeResponse>.Failure(Error.NotFound("Showtime not found"));
+                }
+                var movie = await _movieRepository.GetByIdAsync(showtime.MovieId);
+                if (movie == null)
+                {
+                    return BaseResponse<ShowtimeResponse>.Failure(Error.NotFound("Movie not found"));
+                }
+                var cinemaScreen = new CinemaWithScreensSpecification(showtime.CinemaId, showtime.ScreenId);
+                var cinema = await _cinemaRepository.FirstOrDefaultAsync(cinemaScreen);
+
+                if (cinema == null)
+                {
+                    return BaseResponse<ShowtimeResponse>.Failure(Error.NotFound("Cinema not found"));
+                }
+                var screen = cinema.Screens.FirstOrDefault();
+                if (screen == null)
+                {
+                    return BaseResponse<ShowtimeResponse>.Failure(Error.NotFound("Screen not found in the specified cinema"));
+                }
+
+                var timeSlot = await _timeSlotRepository.GetByIdAsync(showtime.SlotId);
+                if (timeSlot == null)
+                {
+                    return BaseResponse<ShowtimeResponse>.Failure(Error.NotFound("Time slot not found"));
+                }
+                var pricingTier = await _pricingTierRepository.GetByIdAsync(showtime.PricingTierId);
+                if (pricingTier == null)
+                {
+                    return BaseResponse<ShowtimeResponse>.Failure(Error.NotFound("Pricing tier not found"));
+                }
+
+                var response = new ShowtimeResponse
+                {
+                    Id = showtime.Id,
+                    MovieTitle = movie.Title,
+                    ScreenId = showtime.ScreenId,
+                    ScreenName = screen.ScreenName,
+                    SlotId = showtime.SlotId,
+                    SlotName = $"{timeSlot.DayType}({timeSlot.StartTime} - {timeSlot.EndTime})",
+                    PricingTierId = showtime.PricingTierId,
+                    PricingTierMultiplier = pricingTier.Multiplier,
+                    PricingTierName = pricingTier.TierName,
+                    ShowDate = showtime.ShowDate,
+                    ActualStartTime = showtime.ActualStartTime,
+                    ActualEndTime = showtime.ActualEndTime,
+                    Status = showtime.Status
+                };
+                return BaseResponse<ShowtimeResponse>.Success(response);
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<ShowtimeResponse>.Failure(Error.InternalServerError(ex.Message));
             }
         }
 
@@ -234,6 +333,19 @@ namespace Infrastructure.Data.Services
             catch (Exception ex)
             {
                 return BaseResponse<ShowtimeFeaturedResponse>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
+        public async Task<BaseResponse<IEnumerable<ShowtimePerformanceDto>>> GetShowtimePerformanceAsync(Guid cinemaId)
+        {
+            try
+            {
+                var showtimePerformances = await _customShowtimeRepository.GetShowtimePerformanceAsync(cinemaId);
+                return BaseResponse<IEnumerable<ShowtimePerformanceDto>>.Success(showtimePerformances);
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<IEnumerable<ShowtimePerformanceDto>>.Failure(Error.InternalServerError(ex.Message));
             }
         }
 
@@ -332,6 +444,42 @@ namespace Infrastructure.Data.Services
             catch (Exception ex)
             {
                 return BaseResponse<ShowtimeSeatingPlanResponse>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
+        public async Task<BaseResponse<ShowtimeSetupDataDto>> GetShowtimeSetupDataAsync(Guid cinemaId)
+        {
+            try
+            {
+                var screensSpec = new GetScreensByCinemaIdSpecification(cinemaId);
+                var screens = await _cinemaRepository.FirstOrDefaultAsync(screensSpec);
+
+                var slotsSpec = new GetAllTimeSlotsSpecification();
+                var slots = await _timeSlotRepository.ListAsync(slotsSpec);
+
+                var pricingTiersSpec = new GetAllPricingTiersSpecification();
+                var pricingTiers = await _pricingTierRepository.ListAsync(pricingTiersSpec);
+
+                var moviesPec = new GetMoviesSpecification();
+                var movies = await _movieRepository.ListAsync(moviesPec);
+
+                var seatTypesSpec = new GetAllSeatTypesSpecification();
+                var seatTypes = await _seatTypeRepository.ListAsync(seatTypesSpec);
+
+                var response = new ShowtimeSetupDataDto
+                {
+                    Screens = screens,
+                    Slots = slots,
+                    PricingTiers = pricingTiers,
+                    Movies = movies,
+                    SeatTypes = seatTypes
+                };
+                return BaseResponse<ShowtimeSetupDataDto>.Success(response);
+
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<ShowtimeSetupDataDto>.Failure(Error.InternalServerError(ex.Message));
             }
         }
 

@@ -24,6 +24,8 @@ namespace Application.Interfaces.Persistences
 
         //---------------------Shifts-----------------------------
         Task<BaseResponse<string>> AddShiftsToCinemaAsync(IEnumerable<ShiftRequest> requests);
+        Task<BaseResponse<string>> UpdateShiftToCinemaAsync(Guid shiftId, ShiftRequest request);
+        Task<BaseResponse<string>> DeleteShiftToCinemaAsync(Guid shiftId);
         Task<BaseResponse<object>> AddShiftToEmployeeAsync(TakeAttendanceOEmpRequest request);
 
     }

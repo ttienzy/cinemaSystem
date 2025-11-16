@@ -21,7 +21,6 @@ using Shared.Models.DataModels.InventoryDtos;
 using Shared.Models.DataModels.ShowtimeDtos;
 using Shared.Models.DataModels.StaffDtos;
 
-
 namespace Infrastructure.Data.Services
 {
     public class InventoryService : IInventoryManager
@@ -209,6 +208,20 @@ namespace Infrastructure.Data.Services
             }
         }
 
+        public async Task<BaseResponse<IEnumerable<InventoryItem>>> GetConcessionItemsDetailAsync(Guid cinemaId)
+        {
+            try
+            {
+                var results = new GetConcessionByCinemaIdDetails(cinemaId);
+                var items = await _inventoryRepository.ListAsync(results);
+                return BaseResponse<IEnumerable<InventoryItem>>.Success(items);
+            }
+            catch (Exception ex)
+            {
+                return BaseResponse<IEnumerable<InventoryItem>>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
+
         public async Task<BaseResponse<IEnumerable<ConcessionRevenueResponse>>> GetConcessionRevenueReportAsync(Guid cinemaId)
         {
             try
@@ -248,28 +261,30 @@ namespace Infrastructure.Data.Services
             }
         }
 
+        public async Task<BaseResponse<IEnumerable<RevenueMonthlyReportResponseDto>>> GetMonthlyRevenueReportAsync(RevenueMonthlyReportRequestDto request)
+        {
+            try
+            {
+                var result = await _concessionSaleRepository.GetMonthlyRevenueReportAsync(request);
+                return BaseResponse<IEnumerable<RevenueMonthlyReportResponseDto>>.Success(result);
+            }
+            catch(Exception ex)
+            {
+                return BaseResponse<IEnumerable<RevenueMonthlyReportResponseDto>>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
 
-        //public async Task<BaseResponse<TakeAttendanceOEmpRequest>> TakeAttendanceOEmpAsync(TakeAttendanceOEmpRequest request)
-        //{
-        //    try
-        //    {
-        //        var staffSpec = new StaffByIdSpecification(request.StaffId);
-        //        var staff = await _staffRepository.FirstOrDefaultAsync(staffSpec);
-        //        if(staff == null)
-        //        {
-        //            return BaseResponse<TakeAttendanceOEmpRequest>.Failure(Error.NotFound("Staff not found"));
-        //        }
-
-        //        var shift = new Shift(staff.CinemaId, request.StartTime, request.EndTime, request.ShiftDate);
-        //        staff.AddItem(shift);
-
-        //        await _staffRepository.UpdateAsync(staff);
-        //        return BaseResponse<TakeAttendanceOEmpRequest>.Success(request);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BaseResponse<TakeAttendanceOEmpRequest>.Failure(Error.InternalServerError(ex.Message));
-        //    }
-        //}
+        public async Task<BaseResponse<IEnumerable<RevenueReportResponseDto>>> GetRevenueReportAsync(RevenueReportRequestDto request)
+        {
+            try
+            {
+                var result = await _concessionSaleRepository.GetRevenueReportAsync(request);
+                return BaseResponse<IEnumerable<RevenueReportResponseDto>>.Success(result);
+            }
+            catch( Exception ex)
+            {
+                return BaseResponse<IEnumerable<RevenueReportResponseDto>>.Failure(Error.InternalServerError(ex.Message));
+            }
+        }
     }
 }

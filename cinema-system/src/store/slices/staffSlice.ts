@@ -1,4 +1,4 @@
-import type { GetShiftsMn, GetStaffsMn, Shift, Staff, StaffWorking } from "../../types/staff.types";
+import type { AddShiftToEmployeeRequest, AddStaffRequest, GetShiftsMn, GetStaffsMn, Shift, Staff, StaffWorking } from "../../types/staff.types";
 import { staffServices } from "../../services/staff.services";
 import type { TakeAttendanceOfEmployeeRequest } from "../../types/staff.types";
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
@@ -58,6 +58,30 @@ export const getStaffsMn = createAsyncThunk(
         return await staffServices.getStaffToCinemaForManager(cinemaId);
     }
 )
+export const addStaffToCinemaForManager = createAsyncThunk(
+    'staff/addStaffToCinemaForManager',
+    async (payload: AddStaffRequest) => {
+        return await staffServices.addStaffToCinemaForManager(payload);
+    }
+)
+export const addShiftToCinemaForManager = createAsyncThunk(
+    'staff/addShiftToCinemaForManager',
+    async (request: AddShiftToEmployeeRequest[]) => {
+        return await staffServices.addShiftToCinemaForManager(request);
+    }
+)
+export const updateShiftToCinemaForManager = createAsyncThunk(
+    'staff/updateShiftToCinemaForManager',
+    async ({ shiftId, request }: { shiftId: string; request: { cinemaId: string; startTime: string; endTime: string; name: string } }) => {
+        return await staffServices.updateShiftToCinemaForManager(shiftId, request);
+    }
+)
+export const deleteShiftToCinemaForManager = createAsyncThunk(
+    'staff/deleteShiftToCinemaForManager',
+    async (shiftId: string) => {
+        return await staffServices.deleteShiftToCinemaForManager(shiftId);
+    }
+)
 
 const staffSlice = createSlice({
     name: 'staff',
@@ -76,7 +100,7 @@ const staffSlice = createSlice({
                         shiftId: action.payload.shiftId,
                         endTime: action.payload.endTime,
                         startTime: action.payload.startTime,
-                        shiftDate: action.payload.shiftDate
+                        name: action.payload.name
                     })
                 }
             })
@@ -164,6 +188,42 @@ const staffSlice = createSlice({
         builder.addCase(getStaffsMn.rejected, (state, action) => {
             state.loading = false;
             state.error = action.error.message || 'Failed to get staffs';
+        });
+        builder.addCase(deleteShiftToCinemaForManager.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(deleteShiftToCinemaForManager.fulfilled, (state) => {
+            state.loading = false;
+            state.error = null;
+        });
+        builder.addCase(deleteShiftToCinemaForManager.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.error.message || 'Failed to delete shift';
+        });
+        builder.addCase(addShiftToCinemaForManager.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(addShiftToCinemaForManager.fulfilled, (state) => {
+            state.loading = false;
+            state.error = null;
+        });
+        builder.addCase(addShiftToCinemaForManager.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.error.message || 'Failed to add shift';
+        });
+        builder.addCase(updateShiftToCinemaForManager.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+        builder.addCase(updateShiftToCinemaForManager.fulfilled, (state) => {
+            state.loading = false;
+            state.error = null;
+        });
+        builder.addCase(updateShiftToCinemaForManager.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.error.message || 'Failed to update shift';
         });
     }
 });

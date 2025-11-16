@@ -19,6 +19,7 @@ namespace Shared.Models.DataModels.ShowtimeDtos
         public Guid ScreenId { get; set; }
         public string ScreenName { get; set; }
         public Guid SlotId { get; set; }
+        public string SlotName { get; set; }
         public Guid PricingTierId { get; set; }
         public string PricingTierName { get; set; }
         public decimal PricingTierMultiplier { get; set; }

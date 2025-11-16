@@ -1,5 +1,5 @@
 import { api } from "../configs/api";
-import type { TakeAttendanceOfEmployeeRequest } from "../types/staff.types";
+import type { AddShiftToEmployeeRequest, AddStaffRequest, TakeAttendanceOfEmployeeRequest } from "../types/staff.types";
 
 
 
@@ -26,6 +26,23 @@ export const staffServices = {
     },
     getShiftToCinemaForManager: async (cinemaId: string) => {
         const response = await api.get(`/staffs/shifts-manager/${cinemaId}`);
+        return response.data;
+    },
+    addStaffToCinemaForManager: async (payload: AddStaffRequest) => {
+        const response = await api.post(`/staffs/add-staff-to-cinema`, payload);
+        return response.data;
+    },
+
+    addShiftToCinemaForManager: async (request: AddShiftToEmployeeRequest[]) => {
+        const response = await api.post(`/staffs/add-shifts-to-cinema`, request);
+        return response.data;
+    },
+    updateShiftToCinemaForManager: async (shiftId: string, request: AddShiftToEmployeeRequest) => {
+        const response = await api.put(`/staffs/update-shifts-to-cinema/${shiftId}`, request);
+        return response.data;
+    },
+    deleteShiftToCinemaForManager: async (shiftId: string) => {
+        const response = await api.delete(`/staffs/delete-shifts-to-cinema/${shiftId}`);
         return response.data;
     },
 

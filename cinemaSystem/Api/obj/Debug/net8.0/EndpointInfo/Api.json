@@ -210,6 +210,137 @@
         }
       }
     },
+    "/api/CinemaDashboard/sales-summary": {
+      "post": {
+        "tags": [
+          "CinemaDashboard"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CinemaDashboardRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CinemaDashboardRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CinemaDashboardRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": { }
+              },
+              "application/json": {
+                "schema": { }
+              },
+              "text/json": {
+                "schema": { }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/CinemaDashboard/showtimes/{cinemaId}": {
+      "get": {
+        "tags": [
+          "CinemaDashboard"
+        ],
+        "parameters": [
+          {
+            "name": "cinemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/CinemaDashboard/inventory/{cinemaId}": {
+      "get": {
+        "tags": [
+          "CinemaDashboard"
+        ],
+        "parameters": [
+          {
+            "name": "cinemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/CinemaDashboard/staff/{cinemaId}": {
+      "get": {
+        "tags": [
+          "CinemaDashboard"
+        ],
+        "parameters": [
+          {
+            "name": "cinemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Cinemas": {
       "get": {
         "tags": [
@@ -1130,6 +1261,28 @@
         }
       }
     },
+    "/api/InventoryItems/details": {
+      "get": {
+        "tags": [
+          "InventoryItems"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/InventoryItems/sale-history/{cinemaId}": {
       "get": {
         "tags": [
@@ -1205,6 +1358,100 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/InventoryItems/revenue-report-daily/{cinemaId}": {
+      "get": {
+        "tags": [
+          "InventoryItems"
+        ],
+        "parameters": [
+          {
+            "name": "cinemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "CinemaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "StartDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "EndDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/InventoryItems/revenue-report-monthly/{cinemaId}": {
+      "get": {
+        "tags": [
+          "InventoryItems"
+        ],
+        "parameters": [
+          {
+            "name": "cinemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "CinemaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "StartDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "EndDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
             }
           }
         ],
@@ -2547,6 +2794,69 @@
         }
       }
     },
+    "/api/Showtimes/{id}": {
+      "get": {
+        "tags": [
+          "Showtimes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Showtimes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShowtimeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShowtimeRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShowtimeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Showtimes/detail": {
       "get": {
         "tags": [
@@ -2573,6 +2883,52 @@
           {
             "name": "CinemaId",
             "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Showtimes/performance/{cinemaId}": {
+      "get": {
+        "tags": [
+          "Showtimes"
+        ],
+        "parameters": [
+          {
+            "name": "cinemaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Showtimes/setup-data/{cinemaId}": {
+      "get": {
+        "tags": [
+          "Showtimes"
+        ],
+        "parameters": [
+          {
+            "name": "cinemaId",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string",
@@ -2618,48 +2974,6 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/ShowtimePricingRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Showtimes/{id}": {
-      "put": {
-        "tags": [
-          "Showtimes"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ShowtimeRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ShowtimeRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/ShowtimeRequest"
               }
             }
           }
@@ -2752,14 +3066,37 @@
         }
       }
     },
-    "/api/Showtimes/{showtimeId}": {
-      "delete": {
+    "/api/Showtimes/{id}/status/confirm": {
+      "put": {
         "tags": [
           "Showtimes"
         ],
         "parameters": [
           {
-            "name": "showtimeId",
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Showtimes/{id}/status/cancel": {
+      "put": {
+        "tags": [
+          "Showtimes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -2998,6 +3335,71 @@
         }
       }
     },
+    "/api/Staffs/update-shifts-to-cinema/{id}": {
+      "put": {
+        "tags": [
+          "Staffs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Staffs/delete-shifts-to-cinema/{id}": {
+      "delete": {
+        "tags": [
+          "Staffs"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/TimeSlots": {
       "get": {
         "tags": [
@@ -3214,6 +3616,29 @@
           "newPassword": {
             "pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^\\da-zA-Z]).{8,}$",
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CinemaDashboardRequest": {
+        "type": "object",
+        "properties": {
+          "cinemaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "month": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "day": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           }
         },
@@ -3598,6 +4023,33 @@
         },
         "additionalProperties": false
       },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
       "RatingStatus": {
         "enum": [
           "P",
@@ -3796,6 +4248,20 @@
         },
         "additionalProperties": false
       },
+      "ShowtimePricingInfoRequest": {
+        "type": "object",
+        "properties": {
+          "seatTypeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "basePrice": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "ShowtimePricingRequest": {
         "type": "object",
         "properties": {
@@ -3847,6 +4313,13 @@
           },
           "status": {
             "$ref": "#/components/schemas/ShowtimeStatus"
+          },
+          "showtimePricings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowtimePricingInfoRequest"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -3855,8 +4328,7 @@
         "enum": [
           "Scheduled",
           "Confirmed",
-          "Cancelled",
-          "Completed"
+          "Cancelled"
         ],
         "type": "string"
       },

@@ -12,5 +12,6 @@ namespace Application.Interfaces.Persistences.Repo
     {
         Task<List<ShowtimeFeaturedResponse>> GetShowtimeByQuerryAsync(Guid? cinemaId, DateTime showDate);
         Task<ShowtimeFeaturedResponse> GetShowtimeFeaturedAsync(ShowtimeQueryParameters parameters);
+        Task<IEnumerable<ShowtimePerformanceDto>> GetShowtimePerformanceAsync(Guid cinemaId);
     }
 }

@@ -85,5 +85,22 @@ namespace Api.Controllers
                 return Ok(results.Value);
             return ErrorResponse<object>.WithError(results);
         }
+
+        [HttpPut("update-shifts-to-cinema/{id:guid}")]
+        public async Task<IActionResult> UpdateShiftToCinemaAsync(Guid id, [FromBody] ShiftRequest request)
+        {
+            var result = await _staffManager.UpdateShiftToCinemaAsync(id, request);
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            return ErrorResponse<string>.WithError(result);
+        }
+        [HttpDelete("delete-shifts-to-cinema/{id:guid}")]
+        public async Task<IActionResult> DeleteShiftToCinemaAsync(Guid id)
+        {
+            var result = await _staffManager.DeleteShiftToCinemaAsync(id);
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            return ErrorResponse<string>.WithError(result);
+        }
     }
 }

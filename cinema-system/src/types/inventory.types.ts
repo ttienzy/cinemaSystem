@@ -6,6 +6,17 @@ interface InventoryItem {
     unitPrice: number;
     image: string;
 }
+export interface StockItemType {
+    id: string;
+    cinemaId: string;
+    itemName: string;
+    itemCategory: string;
+    currentStock: number;
+    minimumStock: number;
+    unitPrice: number; // Giá nhập
+    costPrice: number; // Giá bán
+    imageUrl: string;
+}
 interface ConcessionSalesItem {
     quantity: number;
     unitPrice: number;

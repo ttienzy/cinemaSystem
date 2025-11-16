@@ -122,6 +122,89 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "Api.Controllers.CinemaDashboardController",
+    "Method": "ProbeInventorySignals",
+    "RelativePath": "api/CinemaDashboard/inventory/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.CinemaDashboardController",
+    "Method": "GetSalesInsights",
+    "RelativePath": "api/CinemaDashboard/sales-summary",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "Shared.Models.DataModels.DashboardDtos.CinemaDashboardRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Object",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "Microsoft.AspNetCore.Mvc.ProblemDetails",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 400
+      }
+    ]
+  },
+  {
+    "ContainingType": "Api.Controllers.CinemaDashboardController",
+    "Method": "ScanShowtimeCapacity",
+    "RelativePath": "api/CinemaDashboard/showtimes/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.CinemaDashboardController",
+    "Method": "EvaluateStaffLoad",
+    "RelativePath": "api/CinemaDashboard/staff/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "Api.Controllers.CinemasController",
     "Method": "GetCinemasAsync",
     "RelativePath": "api/Cinemas",
@@ -647,6 +730,84 @@
         "Name": "request",
         "Type": "Shared.Models.DataModels.InventoryDtos.CartRequest",
         "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.InventoryItemsController",
+    "Method": "GetItemDetailsAsync",
+    "RelativePath": "api/InventoryItems/details",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "itemId",
+        "Type": "System.Guid",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.InventoryItemsController",
+    "Method": "GetRevenueReportAsync",
+    "RelativePath": "api/InventoryItems/revenue-report-daily/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "CinemaId",
+        "Type": "System.Guid",
+        "IsRequired": false
+      },
+      {
+        "Name": "StartDate",
+        "Type": "System.DateTime",
+        "IsRequired": false
+      },
+      {
+        "Name": "EndDate",
+        "Type": "System.DateTime",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.InventoryItemsController",
+    "Method": "GetMonthlyRevenueReportAsync",
+    "RelativePath": "api/InventoryItems/revenue-report-monthly/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "CinemaId",
+        "Type": "System.Guid",
+        "IsRequired": false
+      },
+      {
+        "Name": "StartDate",
+        "Type": "System.DateTime",
+        "IsRequired": false
+      },
+      {
+        "Name": "EndDate",
+        "Type": "System.DateTime",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -1401,6 +1562,22 @@
   },
   {
     "ContainingType": "Api.Controllers.ShowtimesController",
+    "Method": "GetShowtimeByIdAsync",
+    "RelativePath": "api/Showtimes/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.ShowtimesController",
     "Method": "UpdateShowtime",
     "RelativePath": "api/Showtimes/{id}",
     "HttpMethod": "PUT",
@@ -1422,14 +1599,30 @@
   },
   {
     "ContainingType": "Api.Controllers.ShowtimesController",
-    "Method": "DeleteShowtime",
-    "RelativePath": "api/Showtimes/{showtimeId}",
-    "HttpMethod": "DELETE",
+    "Method": "CancelledShowtime",
+    "RelativePath": "api/Showtimes/{id}/status/cancel",
+    "HttpMethod": "PUT",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "showtimeId",
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.ShowtimesController",
+    "Method": "ConfirmedShowtime",
+    "RelativePath": "api/Showtimes/{id}/status/confirm",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
         "Type": "System.Guid",
         "IsRequired": true
       }
@@ -1547,6 +1740,38 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "Api.Controllers.ShowtimesController",
+    "Method": "GetShowtimePerformanceAsync",
+    "RelativePath": "api/Showtimes/performance/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.ShowtimesController",
+    "Method": "GetShowtimeSetupDataAsync",
+    "RelativePath": "api/Showtimes/setup-data/{cinemaId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cinemaId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "Api.Controllers.StaffsController",
     "Method": "GetShiftsAsync",
     "RelativePath": "api/Staffs/{cinemaId}/shifts",
@@ -1605,6 +1830,22 @@
       {
         "Name": "request",
         "Type": "Shared.Models.DataModels.InventoryDtos.EmployeeCreateRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.StaffsController",
+    "Method": "DeleteShiftToCinemaAsync",
+    "RelativePath": "api/Staffs/delete-shifts-to-cinema/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
         "IsRequired": true
       }
     ],
@@ -1674,6 +1915,27 @@
       {
         "Name": "cinemaId",
         "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Api.Controllers.StaffsController",
+    "Method": "UpdateShiftToCinemaAsync",
+    "RelativePath": "api/Staffs/update-shifts-to-cinema/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "Shared.Models.DataModels.StaffDtos.ShiftRequest",
         "IsRequired": true
       }
     ],

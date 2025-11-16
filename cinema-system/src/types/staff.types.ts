@@ -7,11 +7,33 @@ interface Staff {
     email: string;
     shifts: Shift[];
 }
+
+type AddStaffRequest = {
+    cinemaId: string;
+    email: string;
+    fullName: string;
+    phoneNumber: string;
+    address: string;
+    position: string;
+    department: string;
+    hireDate: string; // ISO dạng chuỗi (toISOString)
+    salary: number;
+    password: string;
+    roles: string[];
+};
+
+
 interface Shift {
     shiftId: string;
     startTime: string;
     endTime: string;
-    shiftDate: string;
+    name: string;
+}
+interface AddShiftToEmployeeRequest {
+    cinemaId: string;
+    startTime: string;
+    endTime: string;
+    name: string;
 }
 
 interface GetShiftsMn extends Shift {
@@ -91,4 +113,8 @@ interface AddStaffFormInput {
     salary: number;
 }
 
-export type { Staff, Shift, StaffWorking, TakeAttendanceOfEmployeeRequest, GetShiftsMn, GetStaffsMn, GetStaffs, AddStaffPayload, AddStaffFormInput };
+export type {
+    Staff, Shift, StaffWorking, TakeAttendanceOfEmployeeRequest, GetShiftsMn,
+    GetStaffsMn, GetStaffs, AddStaffPayload, AddStaffFormInput,
+    AddShiftToEmployeeRequest, AddStaffRequest
+};

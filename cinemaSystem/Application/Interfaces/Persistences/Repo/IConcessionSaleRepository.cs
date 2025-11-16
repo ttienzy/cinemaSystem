@@ -13,5 +13,7 @@ namespace Application.Interfaces.Persistences.Repo
     {
         Task<PaginatedList<ConcessionSaleHistoryResponse>> GetConcessionSaleHistory(Guid cinemaId, ConcessionSaleQueryParameter query);
         Task<IEnumerable<ConcessionRevenueResponse>> GetConcessionRevenueReportAsync(Guid cinemaId);
+        Task<IEnumerable<RevenueReportResponseDto>> GetRevenueReportAsync(RevenueReportRequestDto request);
+        Task<IEnumerable<RevenueMonthlyReportResponseDto>> GetMonthlyRevenueReportAsync(RevenueMonthlyReportRequestDto request);
     }
 }

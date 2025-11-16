@@ -40,6 +40,16 @@ namespace Api.Controllers
             }
             return ErrorResponse<ShowtimeSeatingPlanResponse>.WithError(result);
         }
+        [HttpGet("{id:guid}")]
+        public async Task<IActionResult> GetShowtimeByIdAsync(Guid id)
+        {
+            var result = await _showtimeService.GetShowtimeByIdAsync(id);
+            if (result.IsSuccess)
+            {
+                return Ok(result.Value);
+            }
+            return ErrorResponse<ShowtimeResponse>.WithError(result);
+        }
         [HttpGet("detail")]
         public async Task<IActionResult> GetShowtimeFeaturedAsync([FromQuery] ShowtimeQueryParameters parameters)
         {
@@ -50,7 +60,29 @@ namespace Api.Controllers
             }
             return ErrorResponse<ShowtimeFeaturedResponse>.WithError(result);
         }
-        [Authorize(Roles = $"{RoleConstant.User}")]
+        [HttpGet("performance/{cinemaId}")]
+        public async Task<IActionResult> GetShowtimePerformanceAsync(Guid cinemaId)
+        {
+            var result = await _showtimeService.GetShowtimePerformanceAsync(cinemaId);
+            if (result.IsSuccess)
+            {
+                return Ok(result.Value);
+            }
+            return ErrorResponse<IEnumerable<ShowtimePerformanceDto>>.WithError(result);
+        }
+        [HttpGet("setup-data/{cinemaId}")]
+        public async Task<IActionResult> GetShowtimeSetupDataAsync(Guid cinemaId)
+        {
+            var result = await _showtimeService.GetShowtimeSetupDataAsync(cinemaId);
+            if (result.IsSuccess)
+            {
+                return Ok(result.Value);
+            }
+            return ErrorResponse<ShowtimeSetupDataDto>.WithError(result);
+        }
+
+
+        [Authorize(Roles = $"{RoleConstant.Manager}")]
         [HttpPost]
         public async Task<IActionResult> CreateShowtime([FromBody] ShowtimeRequest request)
         {
@@ -91,13 +123,23 @@ namespace Api.Controllers
             }
             return ErrorResponse<ShowtimePricingResponse>.WithError(result);
         }
-        [HttpDelete("{showtimeId}")]
-        public async Task<IActionResult> DeleteShowtime(Guid showtimeId)
+        [HttpPut("{id}/status/confirm")]
+        public async Task<IActionResult> ConfirmedShowtime(Guid id)
         {
-            var result = await _showtimeService.DeleteShowtimeAsync(showtimeId);
+            var result = await _showtimeService.ConfirmedShowtimeAsync(id);
             if (result.IsSuccess)
             {
-                return Ok(new { message = "Showtime deleted successfully." });
+                return Ok(new { message = "Showtime confirmed successfully." });
+            }
+            return ErrorResponse<object>.WithError(result);
+        }
+        [HttpPut("{id}/status/cancel")]
+        public async Task<IActionResult> CancelledShowtime(Guid id)
+        {
+            var result = await _showtimeService.CancelledShowtimeAsync(id);
+            if (result.IsSuccess)
+            {
+                return Ok(new { message = "Showtime cancelled successfully." });
             }
             return ErrorResponse<object>.WithError(result);
         }

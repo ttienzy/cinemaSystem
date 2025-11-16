@@ -2,72 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import { Users, Phone, Mail, BadgeCheck, BadgeX, PlusCircle } from 'lucide-react';
-
 import Modal from '../../../components/common/Modal';
 import AddStaffForm from '../../../components/manager-cpnts/AddStaffForm';
 import { type GetStaffs } from '../../../types/staff.types'; // Sử 
+import { useAppDispatch, useAppSelector } from '../../../hooks/redux';
+import { getStaffsMn } from '../../../store/slices/staffSlice';
 
 
-
-// 2. Dữ liệu Mock (đã cập nhật salary)
-const mockStaffData: GetStaffs[] = [
-    {
-        id: 'staff-001',
-        fullName: 'Nguyễn Văn An',
-        position: 'Trưởng phòng kinh doanh',
-        department: 'Kinh Doanh',
-        phone: '0987654321',
-        email: 'annv@cinema.com',
-        address: '123 Đường ABC, Quận 1, TP. HCM',
-        hireDate: '2022-08-20T00:00:00Z',
-        salary: 120000, // 120k/giờ
-        status: 'Active',
-    },
-    {
-        id: 'staff-002',
-        fullName: 'Trần Thị Bích',
-        position: 'Nhân viên bán vé',
-        department: 'Quầy Vé',
-        phone: '0912345678',
-        email: 'bichtp@cinema.com',
-        address: '456 Đường XYZ, Quận 3, TP. HCM',
-        hireDate: '2023-01-10T00:00:00Z',
-        salary: 45000, // 45k/giờ
-        status: 'Active',
-    },
-    {
-        id: 'staff-003',
-        fullName: 'Lê Minh Cường',
-        position: 'Nhân viên kỹ thuật',
-        department: 'Kỹ Thuật',
-        phone: '0905112233',
-        email: 'cuonglm@cinema.com',
-        address: '789 Đường LMN, Quận Gò Vấp, TP. HCM',
-        hireDate: '2021-11-05T00:00:00Z',
-        salary: 60000, // 60k/giờ
-        status: 'Terminated',
-    },
-    {
-        id: 'staff-004',
-        fullName: 'Phạm Thị Dung',
-        position: 'Nhân viên soát vé',
-        department: 'Sảnh Chờ',
-        phone: '0938445566',
-        email: 'dungpt@cinema.com',
-        address: '101 Đường OPQ, Quận Tân Bình, TP. HCM',
-        hireDate: '2023-03-12T00:00:00Z',
-        salary: 42000, // 42k/giờ
-        status: 'Active',
-    },
-];
 
 const ManagerStaffList: React.FC = () => {
-    const [staffs, setStaffs] = useState<GetStaffs[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const { getStaffMn, loading, error } = useAppSelector((state) => state.staff);
+    const dispatch = useAppDispatch();
+
     useEffect(() => {
-        localStorage.setItem('cinemaId', '3fa85f64-5717-4562-b3fc-2c963f66afa6');
-        setStaffs(mockStaffData);
+        const cinemaId = localStorage.getItem('cinemaId');
+        if (cinemaId) {
+            dispatch(getStaffsMn(cinemaId));
+        }
     }, []);
 
     const handleStatusChange = (staff: GetStaffs) => {
@@ -81,7 +34,7 @@ const ManagerStaffList: React.FC = () => {
         }
     };
     const handleAddStaff = (newStaff: GetStaffs) => {
-        setStaffs(prevStaffs => [newStaff, ...prevStaffs]);
+        //setStaffs(prevStaffs => [newStaff, ...prevStaffs]);
         setIsModalOpen(false);
     };
 
@@ -115,7 +68,7 @@ const ManagerStaffList: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {staffs.map((staff) => (
+                        {getStaffMn.map((staff) => (
                             <tr key={staff.id} className="hover:bg-gray-50 transition-colors duration-200">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="text-sm font-medium text-gray-900">{staff.fullName}</div>
@@ -158,7 +111,7 @@ const ManagerStaffList: React.FC = () => {
                     </tbody>
                 </table>
             </div>
-            {staffs.length === 0 && (
+            {getStaffMn.length === 0 && (
                 <div className="text-center py-10 text-gray-500">
                     Không tìm thấy thông tin nhân viên.
                 </div>
@@ -169,7 +122,7 @@ const ManagerStaffList: React.FC = () => {
                 title="Thêm nhân viên mới"
             >
                 <AddStaffForm
-                    onCancel={() => setIsModalOpen(false)}
+                    onClose={() => setIsModalOpen(false)}
                     onSubmit={handleAddStaff}
                 />
             </Modal>

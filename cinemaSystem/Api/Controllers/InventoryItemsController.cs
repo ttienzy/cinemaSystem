@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Persistences;
+using Domain.Entities.InventoryAggregate;
 using Infrastructure.Identity.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -28,6 +29,14 @@ namespace Api.Controllers
             if (result.IsSuccess)
                 return Ok(result.Value);
             return ErrorResponse<IEnumerable<InventoryResponse>>.WithError(result);
+        }
+        [HttpGet("details")]
+        public async Task<IActionResult> GetItemDetailsAsync([FromQuery] Guid itemId)
+        {
+            var result = await _inventoryService.GetConcessionItemsDetailAsync(itemId);
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            return ErrorResponse<IEnumerable<InventoryItem>>.WithError(result);
         }
 
         [HttpGet("sale-history/{cinemaId:guid}")]
@@ -61,6 +70,25 @@ namespace Api.Controllers
             if (result.IsSuccess)
                 return Ok(result.Value);
             return ErrorResponse<IEnumerable<ConcessionRevenueResponse>>.WithError(result);
+        }
+        [HttpGet("revenue-report-daily/{cinemaId:guid}")]
+        public async Task<IActionResult> GetRevenueReportAsync(Guid cinemaId, [FromQuery] RevenueReportRequestDto request)
+        {
+            request.CinemaId = cinemaId;
+            var result = await _inventoryService.GetRevenueReportAsync(request);
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            return ErrorResponse<IEnumerable<RevenueReportResponseDto>>.WithError(result);
+        }
+
+        [HttpGet("revenue-report-monthly/{cinemaId:guid}")]
+        public async Task<IActionResult> GetMonthlyRevenueReportAsync(Guid cinemaId, [FromQuery] RevenueMonthlyReportRequestDto request)
+        {
+            request.CinemaId = cinemaId;
+            var result = await _inventoryService.GetMonthlyRevenueReportAsync(request);
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            return ErrorResponse<IEnumerable<RevenueMonthlyReportResponseDto>>.WithError(result);
         }
 
         [HttpPost]

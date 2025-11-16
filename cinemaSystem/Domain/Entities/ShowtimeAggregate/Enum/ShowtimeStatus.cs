@@ -11,6 +11,5 @@ namespace Domain.Entities.ShowtimeAggregate.Enum
         Scheduled = 1, // Showtime is scheduled but not yet confirmed
         Confirmed = 2, // Showtime is confirmed and ready for bookings
         Cancelled = 3, // Showtime has been cancelled
-        Completed = 4, // Showtime has been completed
     }
 }

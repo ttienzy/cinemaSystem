@@ -51,6 +51,7 @@ namespace Infrastructure
             services.AddScoped<IShowtimeRepository, ShowtimeRepository>();
             services.AddScoped<IBookingRepository, BookingRepository>();
             services.AddScoped<IConcessionSaleRepository, ConcessionSaleRepository>();
+            services.AddScoped<ICinemaInsightRepository, CinemaInsightRepository>();
 
             services.AddScoped<IMovieService, MovieService>();
             services.AddScoped<ISeatTypeService, SeatTypeService>();

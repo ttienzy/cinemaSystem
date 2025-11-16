@@ -29,6 +29,8 @@ namespace Domain.Entities.ShowtimeAggregate
         public Showtime()
         {
         }
+
+
         public Showtime(Guid cinemaId, Guid movieId, Guid screenId, Guid slotId, Guid pricingTierId, DateTime showDate, DateTime actualStartTime, DateTime actualEndTime, ShowtimeStatus status)
         {
             CinemaId = cinemaId;
@@ -53,6 +55,18 @@ namespace Domain.Entities.ShowtimeAggregate
             ActualStartTime = actualStartTime;
             ActualEndTime = actualEndTime;
             Status = status;
+        }
+        public void UpdateStatus(ShowtimeStatus status)
+        {
+            Status = status;
+        }
+        public void MarkAsCancelled()
+        {
+            Status = ShowtimeStatus.Cancelled;
+        }
+        public void MarkAsConfirmed()
+        {
+            Status = ShowtimeStatus.Confirmed;
         }
 
         public List<ShowtimePricing> GetAllShowtimePricings()

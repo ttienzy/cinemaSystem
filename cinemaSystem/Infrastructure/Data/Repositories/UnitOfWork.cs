@@ -28,7 +28,7 @@ namespace Infrastructure.Data.Repositories
         public IRepository<InventoryItem> InventoryItems => new EfRepository<InventoryItem>(_context);
         public IRepository<ConcessionSale> ConcessionSales => new EfRepository<ConcessionSale>(_context);
 
-        public async Task BeginTractionAsync() => await _context.Database.BeginTransactionAsync();
+        public async Task BeginTransactionAsync() => await _context.Database.BeginTransactionAsync();
 
         public async Task CommitTransactionAsync() => await _context.Database.CommitTransactionAsync();
 

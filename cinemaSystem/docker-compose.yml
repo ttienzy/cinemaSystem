@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cinema_sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=ComplexPassword123!
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ComplexPassword123! -Q "SELECT 1" -C || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - cinema_network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: cinema_redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - cinema_network
+
+  # Mailhog for email testing (optional)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: cinema_mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - cinema_network
+
+  # API Application
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cinema_api
+    environment:
+      # Connection Strings
+      - ConnectionStrings__BookingConnection=Server=sqlserver;Database=Booking;User=sa;Password=ComplexPassword123!;TrustServerCertificate=True
+      - ConnectionStrings__IdentityConnection=Server=sqlserver;Database=Identity;User=sa;Password=ComplexPassword123!;TrustServerCertificate=True
+      - ConnectionStrings__RedisConnection=redis:6379
+      
+      # JWT Settings
+      - Jwt__Issuer=BookingApi
+      - Jwt__Audience=BookingApiUsers
+      - Jwt__SecretKey=fjwhi493rkj3brkj3?><ewjo3u093rhnf899r32b8r3hjkh#%#$%
+      - Jwt__AccessTokenExpiration=20
+      - Jwt__RefreshTokenExpiration=7
+      
+      # SMTP Settings (using Mailhog for testing)
+      - Smtp__Server=mailhog
+      - Smtp__Port=1025
+      - Smtp__SenderName=CinemaSystem
+      - Smtp__SenderEmail=noreply@cinema.local
+      - Smtp__Username=
+      - Smtp__Password=
+      
+      # VnPay Settings (use sandbox for testing)
+      - Vnpay__vnp_TmnCode=RCQ192AT
+      - Vnpay__HashSecret=CR3CTXV9101ATEGO7GFGWO80JTXD2AZ3
+      - Vnpay__BaseUrl=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+      - Vnpay__vnp_Command=pay
+      - Vnpay__vnp_CurrCode=VND
+      - Vnpay__vnp_Version=2.1.0
+      - Vnpay__vnp_Locale=vn
+      
+      # Payment Callback
+      - PaymentCallBack__vnp_ReturnUrl=http://localhost:8080/api/Bookings/callback
+      
+      # TimeZone
+      - TimeZone__Id=SE Asia Standard Time
+      
+      # ASP.NET Core
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cinema_network
+    restart: unless-stopped
+
+  # Optional: Adminer for database management
+  adminer:
+    image: adminer:latest
+    container_name: cinema_adminer
+    ports:
+      - "8082:8080"
+    depends_on:
+      - sqlserver
+    networks:
+      - cinema_network
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+  redis_data:
+
+networks:
+  cinema_network:
+    driver: bridge

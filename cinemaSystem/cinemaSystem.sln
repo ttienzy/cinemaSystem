@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{F465542E-DA22-44BF-87AC-BD606D07AF97}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,6 +44,13 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C8ADCC4D-3987-4136-BC5E-A95FA896C388} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{C2B1F537-9449-4C9A-9C36-D05CFD4DF53D} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{5CC04AC1-3DEF-46B7-8804-D52785914978} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{B62A3BFC-5859-4AF4-B316-C05170119932} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{F465542E-DA22-44BF-87AC-BD606D07AF97} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0A9F9523-CE89-4707-A9C7-67592AA0EECE}

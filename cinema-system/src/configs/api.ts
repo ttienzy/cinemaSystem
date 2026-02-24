@@ -54,7 +54,6 @@ const processQueue = (error: any, token: string | null = null) => {
 // Handle logout functionality
 const handleLogout = (message: string) => {
     localStorage.clear();
-    alert(message);
     window.location.href = "/login";
 };
 

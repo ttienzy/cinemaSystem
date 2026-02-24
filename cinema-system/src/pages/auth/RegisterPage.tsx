@@ -34,94 +34,113 @@ export const RegisterPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center py-12">
-            <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-                <h1 className="text-2xl font-bold mb-6 text-center">Đăng ký tài khoản</h1>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-md">
+                {/* Logo and Title */}
+                <div className="text-center mb-8">
+                    <h1 className="text-2xl font-semibold text-gray-900 mb-2">Cinema Management</h1>
+                    <p className="text-sm text-gray-600">Hệ thống quản lý rạp chiếu phim</p>
+                </div>
 
-                {error && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                        <span className="block sm:inline">{error}</span>
-                    </div>
-                )}
+                {/* Register Card */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+                    <h2 className="text-xl font-medium text-gray-900 mb-6">Đăng ký tài khoản</h2>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="userName">
-                            Tên người dùng:
-                        </label>
-                        <input
-                            id="userName"
-                            title='userName'
-                            type="text"
-                            name="userName"
-                            value={formData.userName}
-                            onChange={handleChange}
-                            required
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        />
-                    </div>
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 text-sm" role="alert">
+                            <span className="block sm:inline">{error}</span>
+                        </div>
+                    )}
 
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
-                            Email:
-                        </label>
-                        <input
-                            id="email"
-                            title='email'
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            required
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        />
-                    </div>
+                    <form onSubmit={handleSubmit}>
+                        <div className="mb-5">
+                            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="userName">
+                                Tên người dùng
+                            </label>
+                            <input
+                                id="userName"
+                                title='userName'
+                                type="text"
+                                name="userName"
+                                value={formData.userName}
+                                onChange={handleChange}
+                                required
+                                placeholder="Nhập tên người dùng"
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                            />
+                        </div>
 
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
-                            Mật khẩu:
-                        </label>
-                        <input
-                            id="password"
-                            title='password'
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            required
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        />
-                    </div>
+                        <div className="mb-5">
+                            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="email">
+                                Email
+                            </label>
+                            <input
+                                id="email"
+                                title='email'
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                required
+                                placeholder="email@example.com"
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                            />
+                        </div>
 
-                    <div className="mb-6">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="phoneNumber">
-                            Số điện thoại:
-                        </label>
-                        <input
-                            id="phoneNumber"
-                            title='phoneNumber'
-                            type="text"
-                            name="phoneNumber"
-                            value={formData.phoneNumber}
-                            onChange={handleChange}
-                            required
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        />
-                    </div>
+                        <div className="mb-5">
+                            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="password">
+                                Mật khẩu
+                            </label>
+                            <input
+                                id="password"
+                                title='password'
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                required
+                                placeholder="Nhập mật khẩu"
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                            />
+                        </div>
 
-                    <div className="flex items-center justify-center">
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="phoneNumber">
+                                Số điện thoại
+                            </label>
+                            <input
+                                id="phoneNumber"
+                                title='phoneNumber'
+                                type="text"
+                                name="phoneNumber"
+                                value={formData.phoneNumber}
+                                onChange={handleChange}
+                                required
+                                placeholder="0123456789"
+                                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                            />
+                        </div>
+
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:bg-blue-300"
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm"
                         >
                             {loading ? 'Đang đăng ký...' : 'Đăng ký'}
                         </button>
-                    </div>
-                </form>
+                    </form>
 
-                <p className="text-center text-gray-500 text-sm mt-6">
-                    Đã có tài khoản? <Link to="/login" className="text-blue-500 hover:text-blue-800 font-bold">Đăng nhập</Link>
+                    <p className="text-center text-sm text-gray-600 mt-6">
+                        Đã có tài khoản?{' '}
+                        <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
+                            Đăng nhập ngay
+                        </Link>
+                    </p>
+                </div>
+
+                {/* Footer */}
+                <p className="text-center text-xs text-gray-500 mt-8">
+                    © 2025 Cinema Management System
                 </p>
             </div>
         </div>

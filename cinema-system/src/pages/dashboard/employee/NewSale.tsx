@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Seat, SeatsSelectedResponse, SelectedSeat } from '../../../types/showtime.type';
 import TabNavigation from '../../../components/concession/TabNavigation';
 import DateSelector from '../../../components/concession/DateSelector';
@@ -16,47 +16,85 @@ import { Coffee, Film } from 'lucide-react';
 import { getShowtimeSeatingPlan } from '../../../store/slices/showtimeSlice';
 import { useSignalR } from '../../../contexts/SignalRContext';
 
+// Utility function để format date theo local timezone (VN)
+const getLocalDateString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
 
-
+// Utility function để tạo Date array
+const generateDateRange = (startDate: Date, days: number): Date[] => {
+    return Array.from({ length: days }, (_, i) => {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        return date;
+    });
+};
 
 const EmployeeNewSale: React.FC = () => {
-    const cinemaId = useMemo(() => localStorage.getItem('cinemaId'), []);
-    const staffId = useMemo(() => localStorage.getItem('staffId'), []);
-    if (!cinemaId || !staffId) {
-        alert('No cinema assigned. Please contact admin.');
-        return <div className="p-6">No cinema assigned. Please contact admin.</div>;
-    }
-    const [activeTab, setActiveTab] = useState<'combo' | 'concession'>('combo');
-    const { connection, isConnected } = useSignalR();
-    const [cart, setCart] = useState<CartItem>({ staffId: staffId || '00000000-0000-0000-0000-000000000000', concessions: [], paymentMethod: 'cash', tickets: { showtimeId: '00000000-0000-0000-0000-000000000000', actualStartTime: '', actualEndTime: '', movieTitle: '', selectedSeats: [] } });
-    const [showSeatSelection, setShowSeatSelection] = useState(false);
-    const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
-    const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
-
-    const today = new Date();
-    const endDate = new Date(today);
-    endDate.setDate(today.getDate() + 6);
-    const dates: Date[] = [];
-    let currentDate = new Date(today);
-    while (currentDate <= endDate) {
-        dates.push(new Date(currentDate));
-        currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    const [selectedDate, setSelectedDate] = useState<string>(today.toISOString().split('T')[0]);
-
     const dispatch = useAppDispatch();
+    const { connection, isConnected } = useSignalR();
+
+    // Redux selectors
     const { moviesListFeature } = useAppSelector(state => state.movie);
     const { items } = useAppSelector(state => state.inventory);
     const { showtimeInfo, pricings, seats } = useAppSelector(state => state.showtime);
 
+    // Memoized values
+    const cinemaId = useMemo(() => localStorage.getItem('cinemaId'), []);
+    const staffId = useMemo(() => localStorage.getItem('staffId'), []);
+
+    const today = useMemo(() => new Date(), []);
+    const dates = useMemo(() => generateDateRange(today, 7), [today]);
+
+    const initialCart = useMemo((): CartItem => ({
+        staffId: staffId || '00000000-0000-0000-0000-000000000000',
+        concessions: [],
+        paymentMethod: 'cash',
+        tickets: {
+            showtimeId: '00000000-0000-0000-0000-000000000000',
+            actualStartTime: '',
+            actualEndTime: '',
+            movieTitle: '',
+            selectedSeats: []
+        }
+    }), [staffId]);
+
+    // State
+    const [activeTab, setActiveTab] = useState<'combo' | 'concession'>('combo');
+    const [selectedDate, setSelectedDate] = useState<string>(() => getLocalDateString(today));
+    const [cart, setCart] = useState<CartItem>(initialCart);
+    const [showSeatSelection, setShowSeatSelection] = useState(false);
+    const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
+    const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
+
+    // Validation check
+    if (!cinemaId || !staffId) {
+        return <div className="p-6">No cinema assigned. Please contact admin.</div>;
+    }
+
+    // Initial data fetch
     useEffect(() => {
         dispatch(getInventory(cinemaId));
-        dispatch(getMoviesListFeature({ cinemaId: cinemaId, showDate: selectedDate }));
-    }, []);
-    // Simulate fetching seat data when clicking a showtime
-    const fetchSeatData = async (showtimeId: string) => {
+        dispatch(getMoviesListFeature({ cinemaId, showDate: selectedDate }));
+    }, [dispatch, cinemaId, selectedDate]);
 
+    // Reset cart when tab changes
+    useEffect(() => {
+        setCart(initialCart);
+    }, [activeTab, initialCart]);
+
+    // Date change handler
+    const handleDateChange = useCallback((date: string) => {
+        if (date === selectedDate) return;
+        setSelectedDate(date);
+        dispatch(getMoviesListFeature({ cinemaId, showDate: date }));
+    }, [selectedDate, dispatch, cinemaId]);
+
+    // Seat selection handlers
+    const fetchSeatData = useCallback(async (showtimeId: string) => {
         if (isConnected && connection) {
             try {
                 await connection.invoke('JoinShowtimeGroup', showtimeId);
@@ -64,212 +102,183 @@ const EmployeeNewSale: React.FC = () => {
                 console.error('Failed to join group:', error);
             }
         }
-        await dispatch(getShowtimeSeatingPlan(showtimeId))
-
-        const data: SeatsSelectedResponse = {
-            showtimeInfo: showtimeInfo,
-            pricings: pricings,
-            seats: seats,
-        }
-        console.log(data);
+        await dispatch(getShowtimeSeatingPlan(showtimeId));
         setShowSeatSelection(true);
-    };
+    }, [isConnected, connection, dispatch]);
 
-    const handleDateChange = (date: string) => {
-        if (date === selectedDate) return;
-        setSelectedDate(date);
-        console.log(date);
-        dispatch(getMoviesListFeature({ cinemaId: cinemaId, showDate: date }));
-    };
-
-    const handleSelectSeat = (seat: Seat) => {
+    const handleSelectSeat = useCallback((seat: Seat) => {
         if (seat.status !== 'Available') return;
 
         const pricing = pricings.find(p => p.seatTypeId === seat.seatTypeId);
         if (!pricing) return;
 
-        const existingIndex = selectedSeats.findIndex(s => s.seatId === seat.id);
-        let newSelected;
-        if (existingIndex >= 0) {
-            // Toggle: remove if already selected
-            newSelected = selectedSeats.filter(s => s.seatId !== seat.id);
-        } else {
-            // Add if not selected
-            newSelected = [...selectedSeats, { seatId: seat.id, price: pricing.finalPrice }];
-        }
-        setSelectedSeats(newSelected);
-    };
+        setSelectedSeats(prev => {
+            const existingIndex = prev.findIndex(s => s.seatId === seat.id);
+            if (existingIndex >= 0) {
+                return prev.filter(s => s.seatId !== seat.id);
+            }
+            return [...prev, { seatId: seat.id, price: pricing.finalPrice }];
+        });
+    }, [pricings]);
 
-    const addTicketToCart = async () => {
+    const addTicketToCart = useCallback(async () => {
         if (selectedSeats.length === 0) return;
 
-        setCart(prve => {
-            return { ...prve, tickets: { showtimeId: showtimeInfo.id, actualStartTime: showtimeInfo.actualStartTime, actualEndTime: showtimeInfo.actualEndTime, movieTitle: showtimeInfo.movieTitle, selectedSeats: selectedSeats } };
-        });
+        setCart(prev => ({
+            ...prev,
+            tickets: {
+                showtimeId: showtimeInfo.id,
+                actualStartTime: showtimeInfo.actualStartTime,
+                actualEndTime: showtimeInfo.actualEndTime,
+                movieTitle: showtimeInfo.movieTitle,
+                selectedSeats
+            }
+        }));
 
-        // ivoke update seat status
         if (isConnected && connection) {
             try {
                 await connection.invoke("SeatsReserved", showtimeInfo.id, selectedSeats.map(s => s.seatId));
-            }
-            catch (err) {
-                console.log(err);
+            } catch (err) {
+                console.error('Seat reservation error:', err);
             }
         }
+
         setShowSeatSelection(false);
         setSelectedSeats([]);
-    };
+    }, [selectedSeats, showtimeInfo, isConnected, connection]);
 
-    const addConcessionToCart = (item: InventoryItem) => {
-        const existingItem = cart.concessions.find(cartItem => cartItem.itemId === item.id);
+    // Concession handlers
+    const addConcessionToCart = useCallback((item: InventoryItem) => {
+        setCart(prev => {
+            const existingItem = prev.concessions.find(cartItem => cartItem.itemId === item.id);
 
-        if (existingItem) {
-            //check quantity before update
-            if (existingItem.quantity >= item.currentStock) return;
-            setCart(prev => {
+            if (existingItem) {
+                if (existingItem.quantity >= item.currentStock) return prev;
+
                 return {
-                    ...prev, concessions: prev.concessions.map(cartItem =>
+                    ...prev,
+                    concessions: prev.concessions.map(cartItem =>
                         cartItem.itemId === item.id
                             ? { ...cartItem, quantity: cartItem.quantity + 1 }
                             : cartItem
                     )
                 };
-            });
-        } else {
-            setCart(prev => ({
+            }
+
+            return {
                 ...prev,
-                concessions: [...prev.concessions, { itemId: item.id, itemName: item.itemName, price: item.unitPrice, quantity: 1 }]
-            }));
-        }
-    };
-    const handleUpdateItem = (itemId: string, action: 'increase' | 'decrease' | 'remove') => {
+                concessions: [
+                    ...prev.concessions,
+                    { itemId: item.id, itemName: item.itemName, price: item.unitPrice, quantity: 1 }
+                ]
+            };
+        });
+    }, []);
+
+    const handleUpdateItem = useCallback((itemId: string, action: 'increase' | 'decrease' | 'remove') => {
         setCart(prev => ({
             ...prev,
             concessions: prev.concessions
                 .map(item => {
-                    if (item.itemId === itemId) {
-                        let newQuantity = item.quantity;
-                        if (action === 'increase') {
+                    if (item.itemId !== itemId) return item;
+
+                    let newQuantity = item.quantity;
+                    switch (action) {
+                        case 'increase':
                             newQuantity = item.quantity + 1;
-                        } else if (action === 'decrease') {
-                            newQuantity = item.quantity > 1 ? item.quantity - 1 : item.quantity;
-                        } else if (action === 'remove') {
+                            break;
+                        case 'decrease':
+                            newQuantity = Math.max(1, item.quantity - 1);
+                            break;
+                        case 'remove':
                             newQuantity = 0;
-                        }
-                        return { ...item, quantity: newQuantity };
+                            break;
                     }
-                    return item;
+                    return { ...item, quantity: newQuantity };
                 })
                 .filter(item => item.quantity > 0)
         }));
-    };
-    const handleRemoveTicket = () => {
+    }, []);
+
+    const handleRemoveTicket = useCallback(async () => {
         try {
-            if (connection && isConnected) {
-                connection.invoke('SeatsReleased', cart.tickets.showtimeId, cart.tickets.selectedSeats.map(s => s.seatId));
-                setCart(prve => {
-                    return { ...prve, tickets: { showtimeId: '00000000-0000-0000-0000-000000000000', actualStartTime: '', actualEndTime: '', movieTitle: '', selectedSeats: [] } };
-                });
+            if (connection && isConnected && cart.tickets.selectedSeats.length > 0) {
+                await connection.invoke('SeatsReleased', cart.tickets.showtimeId, cart.tickets.selectedSeats.map(s => s.seatId));
             }
-        }
-        catch (error) {
+            setCart(prev => ({ ...prev, tickets: initialCart.tickets }));
+        } catch (error) {
             console.error('Remove ticket error:', error);
         }
-    }
+    }, [connection, isConnected, cart.tickets, initialCart.tickets]);
 
-    const handleClearCart = () => {
-        // Release seats if any
+    const handleClearCart = useCallback(async () => {
         if (cart.tickets.selectedSeats.length > 0) {
-            handleRemoveTicket();
+            await handleRemoveTicket();
         }
-        setCart({ staffId: staffId || '00000000-0000-0000-0000-000000000000', concessions: [], paymentMethod: 'cash', tickets: { showtimeId: '00000000-0000-0000-0000-000000000000', actualStartTime: '', actualEndTime: '', movieTitle: '', selectedSeats: [] } });
-    }
+        setCart(initialCart);
+    }, [cart.tickets.selectedSeats.length, handleRemoveTicket, initialCart]);
 
+    // Calculation functions
+    const getTotalAmount = useCallback(() => {
+        const ticketsTotal = cart.tickets.selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
+        const concessionsTotal = cart.concessions.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        return ticketsTotal + concessionsTotal;
+    }, [cart]);
 
-
-    const getTotalAmount = () => {
-        let total = 0;
-        cart.tickets.selectedSeats.forEach(seat => {
-            total += seat.price;
-        });
-        cart.concessions.forEach(item => {
-            total += item.price * item.quantity;
-        });
-        return total;
-    };
-
-
-    const formatCurrency = (amount: number) => {
+    // Format functions
+    const formatCurrency = useCallback((amount: number) => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
             currency: 'VND'
         }).format(amount);
-    };
+    }, []);
 
-    const getDateString = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('vi-VN', {
-            day: 'numeric',
-            month: 'numeric',
-            year: 'numeric'
-        });
-    };
+    const getDateString = useCallback((dateStr: string) => {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        return `${day}/${month}/${year}`;
+    }, []);
 
-    const getSeatColor = (seat: Seat, isSelected: boolean) => {
+    const formatVN = useCallback((d: Date) => {
+        const day = d.getDate();
+        const month = d.getMonth() + 1;
+        return `${day}/${month}`;
+    }, []);
+
+    const getSeatColor = useCallback((seat: Seat, isSelected: boolean) => {
         if (isSelected) return 'bg-blue-500 text-white border-blue-500';
 
-        // Base colors for different seat types
-        const getBaseColor = (status: string) => {
-            switch (status.toLowerCase()) {
-                case 'available':
-                    return seat.seatTypeName.toLowerCase() === 'vip'
-                        ? 'bg-purple-50 hover:bg-purple-100 text-purple-800'
-                        : seat.seatTypeName.toLowerCase() === 'couple'
-                            ? 'bg-pink-50 hover:bg-pink-100 text-pink-800'
-                            : 'bg-green-50 hover:bg-green-100 text-green-800';
-                case 'reserved':
-                    return 'bg-yellow-100 text-yellow-800 cursor-not-allowed';
-                case 'booked':
-                    return 'bg-red-100 text-red-800 cursor-not-allowed';
-                case 'unavailable':
-                    return 'bg-gray-100 text-gray-500 cursor-not-allowed';
-                default:
-                    return 'bg-gray-100 text-gray-500 cursor-not-allowed';
-            }
+        const statusColorMap: Record<string, string> = {
+            available: seat.seatTypeName.toLowerCase() === 'vip'
+                ? 'bg-purple-50 hover:bg-purple-100 text-purple-800'
+                : seat.seatTypeName.toLowerCase() === 'couple'
+                    ? 'bg-pink-50 hover:bg-pink-100 text-pink-800'
+                    : 'bg-green-50 hover:bg-green-100 text-green-800',
+            reserved: 'bg-yellow-100 text-yellow-800 cursor-not-allowed',
+            booked: 'bg-red-100 text-red-800 cursor-not-allowed',
+            unavailable: 'bg-gray-100 text-gray-500 cursor-not-allowed'
         };
 
-        return getBaseColor(seat.status);
-    };
+        return statusColorMap[seat.status.toLowerCase()] || 'bg-gray-100 text-gray-500 cursor-not-allowed';
+    }, []);
 
-    const confirmPayment = () => {
-        // call api to confirm payment
+    // Payment handler
+    const confirmPayment = useCallback(async () => {
         try {
-            dispatch(confirmConcessionPurchase({ cinemaId: cinemaId, cartItem: cart }));
+            await dispatch(confirmConcessionPurchase({ cinemaId, cartItem: cart }));
             alert('Payment confirmed!');
-            // Reset cart or handle success
-            setCart({ staffId: staffId || '00000000-0000-0000-0000-000000000000', concessions: [], paymentMethod: 'cash', tickets: { showtimeId: '00000000-0000-0000-0000-000000000000', actualStartTime: '', actualEndTime: '', movieTitle: '', selectedSeats: [] } });
+            setCart(initialCart);
             setPaymentMethod('cash');
+        } catch (err) {
+            console.error('Payment error:', err);
         }
-        catch (err) {
-            console.error(err);
-        }
-
-    };
-
-    const formatVN = (d: Date) =>
-        d.toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' });
-
-    useEffect(() => {
-        setCart({ staffId: staffId || '00000000-0000-0000-0000-000000000000', concessions: [], paymentMethod: 'cash', tickets: { showtimeId: '00000000-0000-0000-0000-000000000000', actualStartTime: '', actualEndTime: '', movieTitle: '', selectedSeats: [] } });
-    }, [activeTab]);
+    }, [dispatch, cinemaId, cart, initialCart]);
 
     return (
         <div className="flex h-screen bg-gray-50">
-            {/* Main Content */}
             <div className="flex-1 flex flex-col">
                 <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-                {/* Content */}
                 <div className="flex-1 p-6">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
                         {/* Products Section */}
@@ -278,7 +287,7 @@ const EmployeeNewSale: React.FC = () => {
                                 <div>
                                     <h3 className="text-lg font-semibold mb-4 flex items-center">
                                         <Film className="w-5 h-5 mr-2" />
-                                        Lịch chiếu từ {formatVN(today)} đến {formatVN(endDate)}
+                                        Lịch chiếu từ {formatVN(dates[0])} đến {formatVN(dates[6])}
                                     </h3>
 
                                     <DateSelector
@@ -288,7 +297,6 @@ const EmployeeNewSale: React.FC = () => {
                                         formatDate={getDateString}
                                     />
 
-                                    {/* Movies for selected date */}
                                     <div className="space-y-6 max-h-[calc(100vh-400px)] overflow-y-auto">
                                         {moviesListFeature.map(movie => (
                                             <MovieCard
@@ -311,7 +319,6 @@ const EmployeeNewSale: React.FC = () => {
                                         getSeatColor={getSeatColor}
                                     />
 
-                                    {/* Concession Items */}
                                     <div className="mt-8 pt-6 border-t border-gray-200">
                                         <h4 className="font-medium mb-3 flex items-center">
                                             <Coffee className="w-4 h-4 mr-2" />

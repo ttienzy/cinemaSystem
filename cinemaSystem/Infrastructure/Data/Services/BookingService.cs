@@ -58,7 +58,7 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                await _unitOfWork.BeginTractionAsync();
+                await _unitOfWork.BeginTransactionAsync();
 
                 var bookingSpec = new BookingWithPaymentSpec(Guid.Parse(response.OrderDescription));
                 var booking = await _unitOfWork.Bookings.FirstOrDefaultAsync(bookingSpec);
@@ -142,64 +142,104 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                await _unitOfWork.BeginTractionAsync();
+                await _unitOfWork.BeginTransactionAsync();
 
+                // 1. Get booking
                 var bookingSpec = new BookingWithPaymentSpec(Guid.Parse(response.OrderDescription.ToString()));
                 var booking = await _unitOfWork.Bookings.FirstOrDefaultAsync(bookingSpec);
+
                 if (booking == null)
                 {
+                    await _unitOfWork.RollbackTransactionAsync();
                     return BaseResponse<string>.Failure(Error.NotFound("Booking not found"));
                 }
-                booking.MarkAsCompleted();
 
-                
-                var seatIds = booking.BookingTickets.Select(_ => _.SeatId).ToHashSet();
+                // 2. Validate payment
                 var payment = booking.Payments.FirstOrDefault();
                 if (payment == null)
                 {
+                    await _unitOfWork.RollbackTransactionAsync();
                     return BaseResponse<string>.Failure(Error.NotFound("Payment not found"));
                 }
-                var results = await _cacheService.GetAsync<ShowtimeSeatingPlanResponse>(CacheKey.SeatingPlan(booking.ShowtimeId));
-                if (results == null)
+
+                // 3. Get seating plan
+                var seatingPlan = await _cacheService.GetAsync<ShowtimeSeatingPlanResponse>(
+                    CacheKey.SeatingPlan(booking.ShowtimeId));
+
+                if (seatingPlan == null)
                 {
+                    await _unitOfWork.RollbackTransactionAsync();
                     return BaseResponse<string>.Failure(Error.NotFound("Seats not found"));
                 }
-                var emailResponse = new EmailConfirmBookingResponse
+
+                // 4. Update booking status
+                booking.MarkAsCompleted();
+
+                // 5. Update seats in cache
+                var seatIds = booking.BookingTickets.Select(bt => bt.SeatId).ToHashSet();
+                var currentTime = DateTime.UtcNow;
+                var bookedSeats = new List<string>();
+
+                foreach (var seat in seatingPlan.Seats.Where(s => seatIds.Contains(s.Id)))
                 {
-                    BookingCode = booking.Id,
-                    CinemaName = results.ShowtimeInfo.CinemaName,
-                    MovieTitle = results.ShowtimeInfo.MovieTitle,
-                    ScreenName = results.ShowtimeInfo.ScreenName,
-                    Showtime = results.ShowtimeInfo.ShowDate.Date,
-                    TimeSlot = $"{results.ShowtimeInfo.ActualStartTime.ToString("HH:mm")} - {results.ShowtimeInfo.ActualEndTime.ToString("HH:mm")}",
-                    TotalTickets = booking.TotalTickets,
-                    TotalAmount = booking.TotalAmount,
-                    SeatsList = new List<string>()
-                };
-                results.Seats.ForEach(s =>
-                {
-                    if (seatIds.Contains(s.Id))
-                    {
-                        s.Status = Domain.Entities.CinemaAggreagte.Enum.SeatStatus.Booked;
-                        s.LastUpdated = DateTime.UtcNow;
-                        emailResponse.SeatsList.Add($"{s.RowName}{s.Number}");
-                    }
-                });
-                await _cacheService.UpdateAsync<ShowtimeSeatingPlanResponse>(CacheKey.SeatingPlan(booking.ShowtimeId), results);
-                payment.UpdatePayment(response.PaymentMethod, response.TransactionId, response.VnPayResponseCode);
+                    seat.Status = Domain.Entities.CinemaAggreagte.Enum.SeatStatus.Booked;
+                    seat.LastUpdated = currentTime;
+                    bookedSeats.Add($"{seat.RowName}{seat.Number}");
+                }
+
+                await _cacheService.UpdateAsync(
+                    CacheKey.SeatingPlan(booking.ShowtimeId), seatingPlan);
+
+                // 6. Update payment info
+                payment.UpdatePayment(
+                    response.PaymentMethod,
+                    response.TransactionId,
+                    response.VnPayResponseCode);
+
+                // 7. Save to database
                 await _unitOfWork.Bookings.UpdateAsync(booking);
+                await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitTransactionAsync();
-                await _hubContext.Clients.Group(booking.ShowtimeId.ToString()).SendAsync(SignalMethodConstants.OnSeatsBooked, booking.BookingTickets.Select(e => e.SeatId).ToList());
-                await _hubContext.Clients.User(booking.CustomerId.ToString() ?? "#").SendAsync(SignalMethodConstants.OnPaymentSuccessful, booking.BookingTickets.Select(e => e.SeatId).ToList());
+
+                // 8. Send real-time notifications (after successful commit)
+                var bookedSeatIds = booking.BookingTickets.Select(e => e.SeatId).ToList();
+
+                await Task.WhenAll(
+                    _hubContext.Clients
+                        .Group(booking.ShowtimeId.ToString())
+                        .SendAsync(SignalMethodConstants.OnSeatsBooked, bookedSeatIds),
+
+                    _hubContext.Clients
+                        .User(booking.CustomerId?.ToString() ?? "#")
+                        .SendAsync(SignalMethodConstants.OnPaymentSuccessful, bookedSeatIds)
+                );
+
+                // 9. Send confirmation email (fire and forget - don't block the response)
                 if (booking.CustomerId != null)
-                    await _emailService.SendBookingConfirmationEmailAsync(
-                        toEmail: "nguyendientien01062005@gmail.com",
-                        bookingInfo: emailResponse);
+                {
+                    var emailResponse = new EmailConfirmBookingResponse
+                    {
+                        BookingCode = booking.Id,
+                        CinemaName = seatingPlan.ShowtimeInfo.CinemaName,
+                        MovieTitle = seatingPlan.ShowtimeInfo.MovieTitle,
+                        ScreenName = seatingPlan.ShowtimeInfo.ScreenName,
+                        Showtime = seatingPlan.ShowtimeInfo.ShowDate.Date,
+                        TimeSlot = $"{seatingPlan.ShowtimeInfo.ActualStartTime:HH:mm} - {seatingPlan.ShowtimeInfo.ActualEndTime:HH:mm}",
+                        TotalTickets = booking.TotalTickets,
+                        TotalAmount = booking.TotalAmount,
+                        SeatsList = bookedSeats
+                    };
+
+                    _ = SendEmailAsync(emailResponse);
+                }
+
                 return BaseResponse<string>.Success(booking.ShowtimeId.ToString());
             }
             catch (Exception ex)
             {
                 await _unitOfWork.RollbackTransactionAsync();
+                // TODO: Add logging
+                // _logger.LogError(ex, "Error confirming payment for order: {OrderId}", response.OrderDescription);
                 return BaseResponse<string>.Failure(Error.InternalServerError(ex.Message));
             }
             finally
@@ -208,11 +248,27 @@ namespace Infrastructure.Data.Services
             }
         }
 
+        private async Task SendEmailAsync(EmailConfirmBookingResponse emailResponse)
+        {
+            try
+            {
+                await _emailService.SendBookingConfirmationEmailAsync(
+                    toEmail: "nguyendientien01062005@gmail.com", // TODO: Get actual customer email
+                    bookingInfo: emailResponse);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                // Log but don't throw - email failure shouldn't affect payment confirmation
+                // _logger.LogError(ex, "Failed to send booking confirmation email for booking {BookingId}", emailResponse.BookingCode);
+            }
+        }
+
         public async Task<BaseResponse<string>> CreateBookingAsync(PaymentInfomationRequest request, HttpContext httpContext)
         {
             try
             {
-                await _unitOfWork.BeginTractionAsync();
+                await _unitOfWork.BeginTransactionAsync();
 
                 var cachedSeatingPlan = await _cacheService.GetAsync<ShowtimeSeatingPlanResponse>(CacheKey.SeatingPlan(request.ShowtimeId));
                 if (cachedSeatingPlan == null)

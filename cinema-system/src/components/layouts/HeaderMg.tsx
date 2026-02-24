@@ -26,7 +26,7 @@ const HeaderMg: React.FC<HeaderProps> = ({ activeRole, activeItem, menuItems }) 
     // In a real application, this user data might come from a global state (Context/Redux).
     // For this example, we'll try to get it from localStorage.
     const user = {
-        name: decodedToken?.name || 'Admin User',
+        name: decodedToken?.name || 'Belong System',
         email: decodedToken?.email || 'admin@example.com',
     };
 

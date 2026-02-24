@@ -1,0 +1,39 @@
+# .dockerignore
+# .NET
+bin/
+obj/
+out/
+*.dll
+*.pdb
+*.exe
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose*
+.dockerignore
+
+# Documentation
+*.md
+!README.md
+
+# Database
+*.mdf
+*.ldf
+
+# Logs
+*.log
+logs/
+
+# Build
+publish/

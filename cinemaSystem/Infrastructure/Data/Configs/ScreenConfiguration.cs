@@ -1,4 +1,4 @@
-﻿using Domain.Entities.CinemaAggreagte;
+using Domain.Entities.CinemaAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;

@@ -20,11 +20,17 @@ namespace Infrastructure.Data.Configs
             builder.Property(p => p.PaymentMethod).IsRequired(false).HasMaxLength(50);
             builder.Property(p => p.PaymentProvider).HasMaxLength(50);
             builder.Property(p => p.Currency).IsRequired(false).HasMaxLength(10);
-            builder.Property(p => p.TransactionId).HasMaxLength(100);
-            builder.Property(p => p.ReferenceCode).HasMaxLength(100);
+            builder.Property(p => p.Status)
+                .IsRequired()
+                .HasMaxLength(50)
+                .HasConversion<string>(); // Pending = 0, Completed = 1, Failed = 2, Refunded = 3
 
             builder.Property(p => p.Amount)
                 .HasColumnType("decimal(18, 2)");
+
+            builder.HasIndex(p => p.TransactionId)
+                .IsUnique()
+                .HasFilter("[TransactionId] IS NOT NULL");
         }
     }
 }

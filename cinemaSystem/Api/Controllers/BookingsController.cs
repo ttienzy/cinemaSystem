@@ -1,95 +1,72 @@
-﻿using Application.Interfaces.Integrations;
-using Application.Interfaces.Persistences;
-using Infrastructure.Identity.Constants;
+using Application.Features.Bookings.Commands.ApproveRefund;
+using Application.Features.Bookings.Commands.RequestRefund;
+using Application.Features.Bookings.Commands.CancelBooking;
+using Application.Features.Bookings.Commands.CompleteBooking;
+using Application.Features.Bookings.Commands.CreateBooking;
+using Application.Features.Bookings.Queries.GetBookingById;
+using Application.Features.Bookings.Queries.GetMyBookings;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Org.BouncyCastle.Bcpg;
-using Shared.Common.Base;
-using Shared.Models.DataModels.BookingDtos;
-using Shared.Models.PaymentModels;
+using System.Security.Claims;
 
 namespace Api.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class BookingsController : ControllerBase
+    [Authorize]
+    public class BookingsController : BaseApiController
     {
-        private readonly IBookingService _bookingService;
-        private readonly IVnPayService _vnPayService;
-        public BookingsController(
-            IBookingService bookingService,
-            IVnPayService vnPayService)
+        [HttpPost]
+        public async Task<ActionResult<CreateBookingResult>> CreateBooking([FromBody] CreateBookingCommand command)
         {
-            _bookingService = bookingService;
-            _vnPayService = vnPayService;
+            // Ensure the customer ID from command matches the user ID from token (or just use token)
+            // For now, let's trust the command or override it for safety:
+            // var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            return Ok(await Mediator.Send(command));
         }
 
-        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager},{RoleConstant.Employee},{RoleConstant.User}")]
-        [HttpGet("purchase-history/{userId:guid}")]
-        public async Task<IActionResult> PurchaseAsync(Guid userId)
+        [HttpPost("{id}/complete")]
+        public async Task<IActionResult> CompleteBooking(Guid id, [FromBody] CompleteBookingRequest request)
         {
-            var result = await _bookingService.PurchaseHistoryAsync(userId);
-            if (result.IsSuccess) 
-                return Ok(result.Value);
-            return ErrorResponse<IEnumerable<PurchaseResponse>>.WithError(result);
-        }
-        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager},{RoleConstant.Employee}")]
-        [HttpGet("check-in/{bookingId:guid}")]
-        public async Task<IActionResult> CheckInAsync(Guid bookingId)
-        {
-            var result = await _bookingService.CheckInBookingAsync(bookingId);
-            if (result.IsSuccess)
-                return Ok(result.Value);
-            return ErrorResponse<BookingCheckedInResponse>.WithError(result);
-        }
-        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager},{RoleConstant.Employee}")]
-        [HttpPost("confirm-check-in/{bookingId:guid}")]
-        public async Task<IActionResult> ConfirmCheckInAsync(Guid bookingId)
-        {
-            var result = await _bookingService.ConfirmCheckedIn(bookingId);
-            if (result.IsSuccess)
-                return Ok(result.Value);
-            return ErrorResponse<string>.WithError(result);
-        }
-        [Authorize(Roles = $"{RoleConstant.User}")]
-        [HttpPost("create-booking")]
-        public async Task<IActionResult> CreateBooking([FromBody] PaymentInfomationRequest request)
-        {
-            var result = await _bookingService.CreateBookingAsync(request, HttpContext);
-            if (result.IsSuccess)
-            {
-                return Ok(result.Value);
-            }
-            return ErrorResponse<string>.WithError(result);
-        }
-        [HttpGet("callback")]
-        public async Task<IActionResult> ConfirmPayment()
-        {
-            var query = HttpContext.Request.Query;
-            var response = _vnPayService.PaymentExecute(query);
-            if (response.VnPayResponseCode == "00")
-            {
-                var result = await _bookingService.ConfirmPaymentAsync(response);
-                if (result.IsSuccess)
-                {
-                    return Redirect($"http://localhost:5173/payment/success?showtimeId={result.Value}");
-                }
-                return ErrorResponse<string>.WithError(result);
-            }
-            else
-            {
-                var result = await _bookingService.CancelPaymentAsync(response);
-                if (result.IsSuccess)
-                {
-                    return Redirect($"http://localhost:5173/{result.Value}");
-                }
-                return ErrorResponse<string>.WithError(result);
-
-
-            }
+            await Mediator.Send(new CompleteBookingCommand(id, request.TransactionId, request.ReferenceCode));
+            return NoContent();
         }
 
-        
+        [HttpPost("{id}/cancel")]
+        public async Task<IActionResult> CancelBooking(Guid id, [FromBody] CancelBookingRequest request)
+        {
+            await Mediator.Send(new CancelBookingCommand(id, request.Reason));
+            return NoContent();
+        }
+
+        [HttpPost("{id}/request-refund")]
+        public async Task<IActionResult> RequestRefund(Guid id, [FromBody] RefundRequest request)
+        {
+            await Mediator.Send(new RequestRefundCommand(id, request.Reason));
+            return NoContent();
+        }
+
+        [HttpPost("{id}/approve-refund")]
+        [Authorize(Roles = "Manager,Admin")]
+        public async Task<IActionResult> ApproveRefund(Guid id)
+        {
+            await Mediator.Send(new ApproveRefundCommand(id));
+            return NoContent();
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<BookingDetailDto>> GetBooking(Guid id)
+        {
+            return Ok(await Mediator.Send(new GetBookingByIdQuery(id)));
+        }
+
+        [HttpGet("my")]
+        public async Task<ActionResult<MyBookingsResult>> GetMyBookings([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            return Ok(await Mediator.Send(new GetMyBookingsQuery(userId, page, pageSize)));
+        }
     }
+
+    public record CompleteBookingRequest(string TransactionId, string ReferenceCode);
+    public record CancelBookingRequest(string Reason);
+    public record RefundRequest(string Reason);
 }

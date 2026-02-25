@@ -1,150 +1,36 @@
-﻿using Application.Interfaces.Persistences;
-using Microsoft.AspNetCore.Http;
+using Application.Features.Cinemas.Commands.BlockSeat;
+using Application.Features.Cinemas.Commands.LinkSeat;
+using Application.Features.Cinemas.Queries.GetAllCinemas;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Common.Base;
-using Shared.Common.Paging;
-using Shared.Models.DataModels.CinemaDtos;
 
 namespace Api.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class CinemasController : ControllerBase
+    public class CinemasController : BaseApiController
     {
-        private readonly ICinemaService _cinemaService;
-        public CinemasController(ICinemaService cinemaService)
-        {
-            _cinemaService = cinemaService ?? throw new ArgumentNullException(nameof(cinemaService), "Cinema service cannot be null");
-        }
-
         [HttpGet]
-        public async Task<IActionResult> GetCinemasAsync()
+        public async Task<ActionResult<List<CinemaDto>>> GetCinemas()
         {
-            var serviceResponse = await _cinemaService.GetCinemaPublicAsync();
-            if (serviceResponse.IsSuccess)
-            {
-                return Ok(serviceResponse.Value);
-            }
-            return ErrorResponse<IEnumerable<CinemaPublicResponse>>.WithError(serviceResponse);
-        }
-        [HttpGet("{cinemaId:guid}")]
-        public async Task<IActionResult> GetCinemaByIdAsync(Guid cinemaId)
-        {
-            var result = await _cinemaService.GetCinemaByIdAsync(cinemaId);
-            if (result.IsSuccess) 
-                return Ok(result.Value);
-            return ErrorResponse<CinemaPublicDetailsResponse>.WithError(result);
-        }
-        [HttpGet("{cinemaId:guid}/screens/{screenId:guid}/seats")]
-        public async Task<IActionResult> GetSeatsForScreen(Guid cinemaId, Guid screenId)
-        {
-            var serviceResponse = await _cinemaService.GetSeatsForScreenAsync(cinemaId, screenId);
-            if (serviceResponse.IsSuccess)
-            {
-                return Ok(serviceResponse.Value);
-            }
-            return ErrorResponse<IEnumerable<SeatResponse>>.WithError(serviceResponse);
-        }
-        [HttpPost]
-        public async Task<IActionResult> CreateCinema([FromBody] CinemaRequest request)
-        {
-            var serviceResponse = await _cinemaService.CreateCinemaAsync(request);
-            if (serviceResponse.IsSuccess)
-            {
-                return Ok(serviceResponse.Value);
-            }
-            return ErrorResponse<CinemaResponse>.WithError(serviceResponse);
-        }
-        [HttpPost("{cinemaId:guid}/screens")]
-        public async Task<IActionResult> AddScreenToCinema(Guid cinemaId, [FromBody] ScreenRequest request)
-        {
-            var serviceResponse = await _cinemaService.AddScreenToCinemaAsync(cinemaId, request);
-            if (serviceResponse.IsSuccess)
-            {
-                return Ok(serviceResponse.Value);
-            }
-            return ErrorResponse<ScreenResponse>.WithError(serviceResponse);
-        }
-        [HttpPost("{cinemaId:guid}/screens/{screenId:guid}/seats/generate")]
-        public async Task<IActionResult> GenerateSeatsForScreen(Guid cinemaId, Guid screenId, [FromBody] IEnumerable<SeatGenerateRequest> requests)
-        {
-            var serviceResponse = await _cinemaService.GenerateSeatsForScreenAsync(cinemaId, screenId, requests);
-            if (serviceResponse.IsSuccess)
-            {
-                return Ok(serviceResponse.Value);
-            }
-            return ErrorResponse<IEnumerable<SeatResponse>>.WithError(serviceResponse);
-        }
-        [HttpPut("{cinemaId:guid}")]
-        public async Task<IActionResult> UpdateCinema(Guid cinemaId, [FromBody] CinemaRequest request)
-        {
-            var serviceResponse = await _cinemaService.UpdateCinemaAsync(cinemaId, request);
-            if (serviceResponse.IsSuccess)
-            {
-                return Ok(serviceResponse.Value);
-            }
-            return ErrorResponse<CinemaResponse>.WithError(serviceResponse);
-        }
-        [HttpPut("{cinemaId:guid}/screens/{screenId:guid}")]
-        public async Task<IActionResult> UpdateScreenForCinema(Guid cinemaId, Guid screenId, [FromBody] ScreenRequest request)
-        {
-            var serviceResponse = await _cinemaService.UpdateScreenForCinemaAsync(cinemaId, screenId, request);
-            if (serviceResponse.IsSuccess)
-            {
-                return Ok(serviceResponse.Value);
-            }
-            return ErrorResponse<ScreenResponse>.WithError(serviceResponse);
-        }
-        [HttpPut("{cinemaId:guid}/screens/{screenId:guid}/seats/{seatId:guid}")]
-        public async Task<IActionResult> UpdateSeatForScreen(Guid cinemaId, Guid screenId, Guid seatId, [FromBody] SeatGenerateRequest request)
-        {
-            var serviceResponse = await _cinemaService.UpdateSeatForScreenAsync(cinemaId, screenId, seatId, request);
-            if (serviceResponse.IsSuccess)
-            {
-                return Ok(serviceResponse.Value);
-            }
-            return ErrorResponse<SeatResponse>.WithError(serviceResponse);
-        }
-        [HttpPut("{cinemaId:guid}/screens/{screenId:guid}/seats/updatestatuses")]
-        public async Task<IActionResult> UpdateSeatStatuses(Guid cinemaId, Guid screenId, [FromBody] IEnumerable<Guid> seatIds)
-        {
-            var serviceResponse = await _cinemaService.UpdateSeatStatusesAsync(cinemaId, screenId, seatIds);
-            if (serviceResponse.IsSuccess)
-            {
-                return Ok(serviceResponse.Value);
-            }
-            return ErrorResponse<IEnumerable<SeatResponse>>.WithError(serviceResponse);
-        }
-        [HttpDelete("{cinemaId:guid}")]
-        public async Task<IActionResult> DeleteCinema(Guid cinemaId)
-        {
-            var serviceResponse = await _cinemaService.DeleteCinemaAsync(cinemaId);
-            if (serviceResponse.IsSuccess)
-            {
-                return NoContent();
-            }
-            return ErrorResponse<object>.WithError(serviceResponse);
-        }
-        [HttpDelete("{cinemaId:guid}/screens/{screenId:guid}")]
-        public async Task<IActionResult> DeleteScreenFromCinema(Guid cinemaId, Guid screenId)
-        {
-            var serviceResponse = await _cinemaService.DeleteScreenFromCinemaAsync(cinemaId, screenId);
-            if (serviceResponse.IsSuccess)
-            {
-                return NoContent();
-            }
-            return ErrorResponse<object>.WithError(serviceResponse);
-        }
-        [HttpDelete("{cinemaId:guid}/screens/{screenId:guid}/seats")]
-        public async Task<IActionResult> DeleteSeatsFromScreen(Guid cinemaId, Guid screenId, [FromBody] IEnumerable<Guid> seatIds)
-        {
-            var serviceResponse = await _cinemaService.DeleteSeatsFromScreenAsync(cinemaId, screenId, seatIds);
-            if (serviceResponse.IsSuccess)
-            {
-                return NoContent();
-            }
-            return ErrorResponse<object>.WithError(serviceResponse);
+            return Ok(await Mediator.Send(new GetAllCinemasQuery()));
         }
 
+        [HttpPost("screens/{screenId}/seats/{seatId}/block")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> BlockSeat(Guid screenId, Guid seatId, [FromBody] BlockSeatRequest request)
+        {
+            await Mediator.Send(new BlockSeatCommand(screenId, seatId, request.Reason));
+            return NoContent();
+        }
+
+        [HttpPost("screens/{screenId}/seats/{seatId}/link")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> LinkSeat(Guid screenId, Guid seatId, [FromBody] LinkSeatRequest request)
+        {
+            await Mediator.Send(new LinkSeatCommand(screenId, seatId, request.PartnerSeatNumber));
+            return NoContent();
+        }
     }
+
+    public record BlockSeatRequest(string Reason);
+    public record LinkSeatRequest(int PartnerSeatNumber);
 }

@@ -13,6 +13,8 @@ namespace Domain.Entities.MovieAggregate
         public Guid MovieId { get; private set; }
         public Guid GenreId { get; private set; }
 
+        public virtual Genre Genre { get; private set; } // Navigation property
+
         public MovieGenre()
         {
         }

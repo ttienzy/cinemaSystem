@@ -28,7 +28,7 @@ namespace Infrastructure.Data.Configs
 
             builder.HasOne(ws => ws.Shift)
             .WithMany(st => st.WorkSchedules)
-            .HasForeignKey(ws => ws.ShiffId)
+            .HasForeignKey(ws => ws.ShiftId)
             .OnDelete(DeleteBehavior.Restrict);
         }
     }

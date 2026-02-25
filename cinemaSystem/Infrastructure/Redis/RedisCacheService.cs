@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Integrations;
+﻿using Application.Common.Interfaces.Services;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 

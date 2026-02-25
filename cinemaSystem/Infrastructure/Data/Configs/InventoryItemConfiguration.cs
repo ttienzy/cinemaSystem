@@ -1,4 +1,4 @@
-﻿using Domain.Entities.InventoryAggregate;
+using Domain.Entities.InventoryAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -24,10 +24,13 @@ namespace Infrastructure.Data.Configs
             builder.Property(i => i.UnitPrice).HasColumnType("decimal(18, 2)");
             builder.Property(i => i.CostPrice).HasColumnType("decimal(18, 2)");
 
-            builder.HasOne<Domain.Entities.CinemaAggreagte.Cinema>()
+            builder.HasOne<Domain.Entities.CinemaAggregate.Cinema>()
                 .WithMany()
                 .HasForeignKey(i => i.CinemaId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Navigation(i => i.Transactions)
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
         }
     }
 }

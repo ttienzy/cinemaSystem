@@ -1,215 +1,58 @@
-﻿using Application.Interfaces.Persistences.Repo;
-using Microsoft.Data.SqlClient;
+﻿using Application.Common.Interfaces.Persistence;
+using Domain.Entities.ConcessionAggregate;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
-using Shared.Common.Base;
-using Shared.Common.Paging;
-using Shared.Models.DataModels.InventoryDtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Data.Repositories
 {
-    public class ConcessionSaleRepository : IConcessionSaleRepository
+    /// <summary>
+    /// ConcessionSale aggregate repository — implements new CQRS interface.
+    /// </summary>
+    public class ConcessionSaleRepository(BookingContext context) : IConcessionSaleRepository
     {
-        private readonly BookingContext _context;
-        public ConcessionSaleRepository(BookingContext context)
+        public async Task<ConcessionSale?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => await context.ConcessionSales.FindAsync([id], ct);
+
+        public async Task<ConcessionSale?> GetByIdWithItemsAsync(Guid id, CancellationToken ct = default)
+            => await context.ConcessionSales
+                .Include(s => s.Items)
+                .FirstOrDefaultAsync(s => s.Id == id, ct);
+
+        public async Task<List<ConcessionSale>> GetByCinemaAndDateAsync(
+            Guid cinemaId, DateTime date, CancellationToken ct = default)
+            => await context.ConcessionSales
+                .Where(s => s.CinemaId == cinemaId && s.SaleDate.Date == date.Date)
+                .Include(s => s.Items)
+                .OrderByDescending(s => s.SaleDate)
+                .ToListAsync(ct);
+
+        public async Task<(List<ConcessionSale> Items, int Total)> GetPagedAsync(
+            Guid cinemaId, DateTime? fromDate, DateTime? toDate,
+            int page, int pageSize, CancellationToken ct = default)
         {
-            _context = context;
+            var query = context.ConcessionSales
+                .Where(s => s.CinemaId == cinemaId);
+
+            if (fromDate.HasValue)
+                query = query.Where(s => s.SaleDate >= fromDate.Value);
+            if (toDate.HasValue)
+                query = query.Where(s => s.SaleDate <= toDate.Value);
+
+            var total = await query.CountAsync(ct);
+
+            var items = await query
+                .OrderByDescending(s => s.SaleDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Include(s => s.Items)
+                .ToListAsync(ct);
+
+            return (items, total);
         }
 
-        public async Task<IEnumerable<ConcessionRevenueResponse>> GetConcessionRevenueReportAsync(Guid cinemaId)
-        {
-            var queryable = _context.ConcessionSales
-            .Where(c => c.CinemaId == cinemaId
-                     && c.SaleDate.Date >= DateTime.Today.AddDays(-10))
-            .GroupBy(c => c.SaleDate.Date)
-            .Select(g => new ConcessionRevenueResponse
-            {
-                SaleDate = g.Key,
-                TotalTransactions = g.Count(),
-                TotalRevenue = g.Sum(s => s.TotalAmount)
-            })
-            .OrderBy(r => r.SaleDate);
+        public async Task AddAsync(ConcessionSale sale, CancellationToken ct = default)
+            => await context.ConcessionSales.AddAsync(sale, ct);
 
-            return await queryable.ToListAsync();
-        }
-
-        public async Task<PaginatedList<ConcessionSaleHistoryResponse>> GetConcessionSaleHistory(Guid cinemaId, ConcessionSaleQueryParameter query)
-        {
-            var queryable = _context.ConcessionSales.Where(c => c.CinemaId == cinemaId);
-
-            if (query.FromDate.HasValue)
-            {
-                queryable = queryable.Where(x => x.SaleDate >= query.FromDate.Value);
-            }
-
-            if (query.ToDate.HasValue)
-            {
-                queryable = queryable.Where(x => x.SaleDate <= query.ToDate.Value);
-            }
-
-            if (!string.IsNullOrEmpty(query.PaymentMethod))
-            {
-                queryable = queryable.Where(x => x.PaymentMethod == query.PaymentMethod);
-            }
-
-            var totalCount = await queryable.CountAsync();
-
-            var items = await queryable
-                .OrderByDescending(x => x.SaleDate)
-                .Skip((query.PageIndex - 1) * query.PageSize)
-                .Take(query.PageSize)
-                .Select(sale => new ConcessionSaleHistoryResponse
-                {
-                    SaleDate = sale.SaleDate,
-                    TotalAmount = sale.TotalAmount,
-                    PaymentMethod = sale.PaymentMethod!,
-                    Items = _context.ConcessionSaleItems
-                        .Where(item => item.ConcessionSaleId == sale.Id)
-                        .Join(_context.InventoryItems,
-                              item => item.InventoryId,
-                              inv => inv.Id,
-                              (item, inv) => new ConcessionSaleHistoryItem
-                              {
-                                  ItemName = inv.ItemName,
-                                  Quantity = item.Quantity,
-                                  UnitPrice = item.UnitPrice
-                              })
-                        .ToList(),
-                    TicketSales = sale.BookingId != null
-                        ? _context.Bookings
-                            .Where(b => b.Id == sale.BookingId)
-                            .Select(b => new TicketSaleHistoryResponse
-                            {
-                                TotalTickets = _context.BookingTickets.Count(bt => bt.BookingId == b.Id),
-                                Status = b.Status
-                            })
-                            .FirstOrDefault()
-                        : null
-                })
-                .ToListAsync();
-
-            return new PaginatedList<ConcessionSaleHistoryResponse>(items, totalCount, query.PageIndex, query.PageSize);
-        }
-
-        public async Task<IEnumerable<RevenueMonthlyReportResponseDto>> GetMonthlyRevenueReportAsync(RevenueMonthlyReportRequestDto request)
-        {
-            var query = @"
-                SELECT 
-                    FORMAT(COALESCE(cs.SaleDate, b.BookingTime), 'yyyy-MM') AS [Month],
-                    SUM(ISNULL(b.TotalAmount, 0)) AS TicketRevenue,
-                    SUM(ISNULL(b.TotalTickets, 0)) AS TicketCount,
-                    CASE 
-                        WHEN SUM(ISNULL(b.TotalTickets, 0)) > 0 
-                        THEN SUM(ISNULL(b.TotalAmount, 0)) / SUM(ISNULL(b.TotalTickets, 0))
-                        ELSE 0 
-                    END AS AverageTicketPrice,
-                    SUM(ISNULL(csi.Quantity * csi.UnitPrice, 0)) AS ConcessionRevenue,
-                    SUM(ISNULL(csi.Quantity, 0)) AS ConcessionCount,
-                    CASE 
-                        WHEN SUM(ISNULL(csi.Quantity, 0)) > 0 
-                        THEN SUM(ISNULL(csi.Quantity * csi.UnitPrice, 0)) / SUM(ISNULL(csi.Quantity, 0))
-                        ELSE 0 
-                    END AS AverageConcessionPrice,
-                    SUM(ISNULL(b.TotalAmount, 0) + ISNULL(csi.Quantity * csi.UnitPrice, 0)) AS TotalRevenue,
-                    CASE 
-                        WHEN SUM(ISNULL(b.TotalAmount, 0) + ISNULL(csi.Quantity * csi.UnitPrice, 0)) = 0 THEN 0
-                        ELSE 
-                            ROUND(
-                                (SUM(ISNULL(csi.Quantity * csi.UnitPrice, 0)) * 100.0) / 
-                                (SUM(ISNULL(b.TotalAmount, 0) + ISNULL(csi.Quantity * csi.UnitPrice, 0))), 2
-                            )
-                    END AS ConcessionRatioPercent
-                FROM 
-                    Bookings b
-                    FULL OUTER JOIN ConcessionSales cs 
-                        ON b.Id = cs.BookingId
-                    LEFT JOIN ConcessionSaleItems csi 
-                        ON cs.Id = csi.ConcessionSaleId
-                WHERE 
-                    cs.CinemaId = @CinemaId
-                    AND CONVERT(date, COALESCE(cs.SaleDate, b.BookingTime)) BETWEEN @StartDate AND @EndDate
-                GROUP BY 
-                    FORMAT(COALESCE(cs.SaleDate, b.BookingTime), 'yyyy-MM')
-                ORDER BY 
-                    [Month];
-            ";
-
-            var parameters = new[]
-            {
-                new SqlParameter("@CinemaId", request.CinemaId),
-                new SqlParameter("@StartDate", request.StartDate),
-                new SqlParameter("@EndDate", request.EndDate)
-            };
-
-            var result = await _context.Database
-                .SqlQueryRaw<RevenueMonthlyReportResponseDto>(query, parameters)
-                .AsNoTracking()
-                .ToListAsync();
-
-            return result;
-        }
-
-        public async Task<IEnumerable<RevenueReportResponseDto>> GetRevenueReportAsync(RevenueReportRequestDto request)
-        {
-            var query = @"
-                SELECT 
-                    CONVERT(date, COALESCE(cs.SaleDate, b.BookingTime)) AS [Date],
-                    SUM(ISNULL(b.TotalAmount, 0)) AS TicketRevenue,
-                    SUM(ISNULL(b.TotalTickets, 0)) AS TicketCount,
-                    CASE 
-                        WHEN SUM(ISNULL(b.TotalTickets, 0)) > 0 
-                        THEN SUM(ISNULL(b.TotalAmount, 0)) / SUM(ISNULL(b.TotalTickets, 0))
-                        ELSE 0 
-                    END AS AverageTicketPrice,
-                    SUM(ISNULL(csi.Quantity * csi.UnitPrice, 0)) AS ConcessionRevenue,
-                    SUM(ISNULL(csi.Quantity, 0)) AS ConcessionCount,
-                    CASE 
-                        WHEN SUM(ISNULL(csi.Quantity, 0)) > 0 
-                        THEN SUM(ISNULL(csi.Quantity * csi.UnitPrice, 0)) / SUM(ISNULL(csi.Quantity, 0))
-                        ELSE 0 
-                    END AS AverageConcessionPrice,
-                    SUM(ISNULL(b.TotalAmount, 0) + ISNULL(csi.Quantity * csi.UnitPrice, 0)) AS TotalRevenue,
-                    CASE 
-                        WHEN SUM(ISNULL(b.TotalAmount, 0) + ISNULL(csi.Quantity * csi.UnitPrice, 0)) = 0 THEN 0
-                        ELSE 
-                            ROUND(
-                                (SUM(ISNULL(csi.Quantity * csi.UnitPrice, 0)) * 100.0) / 
-                                (SUM(ISNULL(b.TotalAmount, 0) + ISNULL(csi.Quantity * csi.UnitPrice, 0))), 2
-                            )
-                    END AS ConcessionRatioPercent
-                FROM 
-                    Bookings b
-                    FULL OUTER JOIN ConcessionSales cs 
-                        ON b.Id = cs.BookingId
-                    LEFT JOIN ConcessionSaleItems csi 
-                        ON cs.Id = csi.ConcessionSaleId
-                WHERE 
-                    cs.CinemaId = @CinemaId
-                    AND CONVERT(date, COALESCE(cs.SaleDate, b.BookingTime)) BETWEEN @StartDate AND @EndDate
-                GROUP BY 
-                    CONVERT(date, COALESCE(cs.SaleDate, b.BookingTime))
-                ORDER BY 
-                    [Date];
-            ";
-
-            var parameters = new[]
-    {
-        new SqlParameter("@CinemaId", request.CinemaId),
-        new SqlParameter("@StartDate", request.StartDate),
-        new SqlParameter("@EndDate", request.EndDate)
-    };
-
-            var result = await _context.Database
-                .SqlQueryRaw<RevenueReportResponseDto>(query, parameters)
-                .AsNoTracking()
-                .ToListAsync();
-
-            return result;
-        }
+        public void Update(ConcessionSale sale)
+            => context.ConcessionSales.Update(sale);
     }
 }

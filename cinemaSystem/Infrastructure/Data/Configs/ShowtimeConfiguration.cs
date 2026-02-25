@@ -1,4 +1,4 @@
-﻿using Domain.Entities.CinemaAggreagte;
+using Domain.Entities.CinemaAggregate;
 using Domain.Entities.MovieAggregate;
 using Domain.Entities.SharedAggregates;
 using Domain.Entities.ShowtimeAggregate;
@@ -24,6 +24,9 @@ namespace Infrastructure.Data.Configs
                 .IsRequired()
                 .HasMaxLength(50)
                 .HasConversion<string>(); // Scheduled = 0, OpenForSale = 1, Screening = 2, Finished = 3, Cancelled = 4
+
+            builder.HasIndex(s => s.ShowDate);
+            builder.HasIndex(s => new { s.ScreenId, s.ShowDate, s.SlotId }).IsUnique();
 
             builder.HasOne<Movie>().WithMany().HasForeignKey(s => s.MovieId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne<Screen>().WithMany().HasForeignKey(s => s.ScreenId).OnDelete(DeleteBehavior.Restrict);

@@ -1,4 +1,4 @@
-﻿using Domain.Entities.CinemaAggreagte;
+using Domain.Entities.CinemaAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -18,10 +18,11 @@ namespace Infrastructure.Data.Configs
             builder.HasKey(c => c.Id);
 
             builder.Property(c => c.CinemaName).IsRequired().HasMaxLength(100);
+            builder.HasIndex(c => c.CinemaName).IsUnique();
             builder.Property(c => c.Address).IsRequired().HasMaxLength(255);
             builder.Property(c => c.Phone).HasMaxLength(20);
             builder.Property(c => c.Email).HasMaxLength(100);
-            builder.Property(c => c.Image).HasMaxLength(100);
+            builder.Property(c => c.Image).HasMaxLength(500); // Increased from 100
             builder.Property(c => c.ManagerName).HasMaxLength(100);
 
 

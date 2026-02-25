@@ -1,5 +1,4 @@
-﻿using Application.Interfaces.Persistences;
-using Application.Interfaces.Security;
+﻿using Application.Common.Interfaces.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

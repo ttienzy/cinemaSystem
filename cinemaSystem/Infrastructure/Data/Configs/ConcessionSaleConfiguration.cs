@@ -1,5 +1,5 @@
-﻿using Domain.Entities.BookingAggregate;
-using Domain.Entities.CinemaAggreagte;
+using Domain.Entities.BookingAggregate;
+using Domain.Entities.CinemaAggregate;
 using Domain.Entities.ConcessionAggregate;
 using Domain.Entities.StaffAggregate;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +28,7 @@ namespace Infrastructure.Data.Configs
                 .HasForeignKey(cs => cs.CinemaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Quan hệ: Booking (optional)
+            // Quan h?: Booking (optional)
             builder.HasOne<Booking>()
                 .WithMany()
                 .HasForeignKey(cs => cs.BookingId)

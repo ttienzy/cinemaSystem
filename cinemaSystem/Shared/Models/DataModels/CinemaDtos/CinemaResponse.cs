@@ -1,4 +1,4 @@
-﻿using Domain.Entities.CinemaAggreagte.Enum;
+using Domain.Entities.CinemaAggregate.Enum;
 using System;
 using System.Collections.Generic;
 using System.Linq;

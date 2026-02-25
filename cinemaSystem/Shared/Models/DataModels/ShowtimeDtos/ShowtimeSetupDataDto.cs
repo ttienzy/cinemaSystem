@@ -1,4 +1,4 @@
-﻿using Domain.Entities.CinemaAggreagte.Enum;
+using Domain.Entities.CinemaAggregate.Enum;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,36 +19,36 @@ namespace Shared.Models.DataModels.ShowtimeDtos
     {
         public Guid MovieId { get; set; }
         public string Title { get; set; } = string.Empty;
-        public int Duration { get; set; } // Thời lượng phim tính bằng phút
+        public int Duration { get; set; } // Th?i lu?ng phim t�nh b?ng ph�t
     }
 
     public class ScreenInfoDto
     {
         public Guid ScreenId { get; set; }
         public string ScreenName { get; set; } = string.Empty;
-        public ScreenType ScreenType { get; set; }  // Ví dụ: 2D, 3D, IMAX
-        public int SeatCapacity { get; set; }                   // Tổng số ghế
-        public bool IsActive { get; set; }                      // Còn hoạt động hay không
+        public ScreenType ScreenType { get; set; }  // V� d?: 2D, 3D, IMAX
+        public int SeatCapacity { get; set; }                   // T?ng s? gh?
+        public bool IsActive { get; set; }                      // C�n ho?t d?ng hay kh�ng
     }
     public class SlotInfoDto
     {
         public Guid SlotId { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
-        public string SlotName { get; set; } = string.Empty;    // VD: "Buổi sáng", "Buổi tối"
-        public bool IsPeakTime { get; set; }                    // Giờ cao điểm hay không
+        public string SlotName { get; set; } = string.Empty;    // VD: "Bu?i s�ng", "Bu?i t?i"
+        public bool IsPeakTime { get; set; }                    // Gi? cao di?m hay kh�ng
     }
     public class PricingTierInfoDto
     {
         public Guid PricingTierId { get; set; }
         public string TierName { get; set; } = string.Empty;    // VD: "Standard", "Premium"
-        public decimal Multiplier { get; set; }                 // Hệ số giá vé
-        public string Description { get; set; } = string.Empty; // Mô tả khung giá
+        public decimal Multiplier { get; set; }                 // H? s? gi� v�
+        public string Description { get; set; } = string.Empty; // M� t? khung gi�
     }
     public class SeatTypeInfoDto
     {
         public Guid SeatTypeId { get; set; }
-        public string SeatTypeName { get; set; } = string.Empty; // VD: "Thường", "VIP"
-        public decimal Multiplier { get; set; }                 // Hệ số giá vé cho loại ghế
+        public string SeatTypeName { get; set; } = string.Empty; // VD: "Thu?ng", "VIP"
+        public decimal Multiplier { get; set; }                 // H? s? gi� v� cho lo?i gh?
     }
 }

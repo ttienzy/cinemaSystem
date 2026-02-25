@@ -1,5 +1,5 @@
-﻿using Domain.Common;
-using Domain.Entities.CinemaAggreagte;
+using Domain.Common;
+using Domain.Entities.CinemaAggregate;
 
 
 namespace Domain.Entities.BookingAggregate

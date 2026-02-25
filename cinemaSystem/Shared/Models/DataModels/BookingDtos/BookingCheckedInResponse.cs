@@ -1,4 +1,4 @@
-﻿using Domain.Entities.BookingAggregate.Enum;
+﻿using Domain.Entities.BookingAggregate.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;

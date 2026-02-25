@@ -1,5 +1,5 @@
-﻿using Application.Interfaces.Integrations;
-using Application.Interfaces.Security;
+﻿using Application.Common.Interfaces.Services;
+using Application.Common.Interfaces.Security;
 using Infrastructure.Identity.Constants;
 using Shared.Models.IdentityModels.Otps;
 using System;

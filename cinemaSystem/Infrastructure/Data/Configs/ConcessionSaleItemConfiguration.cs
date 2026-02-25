@@ -23,7 +23,7 @@ namespace Infrastructure.Data.Configs
             // Quan hệ: InventoryItem
             builder.HasOne<InventoryItem>()
                 .WithMany()
-                .HasForeignKey(csi => csi.InventoryId)
+                .HasForeignKey(csi => csi.InventoryItemId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

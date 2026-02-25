@@ -1,42 +1,74 @@
-﻿using Application.Interfaces.Persistences.Repo;
+﻿using Application.Common.Interfaces.Persistence;
 using Domain.Entities.MovieAggregate;
 using Domain.Entities.MovieAggregate.Enum;
-using Shared.Models.DataModels.MovieDtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data.Repositories
 {
-    public class MovieRepository : IMovieRepository
+    /// <summary>
+    /// Movie aggregate repository — implements new CQRS interface.
+    /// </summary>
+    public class MovieRepository(BookingContext context) : IMovieRepository
     {
-        private readonly BookingContext _context;
-        public MovieRepository(BookingContext context)
+        public async Task<Movie?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => await context.Movies.FindAsync([id], ct);
+
+        public async Task<Movie?> GetByIdWithDetailsAsync(Guid id, CancellationToken ct = default)
+            => await context.Movies
+                .Include(m => m.MovieGenres)
+                    .ThenInclude(mg => mg.Genre)
+                .Include(m => m.CastCrew)
+                .Include(m => m.Certifications)
+                .Include(m => m.Copyrights)
+                .FirstOrDefaultAsync(m => m.Id == id, ct);
+
+        public async Task<(List<Movie> Items, int Total)> GetPagedAsync(
+            string? search, Guid? genreId, string? status,
+            int page, int pageSize, CancellationToken ct = default)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-        }
-        public IQueryable<MovieResponse> GetMovies(string? title, MovieStatus movieStatus)
-        {
-            var query = _context.Movies.Where(m => m.Status == movieStatus);
-            if (!string.IsNullOrEmpty(title))
-            {
-                query = query.Where(m => m.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
-            }
-            var result =  query
-            .OrderByDescending(m => m.ReleaseDate)
-            .Select(e => new MovieResponse
-            {
-                Id = e.Id,
-                Title = e.Title,
-                DurationMinutes = e.DurationMinutes,
-                ReleaseDate = e.ReleaseDate,
-                PosterUrl = e.PosterUrl,
-                Description = e.Description,
-            }).AsQueryable();
-            return result;
+            var query = context.Movies.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(m => m.Title.Contains(search));
+
+            if (genreId.HasValue)
+                query = query.Where(m =>
+                    m.MovieGenres.Any(mg => mg.GenreId == genreId.Value));
+
+            if (!string.IsNullOrWhiteSpace(status) &&
+                Enum.TryParse<MovieStatus>(status, true, out var movieStatus))
+                query = query.Where(m => m.Status == movieStatus);
+
+            var total = await query.CountAsync(ct);
+
+            var items = await query
+                .OrderByDescending(m => m.ReleaseDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(ct);
+
+            return (items, total);
         }
 
+        public async Task<List<Movie>> GetNowShowingAsync(DateTime date, CancellationToken ct = default)
+            => await context.Movies
+                .Where(m => m.Status == MovieStatus.Showing
+                    && m.ReleaseDate <= date)
+                .OrderByDescending(m => m.ReleaseDate)
+                .ToListAsync(ct);
+
+        public async Task<List<Movie>> GetAllAsync(CancellationToken ct = default)
+            => await context.Movies
+                .OrderByDescending(m => m.ReleaseDate)
+                .ToListAsync(ct);
+
+        public async Task AddAsync(Movie movie, CancellationToken ct = default)
+            => await context.Movies.AddAsync(movie, ct);
+
+        public void Update(Movie movie)
+            => context.Movies.Update(movie);
+
+        public void Delete(Movie movie)
+            => context.Movies.Remove(movie);
     }
 }

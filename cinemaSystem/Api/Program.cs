@@ -1,11 +1,14 @@
 ﻿using Api.Convertors;
+using Application;
 using Application.Settings;
+using Infrastructure;
 using Infrastructure.Hubs;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
+using Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +27,6 @@ builder.Services.AddSingleton(vnPaySettings);
 builder.Services.AddSingleton(paymentCallbackSettings);
 builder.Services.AddSingleton(timeZoneSettings);
 
-Infrastructure.Dependencies.ConfigureServices(builder.Configuration, builder.Services);
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 {
     options.Password.RequireDigit = false;
@@ -39,7 +41,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
     .AddEntityFrameworkStores<AppIdentityContext>()
     .AddDefaultTokenProviders();
 
-Application.Dependencies.AddApplicationDependencies(builder.Services, builder.Configuration);
+// ── Clean Architecture DI ──────────────────────────────────────
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
+
 
 builder.Services.AddAuthentication(options =>
 {
@@ -122,6 +127,11 @@ builder.Services.AddSwaggerGen(opt =>
         }
     });
 });
+
+builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
+builder.Services.AddExceptionHandler<DomainExceptionHandler>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -132,6 +142,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowSpecificOrigins");
+app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

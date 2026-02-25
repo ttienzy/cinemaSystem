@@ -1,6 +1,5 @@
-﻿using Application.Interfaces.Integrations;
-using Application.Interfaces.Persistences;
-using Application.Interfaces.Security;
+﻿using Application.Common.Interfaces.Services;
+using Application.Common.Interfaces.Security;
 using Infrastructure.Identity.Constants;
 using Infrastructure.Redis.Constants;
 using Microsoft.AspNetCore.Identity;

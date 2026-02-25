@@ -1,73 +1,57 @@
-﻿using Application.Interfaces.Persistences.Repo;
+﻿using Application.Common.Interfaces.Persistence;
+using Domain.Entities.BookingAggregate;
 using Microsoft.EntityFrameworkCore;
-using Shared.Models.DataModels.BookingDtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Data.Repositories
 {
-    public class BookingRepository : IBookingRepository
+    /// <summary>
+    /// Booking aggregate repository — implements new CQRS-aligned interface.
+    /// All cross-aggregate query reporting stays in old ReadModel repositories (kept in Data/Services).
+    /// </summary>
+    public class BookingRepository(BookingContext context) : IBookingRepository
     {
-        private readonly BookingContext _bookingContext;
-        public BookingRepository(BookingContext bookingContext)
-        {
-            _bookingContext = bookingContext;
-        }
+        public async Task<Booking?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => await context.Bookings
+                .Include(b => b.BookingTickets)
+                .FirstOrDefaultAsync(b => b.Id == id, ct);
 
-        public async Task<BookingCheckedInResponse> CheckInBookingAsync(Guid bookingId)
-        {
-            var query = from b in _bookingContext.Bookings
-                        .Where(b => b.Id == bookingId)
-                        join s in _bookingContext.Showtimes on b.ShowtimeId equals s.Id
-                        join m in _bookingContext.Movies on s.MovieId equals m.Id
-                        join c in _bookingContext.Cinemas on s.CinemaId equals c.Id
-                        select new BookingCheckedInResponse
-                        {
-                            BookingCode = b.Id,
-                            TotalAmount = b.TotalAmount,
-                            TotalTickets = b.TotalTickets,
-                            BookingTime = b.BookingTime,
-                            MovieTitle = m.Title,
-                            CinemaName = c.CinemaName,
-                            Status = b.Status,
-                            ActualEndTime = s.ActualEndTime,
-                            ActualStartTime = s.ActualStartTime,
-                            IsCheckedIn = b.IsCheckedIn,
-                            ScreenName = (from scr in _bookingContext.Screens
-                                          where scr.Id == s.ScreenId
-                                          select scr.ScreenName).FirstOrDefault() ?? "Unknown",
-                            SeatsList = (from bt in _bookingContext.BookingTickets
-                                         join seat in _bookingContext.Seats on bt.SeatId equals seat.Id
-                                         where bt.BookingId == b.Id
-                                         select $"{seat.RowName}{seat.Number}").ToList()
-                        };
-            return await query.FirstOrDefaultAsync() ?? new BookingCheckedInResponse();
-        }
+        public async Task<Booking?> GetByIdWithDetailsAsync(Guid id, CancellationToken ct = default)
+            => await context.Bookings
+                .Include(b => b.BookingTickets)
+                .Include(b => b.Payments)
+                .Include(b => b.Refunds)
+                .FirstOrDefaultAsync(b => b.Id == id, ct);
 
-        public async Task<IEnumerable<PurchaseResponse>> PurchaseHistoryAsync(Guid userId)
-        {
-            var query = from b in _bookingContext.Bookings
-                        .Where(b => b.CustomerId == userId)
-                        join s in _bookingContext.Showtimes on b.ShowtimeId equals s.Id
-                        join m in _bookingContext.Movies on s.MovieId equals m.Id
-                        join c in _bookingContext.Cinemas on s.CinemaId equals c.Id
-                        orderby b.BookingTime descending
-                        select new PurchaseResponse
-                        {
-                            BookingId = b.Id,
-                            TotalAmount = b.TotalAmount,
-                            TotalTickets = b.TotalTickets,
-                            BookingTime = b.BookingTime,
-                            ShowTime = s.ActualStartTime,
-                            MovieTitle = m.Title,
-                            CinemaName = c.CinemaName,
-                            Status = b.Status,
-                        };
-                        
-            return await query.ToListAsync();
-        }
+        public async Task<Booking?> GetByBookingCodeAsync(string code, CancellationToken ct = default)
+            => await context.Bookings
+                .Include(b => b.BookingTickets)
+                .FirstOrDefaultAsync(b => b.BookingCode == code, ct);
+
+        public async Task<List<Booking>> GetExpiredPendingAsync(CancellationToken ct = default)
+            => await context.Bookings
+                .Where(b => b.Status == Domain.Entities.BookingAggregate.Enums.BookingStatus.Pending
+                         && b.ExpiresAt < DateTime.UtcNow)
+                .Include(b => b.BookingTickets)
+                .ToListAsync(ct);
+
+        public async Task<List<Booking>> GetByCustomerAsync(
+            Guid customerId, int page, int pageSize, CancellationToken ct = default)
+            => await context.Bookings
+                .Where(b => b.CustomerId == customerId)
+                .OrderByDescending(b => b.BookingTime)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Include(b => b.BookingTickets)
+                .ToListAsync(ct);
+
+        public async Task<Booking?> GetByIdForCheckInAsync(Guid id, CancellationToken ct = default)
+            => await context.Bookings
+                .FirstOrDefaultAsync(b => b.Id == id, ct);
+
+        public async Task AddAsync(Booking booking, CancellationToken ct = default)
+            => await context.Bookings.AddAsync(booking, ct);
+
+        public void Update(Booking booking)
+            => context.Bookings.Update(booking);
     }
 }

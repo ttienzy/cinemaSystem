@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Security;
+﻿using Application.Common.Interfaces.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Shared.Common.Base;

@@ -1,158 +1,59 @@
-﻿using Application.Interfaces.Persistences.Repo;
-using Domain.Entities.CinemaAggreagte;
-using Domain.Entities.MovieAggregate;
+﻿using Application.Common.Interfaces.Persistence;
 using Domain.Entities.ShowtimeAggregate;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Shared.Models.DataModels.ShowtimeDtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Data.Repositories
 {
-    internal class ShowtimeRepository : IShowtimeRepository
+    /// <summary>
+    /// Showtime aggregate repository — implements new CQRS interface.
+    /// Old reporting queries (performance dashboard, featured) remain in Data/Services/ShowtimeService.
+    /// </summary>
+    public class ShowtimeRepository(BookingContext context) : IShowtimeRepository
     {
-        private readonly BookingContext _context;
-        public ShowtimeRepository(BookingContext context)
-        {
-            _context = context;
-        }
-        public async Task<List<ShowtimeFeaturedResponse>> GetShowtimeByQuerryAsync(Guid? cinemaId, DateTime showDate)
-        {
-            var query = _context.Showtimes
-                .Where(st => st.CinemaId == cinemaId &&
-                             st.ShowDate.Date == showDate.Date)
-                .Join(_context.Movies, st => st.MovieId, m => m.Id, (st, m) => new { st, m })
-                .Join(_context.Cinemas, x => x.st.CinemaId, c => c.Id, (x, c) => new { x.st, x.m, c })
-                .GroupBy(x => new
-                {
-                    x.m.Title,
-                    x.m.DurationMinutes,
-                    x.m.Rating,
-                    x.m.PosterUrl,
-                    x.m.Trailer,
-                    x.m.Description,
-                    x.c.CinemaName,
-                    x.st.ShowDate.Date,
-                })
-                .Select(grouped => new ShowtimeFeaturedResponse
-                {
-                    Title = grouped.Key.Title,
-                    DurationMinutes = grouped.Key.DurationMinutes,
-                    AgeRating = grouped.Key.Rating,
-                    PostUrl = grouped.Key.PosterUrl,
-                    Trailer = grouped.Key.Trailer,
-                    Description = grouped.Key.Description,
-                    CinemaName = grouped.Key.CinemaName,
-                    ReleaseDate = grouped.Key.Date,
-                    ScreeningSlots = grouped.Select(x => new ScreeningSlot
-                    {
-                        ShowtimeId = x.st.Id,
-                        ActualStartTime = x.st.ActualStartTime,
-                        ActualEndTime = x.st.ActualEndTime
-                    }).ToList()
-                });
-            return await query.ToListAsync();
-        }
+        public async Task<Showtime?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => await context.Showtimes.FindAsync([id], ct);
 
-        public async Task<ShowtimeFeaturedResponse> GetShowtimeFeaturedAsync(ShowtimeQueryParameters parameters)
-        {        
-            var query = _context.Showtimes
-                .Where(st => st.CinemaId == parameters.CinemaId &&
-                             st.MovieId == parameters.MovieId &&
-                             st.ShowDate.Date == parameters.ShowDate.Date)
-                .Join(_context.Movies, st => st.MovieId, m => m.Id, (st, m) => new { st, m })
-                .Join(_context.Cinemas, x => x.st.CinemaId, c => c.Id, (x, c) => new { x.st, x.m, c })
-                .GroupBy(x => new
-                {
-                    x.m.Title,
-                    x.m.DurationMinutes,
-                    x.m.Rating,
-                    x.m.PosterUrl,
-                    x.m.Trailer,
-                    x.m.Description,
-                    x.c.CinemaName,
-                    x.st.ShowDate.Date,
-                })
-                .Select(grouped => new ShowtimeFeaturedResponse
-                {
-                    Title = grouped.Key.Title,
-                    DurationMinutes = grouped.Key.DurationMinutes,
-                    AgeRating = grouped.Key.Rating,
-                    PostUrl = grouped.Key.PosterUrl,
-                    Trailer = grouped.Key.Trailer,
-                    Description = grouped.Key.Description,
-                    CinemaName = grouped.Key.CinemaName,
-                    ReleaseDate = grouped.Key.Date,
-                    ScreeningSlots = grouped.Select(x => new ScreeningSlot
-                    {
-                        ShowtimeId = x.st.Id,
-                        ActualStartTime = x.st.ActualStartTime,
-                        ActualEndTime = x.st.ActualEndTime
-                    }).ToList()
-                });
+        public async Task<Showtime?> GetByIdWithPricingAsync(Guid id, CancellationToken ct = default)
+            => await context.Showtimes
+                .Include(s => s.ShowtimePricings)
+                .FirstOrDefaultAsync(s => s.Id == id, ct);
 
-            return await query.FirstOrDefaultAsync();
-        }
+        public async Task<List<Showtime>> GetByCinemaAndDateAsync(
+            Guid cinemaId, DateTime date, CancellationToken ct = default)
+            => await context.Showtimes
+                .Where(s => s.CinemaId == cinemaId && s.ShowDate.Date == date.Date)
+                .Include(s => s.ShowtimePricings)
+                .OrderBy(s => s.ActualStartTime)
+                .ToListAsync(ct);
 
-        public async Task<IEnumerable<ShowtimePerformanceDto>> GetShowtimePerformanceAsync(Guid cinemaId)
-        {
-            var sql = @"
-    SELECT 
-        s.Id AS ShowtimeId,
-        m.Title,
-        scr.ScreenName,
-        scr.Type AS ScreenType,
-        s.ShowDate,
-        ts.StartTime AS SlotStartTime,
-        ts.EndTime AS SlotEndTime,
-        s.ActualStartTime,
-        s.ActualEndTime,
-        s.Status,      
-        pt.TierName AS PricingTier,
-        pt.Multiplier,
-        COUNT_BIG(b.Id) AS TotalBookings,
-        AVG(sp.FinalPrice) AS AvgTicketPrice
-    FROM 
-        Showtimes s
-        INNER JOIN Movies m ON s.MovieId = m.Id
-        INNER JOIN Screens scr ON s.ScreenId = scr.Id
-        INNER JOIN TimeSlots ts ON s.SlotId = ts.Id
-        INNER JOIN PricingTiers pt ON s.PricingTierId = pt.Id
-        LEFT JOIN ShowtimePricings sp ON s.Id = sp.ShowtimeId
-        LEFT JOIN Bookings b ON s.Id = b.ShowtimeId
-    WHERE 
-        s.CinemaId = @CinemaId
-        AND s.Status = 'Scheduled'
-        AND s.ShowDate >= CAST(GETDATE() AS DATE)
-    GROUP BY 
-        s.Id,
-        m.Title,
-        scr.ScreenName,
-        scr.Type,
-        s.ShowDate,
-        ts.StartTime,
-        ts.EndTime,
-        s.ActualStartTime,
-        s.ActualEndTime,
-        s.Status, 
-        pt.TierName,
-        pt.Multiplier
-    ORDER BY 
-        s.ActualStartTime";
+        public async Task<bool> HasOverlappingAsync(
+            Guid screenId, DateTime showDate, TimeOnly startTime, TimeOnly endTime,
+            CancellationToken ct = default)
+            => await context.Showtimes
+                .AnyAsync(s => s.ScreenId == screenId
+                    && s.ShowDate.Date == showDate.Date
+                    && s.Status != Domain.Entities.ShowtimeAggregate.Enum.ShowtimeStatus.Cancelled
+                    && TimeOnly.FromDateTime(s.ActualStartTime) < endTime
+                    && TimeOnly.FromDateTime(s.ActualEndTime) > startTime, ct);
 
-            // ✅ Tạo tham số đúng cách
-            var param = new SqlParameter("@CinemaId", cinemaId);
+        public async Task<bool> HasOverlappingExcludingAsync(
+            Guid screenId, DateTime showDate, TimeOnly startTime, TimeOnly endTime, Guid excludeId,
+            CancellationToken ct = default)
+            => await context.Showtimes
+                .AnyAsync(s => s.ScreenId == screenId
+                    && s.Id != excludeId
+                    && s.ShowDate.Date == showDate.Date
+                    && s.Status != Domain.Entities.ShowtimeAggregate.Enum.ShowtimeStatus.Cancelled
+                    && TimeOnly.FromDateTime(s.ActualStartTime) < endTime
+                    && TimeOnly.FromDateTime(s.ActualEndTime) > startTime, ct);
 
-            var result = await _context.Database
-                .SqlQueryRaw<ShowtimePerformanceDto>(sql, param)
-                .ToListAsync();
+        public async Task AddAsync(Showtime showtime, CancellationToken ct = default)
+            => await context.Showtimes.AddAsync(showtime, ct);
 
-            return result;
-        }
+        public void Update(Showtime showtime)
+            => context.Showtimes.Update(showtime);
+
+        public void Delete(Showtime showtime)
+            => context.Showtimes.Remove(showtime);
     }
 }

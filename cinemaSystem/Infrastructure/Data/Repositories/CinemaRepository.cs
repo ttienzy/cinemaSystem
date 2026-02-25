@@ -1,41 +1,46 @@
-ï»¿using Application.Interfaces.Persistences.Repo;
+using Application.Common.Interfaces.Persistence;
+using Domain.Entities.CinemaAggregate;
 using Microsoft.EntityFrameworkCore;
-using Shared.Models.DataModels.CinemaDtos;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Data.Repositories
 {
-    public class CinemaRepository : ICinemaRepository
+    /// <summary>
+    /// Cinema aggregate repository — implements new CQRS interface.
+    /// Old reporting queries remain in Data/Services/CinemaService.
+    /// </summary>
+    public class CinemaRepository(BookingContext context) : ICinemaRepository
     {
-        private readonly BookingContext _context;
-        public CinemaRepository(BookingContext context)
-        {
-            _context = context ?? throw new ArgumentNullException(nameof(context), "Booking context cannot be null");
-        }
-        public IQueryable<CinemaResponse> GetAllCinemasAsQueryable()
-        {
-            return _context.Cinemas
+        public async Task<Cinema?> GetByIdAsync(Guid id, CancellationToken ct = default)
+            => await context.Cinemas.FindAsync([id], ct);
+
+        public async Task<Cinema?> GetByIdWithScreensAsync(Guid id, CancellationToken ct = default)
+            => await context.Cinemas
                 .Include(c => c.Screens)
-                .Select(cinema => new CinemaResponse
-                {
-                    Id = cinema.Id,
-                    Address = cinema.Address,
-                    Phone = cinema.Phone,
-                    Email = cinema.Email,
-                    Image = cinema.Image,
-                    CinemaName = cinema.CinemaName,
-                    Screens = cinema.Screens.Select(screen => new ScreenResponse
-                    {
-                        Id = screen.Id,
-                        ScreenName = screen.ScreenName,
-                        Type = screen.Type,
-                        Status = screen.Status
-                    }).ToList()
-                });
-        }
+                .FirstOrDefaultAsync(c => c.Id == id, ct);
+
+        public async Task<Cinema?> GetByIdWithScreensAndSeatsAsync(Guid id, CancellationToken ct = default)
+            => await context.Cinemas
+                .Include(c => c.Screens)
+                    .ThenInclude(s => s.Seats)
+                .FirstOrDefaultAsync(c => c.Id == id, ct);
+
+        public async Task<Screen?> GetScreenByIdAsync(Guid screenId, CancellationToken ct = default)
+            => await context.Screens.FindAsync([screenId], ct);
+
+        public async Task<Screen?> GetScreenWithSeatsAsync(Guid screenId, CancellationToken ct = default)
+            => await context.Screens
+                .Include(s => s.Seats)
+                .FirstOrDefaultAsync(s => s.Id == screenId, ct);
+
+        public async Task<List<Cinema>> GetAllAsync(CancellationToken ct = default)
+            => await context.Cinemas
+                .Include(c => c.Screens)
+                .ToListAsync(ct);
+
+        public async Task AddAsync(Cinema cinema, CancellationToken ct = default)
+            => await context.Cinemas.AddAsync(cinema, ct);
+
+        public void Update(Cinema cinema)
+            => context.Cinemas.Update(cinema);
     }
 }

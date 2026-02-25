@@ -1,10 +1,13 @@
-﻿using Domain.Entities.BookingAggregate;
-using Domain.Entities.CinemaAggreagte;
+using Domain.Entities.BookingAggregate;
+using Domain.Entities.CinemaAggregate;
 using Domain.Entities.ConcessionAggregate;
+using Domain.Entities.EquipmentAggregate;
 using Domain.Entities.InventoryAggregate;
 using Domain.Entities.MovieAggregate;
+using Domain.Entities.PromotionAggregate;
 using Domain.Entities.SharedAggregates;
 using Domain.Entities.ShowtimeAggregate;
+using Domain.Entities.StaffAggregate;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models.DataModels.DashboardDtos.Subs;
 using System;
@@ -37,6 +40,16 @@ namespace Infrastructure.Data
         public DbSet<ConcessionSale> ConcessionSales { get; set; }
         public DbSet<ConcessionSaleItem> ConcessionSaleItems { get; set; }
         public DbSet<InventoryItem> InventoryItems { get; set; }
+        public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
+        public DbSet<Refund> Refunds { get; set; }
+        public DbSet<Promotion> Promotions { get; set; }
+        public DbSet<Equipment> Equipments { get; set; }
+        public DbSet<MaintenanceLog> MaintenanceLogs { get; set; }
+        public DbSet<Staff> Staffs { get; set; }
+        public DbSet<Shift> Shifts { get; set; }
+        public DbSet<WorkSchedule> WorkSchedules { get; set; }
+        public DbSet<TimeSlot> TimeSlots { get; set; }
+        public DbSet<PricingTier> PricingTiers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

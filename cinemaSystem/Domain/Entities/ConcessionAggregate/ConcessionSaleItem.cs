@@ -1,29 +1,39 @@
 ﻿using Domain.Common;
-using Domain.Entities.InventoryAggregate;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Domain.Entities.ConcessionAggregate
 {
+    /// <summary>
+    /// ConcessionSaleItem — enhanced with LineTotal computed property.
+    /// </summary>
     public class ConcessionSaleItem : BaseEntity
     {
         public Guid ConcessionSaleId { get; private set; }
-        public Guid InventoryId { get; private set; }
+        public Guid InventoryItemId { get; private set; }
         public int Quantity { get; private set; }
         public decimal UnitPrice { get; private set; }
 
-        public ConcessionSaleItem()
+        public decimal LineTotal => Quantity * UnitPrice;
+
+        // EF Core constructor
+        private ConcessionSaleItem() { }
+
+        public ConcessionSaleItem(Guid inventoryItemId, int quantity, decimal unitPrice)
         {
-        }
-        public ConcessionSaleItem( Guid inventoryId, int quantity, decimal unitPrice)
-        {
-            InventoryId = inventoryId;
+            if (quantity <= 0)
+                throw new DomainException("Quantity must be at least 1.");
+            if (unitPrice < 0)
+                throw new DomainException("Unit price cannot be negative.");
+
+            InventoryItemId = inventoryItemId;
             Quantity = quantity;
             UnitPrice = unitPrice;
         }
 
+        public void UpdateQuantity(int newQuantity)
+        {
+            if (newQuantity <= 0)
+                throw new DomainException("Quantity must be at least 1.");
+            Quantity = newQuantity;
+        }
     }
 }

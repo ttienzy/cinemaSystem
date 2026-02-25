@@ -19,7 +19,7 @@ namespace Infrastructure.Data.Configs
             builder.HasKey(mg => mg.Id);
 
 
-            builder.HasOne<Genre>()
+            builder.HasOne(mg => mg.Genre)
                 .WithMany()
                 .HasForeignKey(mg => mg.GenreId);
         }

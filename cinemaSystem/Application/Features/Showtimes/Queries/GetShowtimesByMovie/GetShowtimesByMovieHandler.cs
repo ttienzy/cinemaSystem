@@ -1,24 +1,28 @@
 using Application.Common.Interfaces.Persistence;
 using Shared.Models.DataModels.ShowtimeDtos;
 using MediatR;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Application.Features.Showtimes.Queries.GetShowtimesByMovie
 {
-    public record GetShowtimesByMovieQuery(Guid MovieId, DateTime Date) : IRequest<List<ShowtimeResponse>>;
+    public record GetShowtimesByMovieQuery(Guid MovieId, DateTime Date) : IRequest<List<ShowtimeDetailResponse>>;
 
     public class GetShowtimesByMovieHandler(IShowtimeRepository showtimeRepo) 
-        : IRequestHandler<GetShowtimesByMovieQuery, List<ShowtimeResponse>>
+        : IRequestHandler<GetShowtimesByMovieQuery, List<ShowtimeDetailResponse>>
     {
-        public async Task<List<ShowtimeResponse>> Handle(GetShowtimesByMovieQuery request, CancellationToken ct)
+        public async Task<List<ShowtimeDetailResponse>> Handle(GetShowtimesByMovieQuery request, CancellationToken ct)
         {
-            // Note: We need a repository method to get showtimes by movie and date
-            // For now, filtering the general results or assuming repo extension
+            // Note: In a real scenario, we'd add GetByMovieAndDateAsync to IShowtimeRepository
+            // For now, we'll use GetByCinemaAndDateAsync with Empty Guid and filter manually
             var showtimes = await showtimeRepo.GetByCinemaAndDateAsync(Guid.Empty, request.Date, ct); 
-            // The above repo method signature is a bit restrictive, in 10-year exp dev would extend IShowtimeRepository
             
             return showtimes
                 .Where(s => s.MovieId == request.MovieId)
-                .Select(s => new ShowtimeResponse
+                .Select(s => new ShowtimeDetailResponse
                 {
                     Id = s.Id,
                     MovieId = s.MovieId,

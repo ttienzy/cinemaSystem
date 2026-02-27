@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Shared.Models.DataModels.MovieDtos
 {
-    public class MovieResponse
+    public class MovieSummaryResponse
     {
         public required Guid Id { get; set; }
         public required string Title { get; set; }

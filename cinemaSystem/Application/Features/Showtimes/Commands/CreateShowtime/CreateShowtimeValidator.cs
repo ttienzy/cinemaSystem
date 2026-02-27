@@ -1,4 +1,5 @@
 using FluentValidation;
+using System;
 
 namespace Application.Features.Showtimes.Commands.CreateShowtime
 {
@@ -6,18 +7,19 @@ namespace Application.Features.Showtimes.Commands.CreateShowtime
     {
         public CreateShowtimeValidator()
         {
-            RuleFor(x => x.CinemaId).NotEmpty();
-            RuleFor(x => x.MovieId).NotEmpty();
-            RuleFor(x => x.ScreenId).NotEmpty();
-            RuleFor(x => x.SlotId).NotEmpty();
-            RuleFor(x => x.PricingTierId).NotEmpty();
-            RuleFor(x => x.ShowDate).GreaterThanOrEqualTo(DateTime.UtcNow.Date)
+            RuleFor(x => x.Request.CinemaId).NotEmpty();
+            RuleFor(x => x.Request.MovieId).NotEmpty();
+            RuleFor(x => x.Request.ScreenId).NotEmpty();
+            RuleFor(x => x.Request.SlotId).NotEmpty();
+            RuleFor(x => x.Request.PricingTierId).NotEmpty();
+            
+            RuleFor(x => x.Request.ShowDate).GreaterThanOrEqualTo(DateTime.UtcNow.Date)
                 .WithMessage("Show date cannot be in the past.");
-            RuleFor(x => x.EndTime).GreaterThan(x => x.StartTime)
-                .WithMessage("End time must be after start time.");
-            RuleFor(x => x.TotalSeats).GreaterThan(0)
-                .WithMessage("Total seats must be positive.");
-            RuleFor(x => x.Pricings).NotEmpty()
+
+            RuleFor(x => x.Request.ActualEndTime).GreaterThan(x => x.Request.ActualStartTime)
+                .WithMessage("Actual end time must be after start time.");
+
+            RuleFor(x => x.Request.ShowtimePricings).NotEmpty()
                 .WithMessage("At least one pricing entry is required.");
         }
     }

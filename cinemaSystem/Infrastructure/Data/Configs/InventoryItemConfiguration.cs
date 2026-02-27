@@ -29,6 +29,11 @@ namespace Infrastructure.Data.Configs
                 .HasForeignKey(i => i.CinemaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasMany(i => i.Transactions)
+                .WithOne()
+                .HasForeignKey(t => t.InventoryItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.Navigation(i => i.Transactions)
                 .UsePropertyAccessMode(PropertyAccessMode.Field);
         }

@@ -1,4 +1,3 @@
-using Shared.Common.Base;
 using Shared.Models.IdentityModels;
 
 namespace Application.Common.Interfaces.Security
@@ -8,10 +7,10 @@ namespace Application.Common.Interfaces.Security
     /// </summary>
     public interface IRoleService
     {
-        Task<BaseResponse<string>> CreateRoleAsync(string nameRole);
-        Task<BaseResponse<string>> DeleteRoleAsync(Guid roleId);
-        Task<BaseResponse<IEnumerable<RoleModel>>> GetAllRolesAsync();
-        Task<BaseResponse<RoleModel>> GetRoleByIdAsync(Guid roleId);
-        Task<BaseResponse<string>> UpdateRoleAsync(Guid roleId, string nameRole);
+        Task CreateRoleAsync(string nameRole);
+        Task DeleteRoleAsync(Guid roleId);
+        Task<IEnumerable<RoleModel>> GetAllRolesAsync();
+        Task<RoleModel> GetRoleByIdAsync(Guid roleId);
+        Task UpdateRoleAsync(Guid roleId, string nameRole);
     }
 }

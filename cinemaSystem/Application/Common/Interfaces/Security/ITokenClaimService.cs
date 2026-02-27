@@ -1,4 +1,3 @@
-using Shared.Common.Base;
 using Shared.Models.IdentityModels;
 using System.Security.Claims;
 

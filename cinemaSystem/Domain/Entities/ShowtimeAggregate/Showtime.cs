@@ -86,13 +86,31 @@ namespace Domain.Entities.ShowtimeAggregate
             Status = ShowtimeStatus.Confirmed;
         }
 
-        public void Cancel(string movieTitle)
+        public void Cancel(string reason)
         {
             if (Status == ShowtimeStatus.Cancelled)
                 throw new DomainException("Showtime is already cancelled.");
 
             Status = ShowtimeStatus.Cancelled;
-            Raise(new ShowtimeCancelledEvent(Id, CinemaId, movieTitle, ShowDate));
+            Raise(new ShowtimeCancelledEvent(Id, CinemaId, reason, ShowDate));
+        }
+
+        /// <summary>
+        /// Reschedule a showtime to a new date/time.
+        /// Only allowed when showtime is Scheduled or Confirmed and has no booked seats.
+        /// </summary>
+        public void Reschedule(DateTime newShowDate, DateTime newStartTime, DateTime newEndTime)
+        {
+            if (Status == ShowtimeStatus.Cancelled)
+                throw new DomainException("Cannot reschedule a cancelled showtime.");
+            if (newEndTime <= newStartTime)
+                throw new DomainException("End time must be after start time.");
+            if (newShowDate.Date < DateTime.UtcNow.Date)
+                throw new DomainException("Rescheduled show date cannot be in the past.");
+
+            ShowDate = newShowDate;
+            ActualStartTime = newStartTime;
+            ActualEndTime = newEndTime;
         }
 
         public void IncrementBookedSeats(int count = 1)

@@ -9,28 +9,35 @@ A modern, high-performance Cinema Management and Booking System built with **.NE
 - **🎫 Real-time Booking**: Distributed seat locking using **Redis** and real-time updates via **SignalR**.
 - **💳 Payment Integration**: Secure payment processing with **VnPay** (Sandbox support).
 - **🎟️ Advanced Seating**: Support for Couple/Double seats, maintenance blocking, and tiered refund policies.
+- **🍿 Concession Management**: POS-ready counter sales for popcorn and snacks.
+- **📦 Inventory Management**: Real-time stock tracking with automated deduction on sales and low-stock alerts.
 - **🔐 Security**: Robust identity management with **ASP.NET Core Identity** and **JWT** Bearer authentication.
+- **Logging & Observability**: Full OpenTelemetry integration for Distributed Tracing, Metrics, and Structured Logging.
+- **🏗️ Orchestration**: Managed by **.NET Aspire** for local development and cloud-ready deployment.
 - **🏢 Clean Architecture**: Strict separation of concerns between Domain, Application, Infrastructure, and Api layers.
 
 ## 🛠️ Technology Stack
 
 - **Backend**: ASP.NET Core Web API (.NET 8)
+- **Orchestration**: .NET Aspire (Dashboard, Service Discovery)
 - **Database**: Entity Framework Core with SQL Server
 - **Caching & Locks**: Redis (StackExchange.Redis)
 - **Real-time**: SignalR with Redis Backplane
+- **Observability**: OpenTelemetry
 - **Communication**: MediatR for CQRS
 - **Validation**: FluentValidation
-- **Logging**: Structured Console Logging
-- **Containerization**: Docker & Docker Compose
 
 ## 🏗️ Project Structure
 
 ```text
-├── Api            # Entry point, Controllers, Middlewares
-├── Application    # Business Logic, Commands, Queries, Interfaces
-├── Domain         # Entities, Value Objects, Domain Events, Domain Services
-├── Infrastructure # Persistence, Redis, Hubs, External Services
-└── Shared         # DTOs, Common Models, Constants
+├── Api            # Main Entry Point, Controllers
+├── Application    # Business Logic, Commands, Queries
+├── Domain         # Entities, Value Objects, Domain Events
+├── Infrastructure # Persistence, Redis, Hubs, Mail Service
+├── Shared         # DTOs, Common Models
+├── AppHost        # .NET Aspire Orchestrator (Infrastructure Resource Management)
+├── Migrations     # Dedicated Migration & Seeding Worker
+└── ServiceDefaults# Shared OTel and Health Check configurations
 ```
 
 ## 🚦 Getting Started
@@ -38,8 +45,8 @@ A modern, high-performance Cinema Management and Booking System built with **.NE
 ### Prerequisites
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [.NET Aspire Workload](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/setup-tooling)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop)
-- [SQL Server](https://www.microsoft.com/en-us/sql-server/sql-server-downloads) (or use Docker)
 
 ### Installation & Run
 
@@ -50,33 +57,29 @@ A modern, high-performance Cinema Management and Booking System built with **.NE
    cd cinemaSystem
    ```
 
-2. **Setup Environment**:
-   - Copy `.env.example` to `.env`.
-   - Update connection strings in `appsettings.json` or `.env`.
-
-3. **Run with Docker Compose**:
+2. **Setup Secrets** (Optional but recommended):
 
    ```bash
-   docker-compose up -d
+   cd cinemaSystem.AppHost
+   dotnet user-secrets set "Parameters:sql-password" "YourStrongPassword123!"
    ```
 
-4. **Run via .NET CLI**:
+3. **Run with .NET Aspire**:
+
    ```bash
-   dotnet restore
-   dotnet run --project Api/Api.csproj
+   dotnet run --project cinemaSystem.AppHost
    ```
+
+   _This will launch the Aspire Dashboard at https://localhost:18888, where you can monitor logs, traces, and metrics for SQL Server, Redis, Migrations, and the API._
 
 ## 🧪 API Documentation
 
 The project includes **Swagger UI** for easy API exploration and testing.
-Once running, navigate to:
+The easiest way to access it is through the **Aspire Dashboard** by clicking the endpoint link for `cinema-api`.
 
-- `http://localhost:5190/swagger` (Local)
-- `http://localhost:8080/swagger` (Docker)
+## 🐳 Deployment
 
-## 🐳 Docker Deployment
-
-The solution is fully containerized. Use the provided `Dockerfile` and `docker-compose.yml` for rapid deployment of the API, SQL Server, Redis, and Adminer.
+The solution is cloud-ready via the **Aspire Manifest**. Use `azd init` and `azd up` to deploy the entire infrastructure to Azure Container Apps or other platforms.
 
 ---
 

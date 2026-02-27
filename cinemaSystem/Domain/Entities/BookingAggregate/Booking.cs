@@ -13,6 +13,7 @@ namespace Domain.Entities.BookingAggregate
     {
         // ── Core Properties ─────────────────────────────────────────
         public Guid? CustomerId { get; private set; }
+        public Guid? StaffId { get; private set; }
         public Guid ShowtimeId { get; private set; }
         public DateTime BookingTime { get; private set; }
         public DateTime ExpiresAt { get; private set; }
@@ -67,6 +68,42 @@ namespace Domain.Entities.BookingAggregate
 
             booking.Raise(new BookingCreatedEvent(
                 booking.Id, customerId, showtimeId,
+                totalAmount, tickets.Select(t => t.SeatId).ToList(),
+                booking.ExpiresAt));
+
+            return booking;
+        }
+
+        /// <summary>
+        /// Create a new booking at the counter by a staff member.
+        /// Bypasses online expiry and marks as immediately confirmed once payment is added.
+        /// </summary>
+        public static Booking CreateAtCounter(
+            Guid? customerId,
+            Guid staffId,
+            Guid showtimeId,
+            int totalTickets,
+            decimal totalAmount,
+            List<BookingTicket> tickets)
+        {
+            var booking = new Booking
+            {
+                CustomerId = customerId,
+                StaffId = staffId,
+                ShowtimeId = showtimeId,
+                BookingTime = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddYears(1), // Counter bookings don't "expire" in the typical online sense
+                BookingCode = GenerateBookingCode(),
+                TotalTickets = totalTickets,
+                TotalAmount = totalAmount,
+                DiscountAmount = 0,
+                Status = BookingStatus.Pending, // Will be moved to Completed immediately by handler
+                IsCheckedIn = true // Counter sales are usually checked in or ready to enter
+            };
+            booking._bookingTickets.AddRange(tickets);
+
+            booking.Raise(new BookingCreatedEvent(
+                booking.Id, customerId ?? Guid.Empty, showtimeId,
                 totalAmount, tickets.Select(t => t.SeatId).ToList(),
                 booking.ExpiresAt));
 

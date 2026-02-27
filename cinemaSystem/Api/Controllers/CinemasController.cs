@@ -3,13 +3,14 @@ using Application.Features.Cinemas.Commands.LinkSeat;
 using Application.Features.Cinemas.Queries.GetAllCinemas;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Models.DataModels.CinemaDtos;
 
 namespace Api.Controllers
 {
     public class CinemasController : BaseApiController
     {
         [HttpGet]
-        public async Task<ActionResult<List<CinemaDto>>> GetCinemas()
+        public async Task<ActionResult<List<CinemaSummaryResponse>>> GetCinemas()
         {
             return Ok(await Mediator.Send(new GetAllCinemasQuery()));
         }

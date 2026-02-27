@@ -4,16 +4,16 @@ using MediatR;
 
 namespace Application.Features.Showtimes.Queries.GetShowtimesByCinema
 {
-    public record GetShowtimesByCinemaQuery(Guid CinemaId, DateTime Date) : IRequest<List<ShowtimeResponse>>;
+    public record GetShowtimesByCinemaQuery(Guid CinemaId, DateTime Date) : IRequest<List<ShowtimeDetailResponse>>;
 
     public class GetShowtimesByCinemaHandler(IShowtimeRepository showtimeRepo) 
-        : IRequestHandler<GetShowtimesByCinemaQuery, List<ShowtimeResponse>>
+        : IRequestHandler<GetShowtimesByCinemaQuery, List<ShowtimeDetailResponse>>
     {
-        public async Task<List<ShowtimeResponse>> Handle(GetShowtimesByCinemaQuery request, CancellationToken ct)
+        public async Task<List<ShowtimeDetailResponse>> Handle(GetShowtimesByCinemaQuery request, CancellationToken ct)
         {
             var showtimes = await showtimeRepo.GetByCinemaAndDateAsync(request.CinemaId, request.Date, ct);
             
-            return showtimes.Select(s => new ShowtimeResponse
+            return showtimes.Select(s => new ShowtimeDetailResponse
             {
                 Id = s.Id,
                 MovieId = s.MovieId,

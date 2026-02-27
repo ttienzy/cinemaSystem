@@ -1,283 +1,166 @@
-﻿using Application.Common.Interfaces.Services;
+﻿using Application.Common.Exceptions;
+using Application.Common.Interfaces.Services;
 using Application.Common.Interfaces.Security;
 using Infrastructure.Identity.Constants;
 using Infrastructure.Redis.Constants;
 using Microsoft.AspNetCore.Identity;
-using Shared.Common.Base;
-using Shared.EmailTemplates;
 using Shared.Models.IdentityModels;
 using Shared.Models.IdentityModels.Otps;
+using Shared.EmailTemplates;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Identity
 {
-    public class IdentityService : IIdentityUserService
+    public class IdentityService(
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole<Guid>> roleManager,
+        ITokenClaimService tokenClaimService,
+        ICacheService cacheService,
+        IOtpService otpService,
+        IEmailService emailService) : IIdentityUserService
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
-        private readonly ITokenClaimService _tokenClaimService;
-        private readonly ICacheService _cacheService;
-        private readonly IOtpService _otpService;
-        private readonly IEmailService _emailService;
-        public IdentityService(
-            UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole<Guid>> roleManager,
-            ITokenClaimService tokenClaimService,
-            ICacheService cacheService,
-            IOtpService otpService,
-            IEmailService emailService)
+        public async Task ChangePasswordAsync(ChangePasswordRequest request)
         {
-            _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
-            _roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
-            _tokenClaimService = tokenClaimService ?? throw new ArgumentNullException(nameof(tokenClaimService));
-            _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
-            _otpService = otpService ?? throw new ArgumentNullException(nameof(otpService));
-            _emailService = emailService ?? throw new AggregateException(nameof(emailService));
-        }
+            var user = await userManager.FindByEmailAsync(request.Email)
+                ?? throw new NotFoundException("User", request.Email);
 
-        public async Task<BaseResponse<string>> ChangePasswordAsync(ChangePasswordRequest request)
-        {
-            try
+            var result = await userManager.ChangePasswordAsync(user, request.OldPassword, request.NewPassword);
+            if (!result.Succeeded)
             {
-
-                var user = await _userManager.FindByEmailAsync(request.Email);
-                if (user == null)
-                {
-                    return BaseResponse<string>.Failure(Error.NotFound("User not found."));
-                }
-
-                var result = await _userManager.ChangePasswordAsync(user, request.OldPassword, request.NewPassword);
-                if (!result.Succeeded)
-                {
-                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                    return BaseResponse<string>.Failure(Error.BadRequest(errors));
-                }
-
-                return BaseResponse<string>.Success("Password changed successfully.");
-            }
-            catch (Exception ex)
-            {
-                return BaseResponse<string>.Failure(Error.InternalServerError(ex.Message));
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new ValidationException("Password", errors);
             }
         }
 
-        public async Task<BaseResponse<string>> ForgotPasswordAsync(string email)
+        public async Task ForgotPasswordAsync(string email)
         {
-            try
-            {
-                var user = await _userManager.FindByEmailAsync(email);
-                if (user == null)
-                {
-                    return BaseResponse<string>.Failure(Error.NotFound("User not found."));
-                }
+            var user = await userManager.FindByEmailAsync(email)
+                ?? throw new NotFoundException("User", email);
 
-                var otpCode = await _otpService.GenerateOtpAsync(user.Id.ToString(), user.Email!);
-                var emailRequest = PasswordResetTemplates.VerificationCode(user.Email!, otpCode);
-                await _emailService.SendEmailAsync(emailRequest);
-                return BaseResponse<string>.Success("Verification code sent to your email.");
-            }
-            catch (Exception ex)
-            {
-                return BaseResponse<string>.Failure(Error.InternalServerError(ex.Message));
-            }
+            var otpCode = await otpService.GenerateOtpAsync(user.Id.ToString(), user.Email!);
+            var emailRequest = PasswordResetTemplates.VerificationCode(user.Email!, otpCode);
+            await emailService.SendEmailAsync(emailRequest);
         }
 
-        public async Task<BaseResponse<UserProfileResponse>> GetUserProfileAsync(Guid userId)
+        public async Task<UserProfileResponse> GetUserProfileAsync(Guid userId)
         {
-            try
-            {
-                var userProfile = await _userManager.FindByIdAsync(userId.ToString());
-                if (userProfile == null)
-                {
-                    return BaseResponse<UserProfileResponse>.Failure(Error.NotFound("User profile not found."));
-                }
+            var userProfile = await userManager.FindByIdAsync(userId.ToString())
+                ?? throw new NotFoundException("User", userId);
 
-#pragma warning disable CS8601 // Possible null reference assignment.
-                var response = new UserProfileResponse
-                {
-                    UserName = userProfile.UserName,
-                    Email = userProfile.Email,
-                    PhoneNumber = userProfile.PhoneNumber,
-                    Roles = (await _userManager.GetRolesAsync(userProfile)).ToList(),
-                    CreatedAt = userProfile.CreatedAt
-                };
-#pragma warning restore CS8601 // Possible null reference assignment.
-
-                return BaseResponse<UserProfileResponse>.Success(response);
-            }
-            catch (Exception ex)
+            return new UserProfileResponse
             {
-                return BaseResponse<UserProfileResponse>.Failure(Error.InternalServerError(ex.Message));
-            }
+                UserName = userProfile.UserName ?? string.Empty,
+                Email = userProfile.Email ?? string.Empty,
+                PhoneNumber = userProfile.PhoneNumber,
+                Roles = (await userManager.GetRolesAsync(userProfile)).ToList(),
+                CreatedAt = userProfile.CreatedAt
+            };
         }
 
-        public async Task<BaseResponse<LoginResponse>> LoginUserAsync(LoginRequest request)
+        public async Task<LoginResponse> LoginUserAsync(LoginRequest request)
         {
-            try
+            var user = await userManager.FindByEmailAsync(request.Email)
+                ?? throw new UnauthorizedException("Invalid email or password.");
+
+            var result = await userManager.CheckPasswordAsync(user, request.Password);
+            if (!result)
+                throw new UnauthorizedException("Invalid email or password.");
+
+            var roles = await userManager.GetRolesAsync(user);
+            var accessToken = tokenClaimService.GenerateAccessTokenn(user.Id, user.UserName ?? string.Empty, user.Email!, roles.ToList());
+            var refreshToken = tokenClaimService.GenerateRefreshToken();
+            var refreshTokenExpiry = tokenClaimService.GetRefreshTokenExpirationTime();
+
+            await cacheService.SetAsync(
+                CacheKey.RefreshToken(user.Id), 
+                new RefreshTokenModel { RefreshToken = refreshToken, Expiration = refreshTokenExpiry }, 
+                refreshTokenExpiry - DateTime.UtcNow);
+
+            return new LoginResponse
             {
-                var user = await _userManager.FindByEmailAsync(request.Email);
-                if (user == null)
-                {
-                    return BaseResponse<LoginResponse>.Failure(Error.NotFound("User not found."));
-                }
-
-                var result = await _userManager.CheckPasswordAsync(user, request.Password);
-                if (!result)
-                {
-                    return BaseResponse<LoginResponse>.Failure(Error.BadRequest("Invalid password."));
-                }
-                var roles = await _userManager.GetRolesAsync(user);
-                // Generate token using the token claim service
-                var accessToken = _tokenClaimService.GenerateAccessTokenn(user.Id, user.UserName, user.Email!, roles.ToList());
-                var refreshToken = _tokenClaimService.GenerateRefreshToken();
-                var refreshTokenExpiry = _tokenClaimService.GetRefreshTokenExpirationTime();
-
-                var tokenResponse = new TokenResponse
+                Token = new TokenResponse
                 {
                     AccessToken = accessToken,
-                    RefreshToken = refreshToken,
-                };
-                
-                // Store the refresh token in cache with expiration
-                await _cacheService.SetAsync($"{CacheKey.RefreshToken(user.Id)}", new RefreshTokenModel { RefreshToken = refreshToken, Expiration = refreshTokenExpiry }, refreshTokenExpiry - DateTime.UtcNow);
+                    RefreshToken = refreshToken
+                }
+            };
+        }
 
-                return BaseResponse<LoginResponse>.Success(new LoginResponse
-                {
-                    Token = tokenResponse
-                });
-            }
-            catch (Exception ex)
+        public async Task RegisterUserAsync(RegisterRequest request)
+        {
+            var user = new ApplicationUser
             {
-                return BaseResponse<LoginResponse>.Failure(Error.InternalServerError(ex.Message));
+                UserName = request.Username,
+                Email = request.Email,
+                PhoneNumber = request.PhoneNumber,
+                CreatedAt = DateTime.UtcNow,
+            };
+
+            var result = await userManager.CreateAsync(user, request.Password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new ValidationException("User", errors);
+            }
+
+            if (await roleManager.RoleExistsAsync(RoleConstant.User))
+            {
+                await userManager.AddToRoleAsync(user, RoleConstant.User);
             }
         }
 
-        public async Task<BaseResponse<string>> RegisterUserAsync(RegisterRequest request)
+        public async Task ResendOtpAsync(string email)
         {
-            try
-            {
-                var user = new ApplicationUser
-                {
-                    UserName = request.Username,
-                    Email = request.Email,
-                    PhoneNumber = request.PhoneNumber,
-                    CreatedAt = DateTime.UtcNow,
-                };
-                var result = await _userManager.CreateAsync(user, request.Password);
-                if (!result.Succeeded)
-                {
-                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                    return BaseResponse<string>.Failure(Error.BadRequest(errors));
-                }
-                //Set default role if it exists
-                if (await _roleManager.RoleExistsAsync(RoleConstant.User))
-                {
-                    await _userManager.AddToRoleAsync(user, RoleConstant.User);
-                }
+            await ForgotPasswordAsync(email);
+        }
 
-                return BaseResponse<string>.Success("User registered successfully.");
-            }
-            catch (Exception ex)
+        public async Task ResetPasswordAsync(ResetPasswordWithOtpRequest request)
+        {
+            var isValid = await otpService.ValidateOtpAsync(request.Email, request.OtpCode);
+            if (!isValid)
+                throw new ValidationException("OtpCode", "Invalid or expired OTP.");
+
+            var user = await userManager.FindByEmailAsync(request.Email)
+                ?? throw new NotFoundException("User", request.Email);
+
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await userManager.ResetPasswordAsync(user, token, request.NewPassword);
+
+            if (!result.Succeeded)
             {
-                return BaseResponse<string>.Failure(Error.InternalServerError(ex.Message));
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new ValidationException("Password", errors);
+            }
+
+            await cacheService.RemoveAsync($"password_reset_otp_{request.Email.ToLower()}");
+        }
+
+        public async Task UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
+        {
+            var user = await userManager.FindByIdAsync(userId.ToString())
+                ?? throw new NotFoundException("User", userId);
+
+            user.UserName = request.UserName ?? user.UserName;
+            user.PhoneNumber = request.PhoneNumber ?? user.PhoneNumber;
+
+            var result = await userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new ValidationException("Profile", errors);
             }
         }
 
-        public async Task<BaseResponse<string>> ResendOtpAsync(string email)
+        public async Task<bool> VerifyResetOtpAsync(VerifyResetOtpRequest request)
         {
-            try
-            {
-                await ForgotPasswordAsync(email);
-                return BaseResponse<string>.Success("OTP resent successfully.");
-            }
-            catch (Exception ex)
-            {
-                return BaseResponse<string>.Failure(Error.InternalServerError(ex.Message));
-            }
-        }
+            var isValid = await otpService.ValidateOtpAsync(request.Email, request.OtpCode);
+            if (!isValid)
+                throw new ValidationException("OtpCode", "Invalid or expired OTP.");
 
-        public async Task<BaseResponse<string>> ResetPasswordAsync(ResetPasswordWithOtpRequest request)
-        {
-            try
-            {
-                var pass_reset_otp = await _otpService.ValidateOtpAsync(request.Email, request.OtpCode);
-                if (!pass_reset_otp)
-                {
-                    return BaseResponse<string>.Failure(Error.BadRequest("Invalid or expired OTP."));
-                }
-                var user = await _userManager.FindByEmailAsync(request.Email);
-                if (user == null)
-                {
-                    return BaseResponse<string>.Failure(Error.NotFound("User not found."));
-                }
-                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                var resetPasswordResult = await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
-
-
-                if (!resetPasswordResult.Succeeded)
-                {
-                    var errors = string.Join(", ", resetPasswordResult.Errors.Select(e => e.Description));
-                    return BaseResponse<string>.Failure(Error.BadRequest(errors));
-                }
-                // Mark the OTP as used, remove it from cache
-                await _cacheService.RemoveAsync($"password_reset_otp_{request.Email.ToLower()}");
-
-                return BaseResponse<string>.Success("Password reset successfully.");
-            }
-            catch (Exception ex)
-            {
-                return BaseResponse<string>.Failure(Error.InternalServerError(ex.Message));
-            }
-        }
-
-        public async Task<BaseResponse<string>> UpdateProfileAsync(Guid userId, UpdateProfileRequest request)
-        {
-            try
-            {
-                var user = await _userManager.FindByIdAsync(userId.ToString());
-                if (user == null)
-                {
-                    return BaseResponse<string>.Failure(Error.NotFound("User not found."));
-                }
-                user.UserName = request.UserName ?? user.UserName;
-                user.PhoneNumber = request.PhoneNumber ?? user.PhoneNumber;
-                // Update the user profile
-                var result = await _userManager.UpdateAsync(user);
-                if (!result.Succeeded)
-                {
-                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                    return BaseResponse<string>.Failure(Error.BadRequest(errors));
-                }
-                // Return the updated profile
-                return BaseResponse<string>.Success("Profile updated successfully.");
-
-            }
-            catch (Exception ex)
-            {
-                return BaseResponse<string>.Failure(Error.InternalServerError(ex.Message));
-            }
-        }
-
-        public async Task<BaseResponse<string>> VerifyResetOtpAsync(VerifyResetOtpRequest request)
-        {
-            try
-            {
-                var isValidOtp = await _otpService.ValidateOtpAsync(request.Email, request.OtpCode);
-                if (!isValidOtp)
-                {
-                    return BaseResponse<string>.Failure(Error.BadRequest("Invalid or expired OTP."));
-                }
-                // If OTP is valid, return success response
-                return BaseResponse<string>.Success("OTP verified successfully.");
-            }
-            catch (Exception ex)
-            {
-                return BaseResponse<string>.Failure(Error.InternalServerError(ex.Message));
-            }
+            return true;
         }
     }
 }

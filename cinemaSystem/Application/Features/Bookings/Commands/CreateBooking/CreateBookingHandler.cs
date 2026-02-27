@@ -4,6 +4,7 @@ using Application.Common.Interfaces.Services;
 using Domain.Entities.BookingAggregate;
 using Domain.Services;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Features.Bookings.Commands.CreateBooking
 {
@@ -13,7 +14,8 @@ namespace Application.Features.Bookings.Commands.CreateBooking
         IPromotionRepository promotionRepo,
         ISeatLockService seatLock,
         IPaymentGateway paymentGateway,
-        IUnitOfWork uow) : IRequestHandler<CreateBookingCommand, CreateBookingResult>
+        IUnitOfWork uow,
+        ILogger<CreateBookingHandler> logger) : IRequestHandler<CreateBookingCommand, CreateBookingResult>
     {
         public async Task<CreateBookingResult> Handle(
             CreateBookingCommand cmd, CancellationToken ct)
@@ -21,6 +23,8 @@ namespace Application.Features.Bookings.Commands.CreateBooking
             // 1. Load showtime with pricing
             var showtime = await showtimeRepo.GetByIdWithPricingAsync(cmd.ShowtimeId, ct)
                 ?? throw new NotFoundException(nameof(Domain.Entities.ShowtimeAggregate.Showtime), cmd.ShowtimeId);
+
+            logger.LogInformation("Creating booking for customer {CustomerId} at showtime {ShowtimeId}", cmd.CustomerId, cmd.ShowtimeId);
 
             // 2. Domain rules validation
             var seatIds = cmd.Seats.Select(s => s.SeatId).ToList();
@@ -76,6 +80,9 @@ namespace Application.Features.Bookings.Commands.CreateBooking
                 new PaymentRequest(booking.Id, booking.BookingCode, booking.FinalAmount, "Cinema booking"),
                 "127.0.0.1",
                 "");
+
+            logger.LogInformation("Booking {BookingId} created successfully with code {BookingCode}. Total: {Amount}", 
+                booking.Id, booking.BookingCode, booking.FinalAmount);
 
             return new CreateBookingResult(
                 booking.Id, booking.BookingCode,

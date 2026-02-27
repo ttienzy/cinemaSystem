@@ -1,77 +1,46 @@
 ﻿using Application.Common.Interfaces.Security;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Common.Base;
 using Shared.Models.IdentityModels;
 
 namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class RoleController : ControllerBase
+    [Authorize(Roles = "Admin")]
+    public class RoleController(IRoleService roleService) : ControllerBase
     {
-        private readonly IRoleService _roleService;
-        public RoleController(IRoleService roleService)
-        {
-            _roleService = roleService ?? throw new ArgumentNullException(nameof(roleService));
-        }
         [HttpGet("roles")]
-        public async Task<IActionResult> GetRolesAsync()
+        public async Task<ActionResult<IEnumerable<RoleModel>>> GetRoles()
         {
-            var response = await _roleService.GetAllRolesAsync();
-            if (response.IsSuccess)
-            {
-                return Ok(response.Value);
-            }
-            return ErrorResponse<IEnumerable<RoleModel>>.WithError(response);
+            return Ok(await roleService.GetAllRolesAsync());
         }
+
         [HttpGet("{roleId}")]
-        public async Task<IActionResult> GetRoleByIdAsync(Guid roleId)
+        public async Task<ActionResult<RoleModel>> GetRoleById(Guid roleId)
         {
-            var response = await _roleService.GetRoleByIdAsync(roleId);
-            if (response.IsSuccess)
-            {
-                return Ok(response.Value);
-            }
-            return ErrorResponse<RoleModel>.WithError(response);
+            return Ok(await roleService.GetRoleByIdAsync(roleId));
         }
+
         [HttpPost]
-        public async Task<IActionResult> AddRoleAsync([FromBody] string roleName)
+        public async Task<IActionResult> AddRole([FromBody] string roleName)
         {
-            if (roleName == null)
-            {
-                return BadRequest("Role request cannot be null.");
-            }
-            var response = await _roleService.CreateRoleAsync(roleName);
-            if (response.IsSuccess)
-            {
-                return Ok(response.Value);
-            }
-            return ErrorResponse<string>.WithError(response);
+            await roleService.CreateRoleAsync(roleName);
+            return Ok($"Role {roleName} created successfully.");
         }
+
         [HttpPut("{roleId}")]
-        public async Task<IActionResult> UpdateRoleAsync(Guid roleId, [FromBody] string roleName)
+        public async Task<IActionResult> UpdateRole(Guid roleId, [FromBody] string roleName)
         {
-            if (roleName == null)
-            {
-                return BadRequest("Role request cannot be null.");
-            }
-            var response = await _roleService.UpdateRoleAsync(roleId, roleName);
-            if (response.IsSuccess)
-            {
-                return Ok(response.Value);
-            }
-            return ErrorResponse<string>.WithError(response);
+            await roleService.UpdateRoleAsync(roleId, roleName);
+            return Ok($"Role with ID {roleId} updated successfully.");
         }
+
         [HttpDelete("{roleId}")]
-        public async Task<IActionResult> DeleteRoleAsync(Guid roleId)
+        public async Task<IActionResult> DeleteRole(Guid roleId)
         {
-            var response = await _roleService.DeleteRoleAsync(roleId);
-            if (response.IsSuccess)
-            {
-                return Ok(response.Value);
-            }
-            return ErrorResponse<string>.WithError(response);
+            await roleService.DeleteRoleAsync(roleId);
+            return Ok($"Role with ID {roleId} deleted successfully.");
         }
     }
 }

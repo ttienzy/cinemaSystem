@@ -12,5 +12,6 @@ namespace Application.Common.Interfaces.Persistence
         Task<List<Cinema>> GetAllAsync(CancellationToken ct = default);
         Task AddAsync(Cinema cinema, CancellationToken ct = default);
         void Update(Cinema cinema);
+        void Delete(Cinema cinema);
     }
 }

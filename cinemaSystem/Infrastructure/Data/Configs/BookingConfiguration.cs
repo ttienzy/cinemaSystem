@@ -46,6 +46,15 @@ namespace Infrastructure.Data.Configs
                 .HasForeignKey(b => b.ShowtimeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // StaffId: populated for counter sales, null for online bookings
+            builder.Property(b => b.StaffId).IsRequired(false);
+
+            builder.HasOne<Domain.Entities.StaffAggregate.Staff>()
+                .WithMany()
+                .HasForeignKey(b => b.StaffId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
             builder.HasOne<Promotion>()
                 .WithMany()
                 .HasForeignKey(b => b.PromotionId)

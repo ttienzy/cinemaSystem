@@ -1,0 +1,15 @@
+D:\DACS4\cinemaSystem\Domain\bin\Debug\net8.0\Domain.deps.json
+D:\DACS4\cinemaSystem\Domain\bin\Debug\net8.0\Domain.dll
+D:\DACS4\cinemaSystem\Domain\bin\Debug\net8.0\Domain.pdb
+D:\DACS4\cinemaSystem\Domain\obj\Debug\net8.0\Domain.csproj.AssemblyReference.cache
+D:\DACS4\cinemaSystem\Domain\obj\Debug\net8.0\Domain.GeneratedMSBuildEditorConfig.editorconfig
+D:\DACS4\cinemaSystem\Domain\obj\Debug\net8.0\Domain.AssemblyInfoInputs.cache
+D:\DACS4\cinemaSystem\Domain\obj\Debug\net8.0\Domain.AssemblyInfo.cs
+D:\DACS4\cinemaSystem\Domain\obj\Debug\net8.0\Domain.csproj.CoreCompileInputs.cache
+D:\DACS4\cinemaSystem\Domain\obj\Debug\net8.0\Domain.sourcelink.json
+D:\DACS4\cinemaSystem\Domain\obj\Debug\net8.0\Domain.dll
+D:\DACS4\cinemaSystem\Domain\obj\Debug\net8.0\refint\Domain.dll
+D:\DACS4\cinemaSystem\Domain\obj\Debug\net8.0\Domain.pdb
+D:\DACS4\cinemaSystem\Domain\obj\Debug\net8.0\ref\Domain.dll
+d:\DACS4\cinemaSystem\Domain\bin\Debug\net8.0\Domain.xml
+d:\DACS4\cinemaSystem\Domain\obj\Debug\net8.0\Domain.xml

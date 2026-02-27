@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "d:\\DACS4\\cinemaSystem\\Api\\Api.csproj": {}
+    "D:\\DACS4\\cinemaSystem\\Api\\Api.csproj": {}
   },
   "projects": {
-    "d:\\DACS4\\cinemaSystem\\Api\\Api.csproj": {
+    "D:\\DACS4\\cinemaSystem\\Api\\Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\DACS4\\cinemaSystem\\Api\\Api.csproj",
+        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Api\\Api.csproj",
         "projectName": "Api",
-        "projectPath": "d:\\DACS4\\cinemaSystem\\Api\\Api.csproj",
+        "projectPath": "D:\\DACS4\\cinemaSystem\\Api\\Api.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "d:\\DACS4\\cinemaSystem\\Api\\obj\\",
+        "outputPath": "D:\\DACS4\\cinemaSystem\\Api\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -32,17 +32,20 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "d:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
-                "projectPath": "d:\\DACS4\\cinemaSystem\\Application\\Application.csproj"
+              "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj"
               },
-              "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
-                "projectPath": "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
+              "D:\\DACS4\\cinemaSystem\\cinemaSystem.ServiceDefaults\\cinemaSystem.ServiceDefaults.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\cinemaSystem.ServiceDefaults\\cinemaSystem.ServiceDefaults.csproj"
               },
-              "d:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj": {
-                "projectPath": "d:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj"
+              "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
               },
-              "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
-                "projectPath": "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"
+              "D:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj"
+              },
+              "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"
               }
             }
           }
@@ -63,6 +66,10 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "Aspire.StackExchange.Redis": {
+              "target": "Package",
+              "version": "[8.2.2, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[8.0.19, )"
@@ -107,14 +114,14 @@
         }
       }
     },
-    "d:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
+    "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\DACS4\\cinemaSystem\\Application\\Application.csproj",
+        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj",
         "projectName": "Application",
-        "projectPath": "d:\\DACS4\\cinemaSystem\\Application\\Application.csproj",
+        "projectPath": "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "d:\\DACS4\\cinemaSystem\\Application\\obj\\",
+        "outputPath": "D:\\DACS4\\cinemaSystem\\Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -135,11 +142,11 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
-                "projectPath": "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
+              "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
               },
-              "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
-                "projectPath": "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"
+              "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"
               }
             }
           }
@@ -205,14 +212,112 @@
         }
       }
     },
-    "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+    "D:\\DACS4\\cinemaSystem\\cinemaSystem.ServiceDefaults\\cinemaSystem.ServiceDefaults.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
-        "projectName": "Domain",
-        "projectPath": "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
+        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\cinemaSystem.ServiceDefaults\\cinemaSystem.ServiceDefaults.csproj",
+        "projectName": "cinemaSystem.ServiceDefaults",
+        "projectPath": "D:\\DACS4\\cinemaSystem\\cinemaSystem.ServiceDefaults\\cinemaSystem.ServiceDefaults.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "d:\\DACS4\\cinemaSystem\\Domain\\obj\\",
+        "outputPath": "D:\\DACS4\\cinemaSystem\\cinemaSystem.ServiceDefaults\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.Extensions.Http.Resilience": {
+              "target": "Package",
+              "version": "[8.10.0, )"
+            },
+            "Microsoft.Extensions.ServiceDiscovery": {
+              "target": "Package",
+              "version": "[8.2.2, )"
+            },
+            "OpenTelemetry.Exporter.OpenTelemetryProtocol": {
+              "target": "Package",
+              "version": "[1.9.0, )"
+            },
+            "OpenTelemetry.Extensions.Hosting": {
+              "target": "Package",
+              "version": "[1.9.0, )"
+            },
+            "OpenTelemetry.Instrumentation.AspNetCore": {
+              "target": "Package",
+              "version": "[1.9.0, )"
+            },
+            "OpenTelemetry.Instrumentation.Http": {
+              "target": "Package",
+              "version": "[1.9.0, )"
+            },
+            "OpenTelemetry.Instrumentation.Runtime": {
+              "target": "Package",
+              "version": "[1.9.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
+        "projectName": "Domain",
+        "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
+        "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
+        "outputPath": "D:\\DACS4\\cinemaSystem\\Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -276,14 +381,14 @@
         }
       }
     },
-    "d:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj": {
+    "D:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj",
+        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj",
         "projectName": "Infrastructure",
-        "projectPath": "d:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj",
+        "projectPath": "D:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "d:\\DACS4\\cinemaSystem\\Infrastructure\\obj\\",
+        "outputPath": "D:\\DACS4\\cinemaSystem\\Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -304,14 +409,14 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "d:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
-                "projectPath": "d:\\DACS4\\cinemaSystem\\Application\\Application.csproj"
+              "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj"
               },
-              "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
-                "projectPath": "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
+              "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
               },
-              "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
-                "projectPath": "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"
+              "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"
               }
             }
           }
@@ -332,6 +437,10 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "Aspire.Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[8.2.2, )"
+            },
             "MailKit": {
               "target": "Package",
               "version": "[4.13.0, )"
@@ -409,14 +518,14 @@
         }
       }
     },
-    "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
+    "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj",
+        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj",
         "projectName": "Shared",
-        "projectPath": "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj",
+        "projectPath": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "d:\\DACS4\\cinemaSystem\\Shared\\obj\\",
+        "outputPath": "D:\\DACS4\\cinemaSystem\\Shared\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -437,8 +546,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
-                "projectPath": "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
+              "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
               }
             }
           }

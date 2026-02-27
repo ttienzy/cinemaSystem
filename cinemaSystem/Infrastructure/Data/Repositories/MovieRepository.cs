@@ -23,7 +23,7 @@ namespace Infrastructure.Data.Repositories
                 .FirstOrDefaultAsync(m => m.Id == id, ct);
 
         public async Task<(List<Movie> Items, int Total)> GetPagedAsync(
-            string? search, Guid? genreId, string? status,
+            string? search, Guid? genreId, Guid? cinemaId, string? status,
             int page, int pageSize, CancellationToken ct = default)
         {
             var query = context.Movies.AsQueryable();
@@ -34,6 +34,15 @@ namespace Infrastructure.Data.Repositories
             if (genreId.HasValue)
                 query = query.Where(m =>
                     m.MovieGenres.Any(mg => mg.GenreId == genreId.Value));
+
+            if (cinemaId.HasValue)
+            {
+                var movieIdsInCinema = context.Showtimes
+                    .Where(s => s.CinemaId == cinemaId.Value)
+                    .Select(s => s.MovieId);
+                
+                query = query.Where(m => movieIdsInCinema.Contains(m.Id));
+            }
 
             if (!string.IsNullOrWhiteSpace(status) &&
                 Enum.TryParse<MovieStatus>(status, true, out var movieStatus))

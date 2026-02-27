@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace Application.Validators.DataModelValidators
 {
-    public class MovieRequestValidator : AbstractValidator<MovieRequest>
+    public class MovieUpsertRequestValidator : AbstractValidator<MovieUpsertRequest>
     {
-        public MovieRequestValidator()
+        public MovieUpsertRequestValidator()
         {
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Tiêu đề là bắt buộc")

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Infrastructure.Data.Repositories
 {
     /// <summary>
-    /// Cinema aggregate repository — implements new CQRS interface.
+    /// Cinema aggregate repository â€” implements new CQRS interface.
     /// Old reporting queries remain in Data/Services/CinemaService.
     /// </summary>
     public class CinemaRepository(BookingContext context) : ICinemaRepository
@@ -42,5 +42,8 @@ namespace Infrastructure.Data.Repositories
 
         public void Update(Cinema cinema)
             => context.Cinemas.Update(cinema);
+
+        public void Delete(Cinema cinema)
+            => context.Cinemas.Remove(cinema);
     }
 }

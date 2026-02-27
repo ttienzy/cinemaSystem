@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "si4DHDIUUd4=",
+  "dgSpecHash": "EjeOTlJZg1U=",
   "success": true,
-  "projectFilePath": "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
+  "projectFilePath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ASUS\\.nuget\\packages\\mediatr\\12.4.1\\mediatr.12.4.1.nupkg.sha512",
     "C:\\Users\\ASUS\\.nuget\\packages\\mediatr.contracts\\2.0.1\\mediatr.contracts.2.0.1.nupkg.sha512",

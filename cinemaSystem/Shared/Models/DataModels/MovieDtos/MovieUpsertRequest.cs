@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Shared.Models.DataModels.MovieDtos
 {
-    public class MovieRequest
+    public class MovieUpsertRequest
     {
         public required string Title { get; set; }
         public required int DurationMinutes { get; set; }

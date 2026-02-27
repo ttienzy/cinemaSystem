@@ -3,16 +3,20 @@ using Application.Common.Interfaces.Persistence;
 using Application.Common.Interfaces.Services;
 using Domain.Entities.BookingAggregate;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Features.Bookings.Commands.CompleteBooking
 {
     public class CompleteBookingHandler(
         IBookingRepository bookingRepo,
         ISeatLockService seatLock,
-        IUnitOfWork uow) : IRequestHandler<CompleteBookingCommand, Unit>
+        IUnitOfWork uow,
+        ILogger<CompleteBookingHandler> logger) : IRequestHandler<CompleteBookingCommand, Unit>
     {
         public async Task<Unit> Handle(CompleteBookingCommand cmd, CancellationToken ct)
         {
+            logger.LogInformation("Completing booking {BookingId} with Transaction {TransactionId}", cmd.BookingId, cmd.TransactionId);
+
             var booking = await bookingRepo.GetByIdWithDetailsAsync(cmd.BookingId, ct)
                 ?? throw new NotFoundException(nameof(Booking), cmd.BookingId);
 
@@ -26,6 +30,9 @@ namespace Application.Features.Bookings.Commands.CompleteBooking
             await seatLock.ReleaseSeatsAsync(booking.ShowtimeId, seatIds, ct);
 
             await uow.SaveChangesAsync(ct);
+            
+            logger.LogInformation("Booking {BookingId} completed successfully.", booking.Id);
+            
             return Unit.Value;
         }
     }

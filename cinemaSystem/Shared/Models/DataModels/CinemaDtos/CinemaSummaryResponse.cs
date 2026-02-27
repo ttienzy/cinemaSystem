@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Shared.Models.DataModels.CinemaDtos
 {
-    public class CinemaPublicResponse
+    public class CinemaSummaryResponse
     {
         public Guid CinemaId { get; set; }
         public string CinemaName { get; set; }

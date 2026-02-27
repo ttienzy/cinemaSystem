@@ -12,8 +12,8 @@ using Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
+builder.AddServiceDefaults();
+builder.AddRedisClient("redis");
 
 
 var jwtSettings = builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
@@ -43,7 +43,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 
 // ── Clean Architecture DI ──────────────────────────────────────
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.AddInfrastructure();
 
 
 builder.Services.AddAuthentication(options =>
@@ -126,6 +126,10 @@ builder.Services.AddSwaggerGen(opt =>
             new string[]{}
         }
     });
+
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    opt.IncludeXmlComments(xmlPath);
 });
 
 builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
@@ -133,6 +137,8 @@ builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

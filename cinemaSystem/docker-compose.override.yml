@@ -1,8 +1,0 @@
-version: '3.8'
-
-services:
-  api:
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Docker
-    volumes:
-      - ./Api/appsettings.Docker.json:/app/appsettings.Docker.json:ro

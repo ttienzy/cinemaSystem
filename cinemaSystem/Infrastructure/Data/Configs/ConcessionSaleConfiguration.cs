@@ -40,6 +40,11 @@ namespace Infrastructure.Data.Configs
                 .HasForeignKey(cs => cs.StaffId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasMany(cs => cs.Items)
+                .WithOne()
+                .HasForeignKey(csi => csi.ConcessionSaleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.Metadata.FindNavigation(nameof(ConcessionSale.Items))
                 ?.SetPropertyAccessMode(PropertyAccessMode.Field);
         }

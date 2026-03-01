@@ -8,8 +8,9 @@ namespace Infrastructure.Hubs
 {
     public interface ISeatNotificationService
     {
-        Task NotifySeatReservedAsync(string showtimeId, string[] seatIds);
-        Task NotifySeatSoldAsync(string showtimeId, string[] seatIds);
-        Task NotifySeatReleasedAsync(string showtimeId, string[] seatIds);
+        Task NotifySeatReservedAsync(Guid showtimeId, IEnumerable<Guid> seatIds);
+        Task NotifySeatSoldAsync(Guid showtimeId, IEnumerable<Guid> seatIds);
+        Task NotifySeatReleasedAsync(Guid showtimeId, IEnumerable<Guid> seatIds);
+        Task NotifyBookingExpiredAsync(Guid showtimeId, IEnumerable<Guid> seatIds);
     }
 }

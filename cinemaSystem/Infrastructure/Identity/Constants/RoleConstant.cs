@@ -8,9 +8,10 @@ namespace Infrastructure.Identity.Constants
 {
     public class RoleConstant
     {
+        public const string SuperAdmin = "SuperAdmin";
         public const string Admin = "Admin";
-        public const string User = "User";
         public const string Manager = "Manager";
-        public const string Employee = "Employee";
+        public const string Staff = "Staff";
+        public const string Customer = "Customer";
     }
 }

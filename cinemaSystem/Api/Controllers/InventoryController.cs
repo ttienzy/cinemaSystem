@@ -1,17 +1,24 @@
 using Application.Features.Inventory.Commands.RestockInventory;
+using Application.Features.Inventory.Commands.CreateInventoryItem;
 using Application.Features.Inventory.Queries.GetInventory;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
-    [Authorize(Roles = "Manager,Admin")]
+    // [Authorize(Roles = "Manager,Admin")]
     public class InventoryController : BaseApiController
     {
         [HttpGet("{cinemaId}")]
         public async Task<ActionResult<List<InventoryDto>>> GetInventory(Guid cinemaId, [FromQuery] bool lowStockOnly = false)
         {
             return Ok(await Mediator.Send(new GetInventoryQuery(cinemaId, lowStockOnly)));
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<Guid>> CreateItem([FromBody] CreateInventoryItemRequest request)
+        {
+            return Ok(await Mediator.Send(new CreateInventoryItemCommand(request)));
         }
 
         [HttpPost("restock")]

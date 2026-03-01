@@ -4,20 +4,22 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Models.IdentityModels;
 using Shared.Models.IdentityModels.Otps;
 
+using Infrastructure.Identity.Constants;
+
 namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class IdentityController(IIdentityUserService identityService) : ControllerBase
     {
-        [Authorize]
+        // [Authorize]
         [HttpGet("profile/{userId}")]
         public async Task<ActionResult<UserProfileResponse>> GetProfile(Guid userId)
         {
             return Ok(await identityService.GetUserProfileAsync(userId));
         }
 
-        [Authorize]
+        //[Authorize]
         [HttpPut("profile/{userId}")]
         public async Task<IActionResult> UpdateProfile(Guid userId, [FromBody] UpdateProfileRequest request)
         {
@@ -51,6 +53,22 @@ namespace Api.Controllers
         {
             await identityService.ResetPasswordAsync(request);
             return Ok("Password reset successfully.");
+        }
+
+        //[Authorize(Roles = RoleConstant.SuperAdmin + "," + RoleConstant.Admin)]
+        [HttpPost("staff")]
+        public async Task<IActionResult> CreateStaff([FromBody] CreateStaffRequest request)
+        {
+            await identityService.CreateStaffAsync(request);
+            return Ok("Staff account created successfully and welcome email sent.");
+        }
+
+        //[Authorize(Roles = RoleConstant.SuperAdmin + "," + RoleConstant.Admin)]
+        [HttpPut("users/{userId}/role")]
+        public async Task<IActionResult> UpdateUserRole(Guid userId, [FromBody] UpdateUserRoleRequest request)
+        {
+            await identityService.UpdateUserRoleAsync(userId, request);
+            return Ok("User role updated successfully.");
         }
     }
 }

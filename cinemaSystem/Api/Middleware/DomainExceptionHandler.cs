@@ -17,6 +17,7 @@ namespace Api.Middleware
             var (statusCode, title, type) = exception switch
             {
                 NotFoundException => (StatusCodes.Status404NotFound, "Resource Not Found", "https://tools.ietf.org/html/rfc7231#section-6.5.4"),
+                ConcurrencyException => (StatusCodes.Status409Conflict, "Concurrency Conflict", "https://tools.ietf.org/html/rfc7231#section-6.5.8"),
                 ConflictException => (StatusCodes.Status409Conflict, "Conflict Occurred", "https://tools.ietf.org/html/rfc7231#section-6.5.8"),
                 ForbiddenException => (StatusCodes.Status403Forbidden, "Access Forbidden", "https://tools.ietf.org/html/rfc7231#section-6.5.3"),
                 DomainException => (StatusCodes.Status400BadRequest, "Business Rule Violation", "https://tools.ietf.org/html/rfc7231#section-6.5.1"),

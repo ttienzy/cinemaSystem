@@ -24,6 +24,11 @@ namespace Infrastructure.Data.Configs
                 .WithMany()
                 .HasForeignKey(bt => bt.SeatId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne<Booking>()
+                .WithMany(b => b.BookingTickets)
+                .HasForeignKey(bt => bt.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

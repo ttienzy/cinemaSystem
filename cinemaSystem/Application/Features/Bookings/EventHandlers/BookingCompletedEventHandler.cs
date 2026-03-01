@@ -11,20 +11,21 @@ namespace Application.Features.Bookings.EventHandlers
     /// - Future: Send SignalR update, generate QR code
     /// </summary>
     public class BookingCompletedEventHandler(
-        ILogger<BookingCompletedEventHandler> logger) : INotificationHandler<BookingCompletedEvent>
+        ILogger<BookingCompletedEventHandler> logger,
+        ISeatNotificationService seatNotificationService) : INotificationHandler<BookingCompletedEvent>
     {
-        public Task Handle(BookingCompletedEvent e, CancellationToken ct)
+        public async Task Handle(BookingCompletedEvent e, CancellationToken ct)
         {
             logger.LogInformation(
                 "Booking {BookingId} completed! Code: {BookingCode}. " +
                 "Amount: {Amount:N0} VND. Customer: {CustomerId}",
                 e.BookingId, e.BookingCode, e.FinalAmount, e.CustomerId);
 
+            // Send SignalR notification to update seat map
+            await seatNotificationService.NotifySeatSoldAsync(e.ShowtimeId, e.SeatIds);
+            
             // TODO: Send confirmation email with booking code + QR
-            // TODO: Send SignalR notification to update seat map
             // TODO: Generate e-ticket PDF
-
-            return Task.CompletedTask;
         }
     }
 }

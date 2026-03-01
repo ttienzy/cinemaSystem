@@ -9,12 +9,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using Api.Middleware;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.AddServiceDefaults();
-builder.AddRedisClient("redis");
-
 
 var jwtSettings = builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 var smtpSettings = builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
@@ -27,6 +24,10 @@ builder.Services.AddSingleton(vnPaySettings);
 builder.Services.AddSingleton(paymentCallbackSettings);
 builder.Services.AddSingleton(timeZoneSettings);
 
+var redisConn = builder.Configuration.GetConnectionString("RedisConnection") ?? "localhost:6379";
+builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConn));
+builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redisConn);
+
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 {
     options.Password.RequireDigit = false;
@@ -34,8 +35,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
     options.Password.RequireLowercase = false;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
-    options.SignIn.RequireConfirmedAccount = false; // Set to true if you want email confirmation
-    options.User.RequireUniqueEmail = true; // Ensure unique email addresses
+    options.SignIn.RequireConfirmedAccount = false; 
+    options.User.RequireUniqueEmail = true; 
     options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+ ";
 })
     .AddEntityFrameworkStores<AppIdentityContext>()
@@ -43,7 +44,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 
 // ── Clean Architecture DI ──────────────────────────────────────
 builder.Services.AddApplication();
-builder.AddInfrastructure();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 
 builder.Services.AddAuthentication(options =>
@@ -138,7 +139,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 var app = builder.Build();
 
-app.MapDefaultEndpoints();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -157,5 +158,20 @@ app.MapControllers();
 app.MapHub<SeatHub>("/seatHub");
 
 
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    
+    // Identity Seeding
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+    await IdentityContextSeed.SeedAsync(userManager, roleManager);
+
+    // Booking Shared Aggregates Seeding
+    var bookingContext = services.GetRequiredService<Infrastructure.Data.BookingContext>();
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    await Infrastructure.Data.BookingContextSeed.SeedAsync(bookingContext, logger);
+}
 
 app.Run();

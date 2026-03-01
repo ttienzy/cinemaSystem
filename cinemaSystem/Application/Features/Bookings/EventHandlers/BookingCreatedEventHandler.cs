@@ -11,9 +11,10 @@ namespace Application.Features.Bookings.EventHandlers
     /// - Future: Send real-time notification via SignalR
     /// </summary>
     public class BookingCreatedEventHandler(
-        ILogger<BookingCreatedEventHandler> logger) : INotificationHandler<BookingCreatedEvent>
+        ILogger<BookingCreatedEventHandler> logger,
+        ISeatNotificationService seatNotificationService) : INotificationHandler<BookingCreatedEvent>
     {
-        public Task Handle(BookingCreatedEvent e, CancellationToken ct)
+        public async Task Handle(BookingCreatedEvent e, CancellationToken ct)
         {
             logger.LogInformation(
                 "Booking {BookingId} created for customer {CustomerId}, showtime {ShowtimeId}. " +
@@ -22,10 +23,10 @@ namespace Application.Features.Bookings.EventHandlers
                 e.TotalAmount, e.ExpiresAt,
                 string.Join(", ", e.SeatIds));
 
-            // TODO: Send SignalR notification to update seat map in real-time
+            // Send SignalR notification to update seat map in real-time
+            await seatNotificationService.NotifySeatReservedAsync(e.ShowtimeId, e.SeatIds);
+            
             // TODO: Schedule expiry job (Hangfire / background task)
-
-            return Task.CompletedTask;
         }
     }
 }

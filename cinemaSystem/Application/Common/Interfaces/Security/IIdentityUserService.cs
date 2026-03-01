@@ -17,5 +17,7 @@ namespace Application.Common.Interfaces.Security
         Task<bool> VerifyResetOtpAsync(VerifyResetOtpRequest request);
         Task ResetPasswordAsync(ResetPasswordWithOtpRequest request);
         Task ResendOtpAsync(string email);
+        Task CreateStaffAsync(CreateStaffRequest request);
+        Task UpdateUserRoleAsync(Guid userId, UpdateUserRoleRequest request);
     }
 }

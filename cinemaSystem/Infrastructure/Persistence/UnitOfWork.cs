@@ -12,7 +12,16 @@ namespace Infrastructure.Persistence
         private bool _disposed;
 
         public async Task<int> SaveChangesAsync(CancellationToken ct = default)
-            => await context.SaveChangesAsync(ct);
+        {
+            try
+            {
+                return await context.SaveChangesAsync(ct);
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+            {
+                throw new Application.Common.Exceptions.ConcurrencyException();
+            }
+        }
 
         public async Task BeginTransactionAsync(CancellationToken ct = default)
             => await context.Database.BeginTransactionAsync(ct);

@@ -11,9 +11,10 @@ namespace Application.Features.Bookings.EventHandlers
     /// - Future: Send cancellation email to customer
     /// </summary>
     public class BookingCancelledEventHandler(
-        ILogger<BookingCancelledEventHandler> logger) : INotificationHandler<BookingCancelledEvent>
+        ILogger<BookingCancelledEventHandler> logger,
+        ISeatNotificationService seatNotificationService) : INotificationHandler<BookingCancelledEvent>
     {
-        public Task Handle(BookingCancelledEvent e, CancellationToken ct)
+        public async Task Handle(BookingCancelledEvent e, CancellationToken ct)
         {
             logger.LogInformation(
                 "Booking {BookingId} cancelled. Reason: {Reason}. " +
@@ -21,10 +22,10 @@ namespace Application.Features.Bookings.EventHandlers
                 e.BookingId, e.Reason, e.CustomerId,
                 string.Join(", ", e.SeatIds));
 
-            // TODO: Send SignalR notification to update seat map
+            // Send SignalR notification to update seat map
+            await seatNotificationService.NotifySeatReleasedAsync(e.ShowtimeId, e.SeatIds);
+            
             // TODO: Send cancellation email
-
-            return Task.CompletedTask;
         }
     }
 }

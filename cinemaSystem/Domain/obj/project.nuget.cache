@@ -1,12 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "EjeOTlJZg1U=",
+  "dgSpecHash": "Ywkpn71W4mM=",
   "success": true,
   "projectFilePath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ASUS\\.nuget\\packages\\mediatr\\12.4.1\\mediatr.12.4.1.nupkg.sha512",
     "C:\\Users\\ASUS\\.nuget\\packages\\mediatr.contracts\\2.0.1\\mediatr.contracts.2.0.1.nupkg.sha512",
-    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.0\\microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512"
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.0\\microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.24\\microsoft.windowsdesktop.app.ref.8.0.24.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.24\\microsoft.netcore.app.ref.8.0.24.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.24\\microsoft.aspnetcore.app.ref.8.0.24.nupkg.sha512"
   ],
   "logs": []
 }

@@ -31,6 +31,11 @@ namespace Infrastructure.Data.Configs
             builder.HasIndex(p => p.TransactionId)
                 .IsUnique()
                 .HasFilter("[TransactionId] IS NOT NULL");
+
+            builder.HasOne<Booking>()
+                .WithMany(b => b.Payments)
+                .HasForeignKey(p => p.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -11,6 +11,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Shared.Templates;
+using Shared.Models.ExtenalModels;
 
 namespace Infrastructure.Identity
 {
@@ -106,9 +108,9 @@ namespace Infrastructure.Identity
                 throw new ValidationException("User", errors);
             }
 
-            if (await roleManager.RoleExistsAsync(RoleConstant.User))
+            if (await roleManager.RoleExistsAsync(RoleConstant.Staff))
             {
-                await userManager.AddToRoleAsync(user, RoleConstant.User);
+                await userManager.AddToRoleAsync(user, RoleConstant.Staff);
             }
         }
 
@@ -152,6 +154,53 @@ namespace Infrastructure.Identity
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                 throw new ValidationException("Profile", errors);
             }
+        }
+
+        public async Task CreateStaffAsync(CreateStaffRequest request)
+        {
+            var user = new ApplicationUser
+            {
+                UserName = request.FullName,
+                Email = request.Email,
+                PhoneNumber = request.PhoneNumber,
+                CreatedAt = DateTime.UtcNow,
+                EmailConfirmed = true 
+            };
+
+            var temporaryPassword = $"Staff@{Guid.NewGuid().ToString("N")[..8]}!";
+            var result = await userManager.CreateAsync(user, temporaryPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new ValidationException("User", errors);
+            }
+
+            if (await roleManager.RoleExistsAsync(request.Role))
+            {
+                await userManager.AddToRoleAsync(user, request.Role);
+            }
+            else
+            {
+                throw new ValidationException("Role", $"Role {request.Role} does not exist.");
+            }
+
+            // Gửi email thông báo
+            var emailRequest = StaffTemplates.WelcomeStaff(user.Email, user.UserName, temporaryPassword, request.Role);
+            await emailService.SendEmailAsync(emailRequest);
+        }
+
+        public async Task UpdateUserRoleAsync(Guid userId, UpdateUserRoleRequest request)
+        {
+            var user = await userManager.FindByIdAsync(userId.ToString())
+                ?? throw new NotFoundException("User", userId);
+
+            if (!await roleManager.RoleExistsAsync(request.RoleName))
+                throw new ValidationException("RoleName", $"Role {request.RoleName} does not exist.");
+
+            var currentRoles = await userManager.GetRolesAsync(user);
+            await userManager.RemoveFromRolesAsync(user, currentRoles);
+            await userManager.AddToRoleAsync(user, request.RoleName);
         }
 
         public async Task<bool> VerifyResetOtpAsync(VerifyResetOtpRequest request)

@@ -15,35 +15,36 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using StackExchange.Redis;
 
 namespace Infrastructure
 {
     /// <summary>
     /// Clean Architecture DI — Infrastructure layer.
-    /// All old service-layer registrations removed. Controllers now use MediatR.
-    /// Called from Program.cs: builder.Services.AddInfrastructure(config)
+    /// Called from Program.cs: builder.AddInfrastructure()
     /// </summary>
     public static class DependencyInjection
     {
-        public static IHostApplicationBuilder AddInfrastructure(
-            this IHostApplicationBuilder builder)
+        public static IServiceCollection AddInfrastructure(
+            this IServiceCollection services,
+            IConfiguration configuration)
         {
-            var services = builder.Services;
             // ── Database ─────────────────────────────────────────────
             services.AddScoped<DomainEventDispatcherInterceptor>();
 
             services.AddDbContext<BookingContext>((sp, options) =>
             {
+                var connStr = configuration.GetConnectionString("BookingConnection");
+                options.UseSqlServer(connStr);
                 options.AddInterceptors(sp.GetRequiredService<DomainEventDispatcherInterceptor>());
             });
-            
-            builder.AddSqlServerDbContext<BookingContext>("BookingDb");
 
-            builder.AddSqlServerDbContext<AppIdentityContext>("IdentityDb");
+            services.AddDbContext<AppIdentityContext>(options =>
+            {
+                var connStr = configuration.GetConnectionString("IdentityConnection");
+                options.UseSqlServer(connStr);
+            });
 
             // ── Redis ─────────────────────────────────────────────────
-            // Redis IConnectionMultiplexer is registered by builder.AddRedisClient("redis") in Program.cs
             services.AddScoped<ICacheService, RedisCacheService>();
             services.AddScoped<ISeatLockService, SeatLockService>();
 
@@ -56,6 +57,13 @@ namespace Infrastructure
             services.AddScoped<IInventoryRepository, InventoryRepository>();
             services.AddScoped<IPromotionRepository, PromotionRepository>();
             services.AddScoped<IStaffRepository, StaffRepository>();
+            
+            // Shared Aggregates
+            services.AddScoped<IGenreRepository, GenreRepository>();
+            services.AddScoped<ISeatTypeRepository, SeatTypeRepository>();
+            services.AddScoped<ITimeSlotRepository, TimeSlotRepository>();
+            services.AddScoped<IPricingTierRepository, PricingTierRepository>();
+
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // ── External Services ─────────────────────────────────────
@@ -72,11 +80,18 @@ namespace Infrastructure
             services.AddScoped<IOtpService, OtpService>();
 
             // ── SignalR ───────────────────────────────────────────────
-            var redisConnStr = builder.Configuration.GetConnectionString("redis");
-            services.AddSignalR(o => o.EnableDetailedErrors = true)
-                    .AddStackExchangeRedis(redisConnStr!);
+            var redisConnStr = configuration.GetConnectionString("RedisConnection");
+            if (!string.IsNullOrWhiteSpace(redisConnStr))
+            {
+                services.AddSignalR(o => o.EnableDetailedErrors = true)
+                        .AddStackExchangeRedis(redisConnStr);
+            }
+            else
+            {
+                services.AddSignalR(o => o.EnableDetailedErrors = true);
+            }
 
-            return builder;
+            return services;
         }
     }
 }

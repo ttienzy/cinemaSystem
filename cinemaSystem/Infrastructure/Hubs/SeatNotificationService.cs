@@ -20,7 +20,7 @@ namespace Infrastructure.Hubs
             _hubContext = hubContext;
             _logger = logger;
         }
-        public async Task NotifySeatReservedAsync(string showtimeId, string[] seatIds)
+        public async Task NotifySeatReservedAsync(Guid showtimeId, IEnumerable<Guid> seatIds)
         {
             try
             {
@@ -29,11 +29,11 @@ namespace Infrastructure.Hubs
                     EventType = "Reserved",
                     ShowtimeId = showtimeId,
                     SeatIds = seatIds,
+                    Timestamp = DateTime.UtcNow
                 };
 
-                // Notify all clients in showtime group
                 await _hubContext.Clients
-                    .Group($"{showtimeId}")
+                    .Group(showtimeId.ToString())
                     .SendAsync("SeatReserved", notificationData);
 
                 _logger.LogInformation("Notified seat reservation: ShowtimeId={ShowtimeId}, SeatIds={SeatIds}",
@@ -46,7 +46,7 @@ namespace Infrastructure.Hubs
             }
         }
 
-        public async Task NotifySeatReleasedAsync(string showtimeId, string[] seatIds)
+        public async Task NotifySeatReleasedAsync(Guid showtimeId, IEnumerable<Guid> seatIds)
         {
             try
             {
@@ -59,7 +59,7 @@ namespace Infrastructure.Hubs
                 };
 
                 await _hubContext.Clients
-                    .Group($"{showtimeId}")
+                    .Group(showtimeId.ToString())
                     .SendAsync("SeatReleased", notificationData);
 
                 _logger.LogInformation("Notified seat release: ShowtimeId={ShowtimeId}, SeatIds={SeatIds}",
@@ -72,7 +72,7 @@ namespace Infrastructure.Hubs
             }
         }
 
-        public async Task NotifySeatSoldAsync(string showtimeId, string[] seatIds)
+        public async Task NotifySeatSoldAsync(Guid showtimeId, IEnumerable<Guid> seatIds)
         {
             try
             {
@@ -85,7 +85,7 @@ namespace Infrastructure.Hubs
                 };
 
                 await _hubContext.Clients
-                    .Group($"{showtimeId}")
+                    .Group(showtimeId.ToString())
                     .SendAsync("SeatSold", notificationData);
 
                 _logger.LogInformation("Notified seat sold: ShowtimeId={ShowtimeId}, SeatIds={SeatIds}",
@@ -98,6 +98,31 @@ namespace Infrastructure.Hubs
             }
         }
 
+        public async Task NotifyBookingExpiredAsync(Guid showtimeId, IEnumerable<Guid> seatIds)
+        {
+            try
+            {
+                var notificationData = new
+                {
+                    EventType = "BookingExpired",
+                    ShowtimeId = showtimeId,
+                    SeatIds = seatIds,
+                    Timestamp = DateTime.UtcNow
+                };
+
+                await _hubContext.Clients
+                    .Group(showtimeId.ToString())
+                    .SendAsync("BookingExpired", notificationData);
+
+                _logger.LogInformation("Notified booking expiry: ShowtimeId={ShowtimeId}, SeatIds={SeatIds}",
+                    showtimeId, string.Join(",", seatIds));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to notify booking expiry: ShowtimeId={ShowtimeId}, SeatIds={SeatIds}",
+                    showtimeId, string.Join(",", seatIds));
+            }
+        }
     }
 
     // Extension Methods for easier usage
@@ -105,8 +130,8 @@ namespace Infrastructure.Hubs
     {
         public static async Task NotifySeatStatusBatchAsync(
             this ISeatNotificationService notificationService,
-            string showtimeId,
-            Dictionary<string[], string> seatStatusUpdates) // seatIds -> status
+            Guid showtimeId,
+            Dictionary<IEnumerable<Guid>, string> seatStatusUpdates) // seatIds -> status
         {
             var tasks = new List<Task>();
 
@@ -117,6 +142,7 @@ namespace Infrastructure.Hubs
                     "reserved" => notificationService.NotifySeatReservedAsync(showtimeId, seatIds),
                     "available" => notificationService.NotifySeatReleasedAsync(showtimeId, seatIds),
                     "sold" => notificationService.NotifySeatSoldAsync(showtimeId, seatIds),
+                    "expired" => notificationService.NotifyBookingExpiredAsync(showtimeId, seatIds),
                     _ => Task.CompletedTask
                 };
                 tasks.Add(task);

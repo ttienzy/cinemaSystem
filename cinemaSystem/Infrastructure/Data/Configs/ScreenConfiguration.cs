@@ -30,6 +30,11 @@ namespace Infrastructure.Data.Configs
                 .HasConversion<string>(); // Available = 0, UnderMaintenance = 1, Unavailable = 2
 
 
+            builder.HasOne<Cinema>()
+                .WithMany(c => c.Screens)
+                .HasForeignKey(s => s.CinemaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.Metadata.FindNavigation(nameof(Screen.Seats))
                 ?.SetPropertyAccessMode(PropertyAccessMode.Field);
         }

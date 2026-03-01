@@ -6,7 +6,7 @@
     /// </summary>
     public abstract class BaseEntity
     {
-        public Guid Id { get; private set; } = Guid.NewGuid();
+        public Guid Id { get; private set; }
 
         // Domain Events
         private readonly List<IDomainEvent> _domainEvents = [];

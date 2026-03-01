@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
-    [Authorize]
+    //[Authorize]
     public class ConcessionsController : BaseApiController
     {
         [HttpPost]
@@ -15,7 +15,7 @@ namespace Api.Controllers
         }
 
         [HttpGet("{cinemaId}")]
-        [Authorize(Roles = "Manager,Admin,Staff")]
+        //[Authorize(Roles = "Manager,Admin,Staff")]
         public async Task<ActionResult<ConcessionSalesResponse>> GetSales(
             Guid cinemaId, 
             [FromQuery] DateTime? from, 

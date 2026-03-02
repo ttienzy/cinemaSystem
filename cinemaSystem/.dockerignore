@@ -1,4 +1,5 @@
 # .dockerignore
+
 # .NET
 bin/
 obj/
@@ -20,7 +21,7 @@ out/
 
 # Docker
 Dockerfile
-docker-compose*
+docker-compose.yml
 .dockerignore
 
 # Documentation
@@ -37,3 +38,15 @@ logs/
 
 # Build
 publish/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Test
+*.test.csproj
+TestResults/
+
+# Plans folder
+plans/

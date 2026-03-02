@@ -66,9 +66,16 @@ namespace Application.Features.Bookings.Commands.CreateBooking
             }
 
             // 7. Lock seats in Redis (15min TTL)
-            await seatLock.LockSeatsAsync(
-                cmd.ShowtimeId, seatIds, booking.Id,
-                TimeSpan.FromMinutes(15), ct);
+            try
+            {
+                await seatLock.LockSeatsAsync(
+                    cmd.ShowtimeId, seatIds, booking.Id,
+                    TimeSpan.FromMinutes(15), ct);
+            }
+            catch (InvalidOperationException)
+            {
+                throw new ConflictException("One or more seats have just been booked by another user. Please refresh and try again.");
+            }
 
             // 8. Persist
             await bookingRepo.AddAsync(booking, ct);
@@ -78,10 +85,10 @@ namespace Application.Features.Bookings.Commands.CreateBooking
             // 9. Generate payment URL
             var paymentUrl = paymentGateway.CreatePaymentUrl(
                 new PaymentRequest(booking.Id, booking.BookingCode, booking.FinalAmount, "Cinema booking"),
-                "127.0.0.1",
+                cmd.ClientIpAddress ?? "127.0.0.1",
                 "");
 
-            logger.LogInformation("Booking {BookingId} created successfully with code {BookingCode}. Total: {Amount}", 
+            logger.LogInformation("Booking {BookingId} created successfully with code {BookingCode}. Total: {Amount}",
                 booking.Id, booking.BookingCode, booking.FinalAmount);
 
             return new CreateBookingResult(

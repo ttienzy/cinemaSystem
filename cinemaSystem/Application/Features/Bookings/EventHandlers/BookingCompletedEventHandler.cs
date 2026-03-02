@@ -1,3 +1,4 @@
+using Application.Common.Interfaces.Services;
 using Domain.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -23,7 +24,7 @@ namespace Application.Features.Bookings.EventHandlers
 
             // Send SignalR notification to update seat map
             await seatNotificationService.NotifySeatSoldAsync(e.ShowtimeId, e.SeatIds);
-            
+
             // TODO: Send confirmation email with booking code + QR
             // TODO: Generate e-ticket PDF
         }

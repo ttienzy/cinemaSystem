@@ -4,22 +4,21 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Models.IdentityModels;
 using Shared.Models.IdentityModels.Otps;
 
-using Infrastructure.Identity.Constants;
-
 namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class IdentityController(IIdentityUserService identityService) : ControllerBase
     {
-        // [Authorize]
+        [Authorize]
         [HttpGet("profile/{userId}")]
         public async Task<ActionResult<UserProfileResponse>> GetProfile(Guid userId)
         {
             return Ok(await identityService.GetUserProfileAsync(userId));
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpPut("profile/{userId}")]
         public async Task<IActionResult> UpdateProfile(Guid userId, [FromBody] UpdateProfileRequest request)
         {
@@ -27,6 +26,7 @@ namespace Api.Controllers
             return Ok("Profile updated successfully.");
         }
 
+        [Authorize]
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
@@ -34,6 +34,7 @@ namespace Api.Controllers
             return Ok("Password changed successfully.");
         }
 
+        [AllowAnonymous]
         [HttpPost("forgot-password-with-otp")]
         public async Task<IActionResult> ForgotPassword([FromBody] string email)
         {
@@ -41,6 +42,7 @@ namespace Api.Controllers
             return Ok("Verification code sent to your email.");
         }
 
+        [AllowAnonymous]
         [HttpPost("verify-reset-otp")]
         public async Task<IActionResult> VerifyResetOtp([FromBody] VerifyResetOtpRequest request)
         {
@@ -48,6 +50,7 @@ namespace Api.Controllers
             return Ok("OTP verified successfully.");
         }
 
+        [AllowAnonymous]
         [HttpPost("reset-password-with-otp")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordWithOtpRequest request)
         {
@@ -55,7 +58,7 @@ namespace Api.Controllers
             return Ok("Password reset successfully.");
         }
 
-        //[Authorize(Roles = RoleConstant.SuperAdmin + "," + RoleConstant.Admin)]
+        [Authorize(Roles = "Admin")]
         [HttpPost("staff")]
         public async Task<IActionResult> CreateStaff([FromBody] CreateStaffRequest request)
         {
@@ -63,7 +66,7 @@ namespace Api.Controllers
             return Ok("Staff account created successfully and welcome email sent.");
         }
 
-        //[Authorize(Roles = RoleConstant.SuperAdmin + "," + RoleConstant.Admin)]
+        [Authorize(Roles = "Admin")]
         [HttpPut("users/{userId}/role")]
         public async Task<IActionResult> UpdateUserRole(Guid userId, [FromBody] UpdateUserRoleRequest request)
         {

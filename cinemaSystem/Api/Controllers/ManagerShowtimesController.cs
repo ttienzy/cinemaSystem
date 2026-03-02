@@ -19,7 +19,7 @@ namespace Api.Controllers
     /// Managers can only operate on their assigned cinema (enforced at handler level via Staff-Cinema mapping).
     /// Admins can operate on any cinema.
     /// </summary>
-    // [Authorize(Roles = "Manager,Admin")]
+    [Authorize(Roles = "Manager,Admin")]
     [ApiController]
     [Route("api/manager/showtimes")]
     public class ManagerShowtimesController(IMediator mediator) : ControllerBase

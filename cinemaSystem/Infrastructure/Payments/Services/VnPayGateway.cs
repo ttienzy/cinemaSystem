@@ -25,8 +25,6 @@ namespace Infrastructure.Payments.Services
         {
             var tz = TimeZoneInfo.FindSystemTimeZoneById(_tz.Id);
             var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
-            var txnRef = now.Ticks.ToString();
-
             var pay = new VnPayLibrary();
             pay.AddRequestData("vnp_Version", _settings.Vnp_Version);
             pay.AddRequestData("vnp_Command", _settings.Vnp_Command);
@@ -41,7 +39,7 @@ namespace Infrastructure.Payments.Services
             pay.AddRequestData("vnp_ReturnUrl", _callback.Vnp_ReturnUrl);
             pay.AddRequestData("vnp_ExpireDate",
                 now.AddMinutes(PaymentConstants.ExpireInMinutes).ToString("yyyyMMddHHmmss"));
-            pay.AddRequestData("vnp_TxnRef", txnRef);
+            pay.AddRequestData("vnp_TxnRef", request.BookingId.ToString());
 
             return pay.CreateRequestUrl(_settings.BaseUrl, _settings.HashSecret);
         }
@@ -61,19 +59,14 @@ namespace Infrastructure.Payments.Services
 
             var responseCode = Get(callbackParams, "vnp_ResponseCode");
             var isSuccess = responseCode == "00";
-            var bookingOrderInfo = Get(callbackParams, "vnp_OrderInfo");
+            var txnRef = Get(callbackParams, "vnp_TxnRef");
             var txnId = callbackParams.TryGetValue("vnp_TransactionNo", out var txn) ? txn : null;
-            var refCode = callbackParams.TryGetValue("vnp_TxnRef", out var rf) ? rf : null;
 
-            // Extract BookingId from the order info (format: "BKxxxxxxxx - description")
-            if (!Guid.TryParse(
-                bookingOrderInfo.Contains(" - ")
-                    ? bookingOrderInfo.Split(" - ")[0]
-                    : bookingOrderInfo,
-                out var bookingId))
-                return new PaymentCallbackResult(false, Guid.Empty, null, null, "Cannot parse BookingId.");
+            // Extract BookingId from vnp_TxnRef (we store the BookingId GUID there)
+            if (!Guid.TryParse(txnRef, out var bookingId))
+                return new PaymentCallbackResult(false, Guid.Empty, null, null, "Cannot parse BookingId from TxnRef.");
 
-            return new PaymentCallbackResult(isSuccess, bookingId, txnId, refCode,
+            return new PaymentCallbackResult(isSuccess, bookingId, txnId, txnRef,
                 isSuccess ? null : $"VnPay error code: {responseCode}");
         }
 

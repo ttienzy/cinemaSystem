@@ -64,5 +64,8 @@ namespace Infrastructure.Data.Repositories
 
         public async Task<Domain.Entities.SharedAggregates.PricingTier?> GetPricingTierAsync(Guid id, CancellationToken ct = default)
             => await context.PricingTiers.FindAsync([id], ct);
+
+        public IQueryable<Showtime> GetQueryable()
+            => context.Showtimes;
     }
 }

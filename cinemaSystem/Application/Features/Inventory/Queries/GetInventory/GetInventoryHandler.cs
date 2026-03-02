@@ -1,10 +1,11 @@
 using Application.Common.Interfaces.Persistence;
 using Domain.Entities.InventoryAggregate;
 using MediatR;
+using Shared.Common.Paging;
 
 namespace Application.Features.Inventory.Queries.GetInventory
 {
-    public record GetInventoryQuery(Guid CinemaId, bool OnlyLowStock = false) : IRequest<List<InventoryDto>>;
+    public record GetInventoryQuery(Guid CinemaId, bool OnlyLowStock = false, int PageNumber = 1, int PageSize = 10) : IRequest<PaginatedList<InventoryDto>>;
 
     public record InventoryDto(
         Guid Id,
@@ -16,22 +17,19 @@ namespace Application.Features.Inventory.Queries.GetInventory
         bool IsAvailable,
         DateTime? LastRestocked);
 
-    public class GetInventoryHandler(IInventoryRepository inventoryRepo) : IRequestHandler<GetInventoryQuery, List<InventoryDto>>
+    public class GetInventoryHandler(IInventoryRepository inventoryRepo) : IRequestHandler<GetInventoryQuery, PaginatedList<InventoryDto>>
     {
-        public async Task<List<InventoryDto>> Handle(GetInventoryQuery request, CancellationToken ct)
+        public async Task<PaginatedList<InventoryDto>> Handle(GetInventoryQuery request, CancellationToken ct)
         {
-            List<InventoryItem> items;
-            
+            var query = inventoryRepo.GetQueryable()
+                .Where(i => i.CinemaId == request.CinemaId);
+
             if (request.OnlyLowStock)
             {
-                items = await inventoryRepo.GetLowStockAsync(request.CinemaId, ct);
-            }
-            else
-            {
-                items = await inventoryRepo.GetByCinemaAsync(request.CinemaId, false, ct);
+                query = query.Where(i => i.CurrentStock <= i.MinimumStock);
             }
 
-            return items.Select(i => new InventoryDto(
+            var selectQuery = query.Select(i => new InventoryDto(
                 i.Id,
                 i.ItemName,
                 i.ItemCategory,
@@ -39,7 +37,9 @@ namespace Application.Features.Inventory.Queries.GetInventory
                 i.MinimumStock,
                 i.UnitPrice,
                 i.IsAvailable,
-                i.LastRestocked)).ToList();
+                i.LastRestocked));
+
+            return await PaginatedList<InventoryDto>.CreateAsync(selectQuery, request.PageNumber, request.PageSize);
         }
     }
 }

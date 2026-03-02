@@ -18,12 +18,14 @@ namespace Domain.Entities.BookingAggregate
         public DateTime BookingTime { get; private set; }
         public DateTime ExpiresAt { get; private set; }
         public string BookingCode { get; private set; } = string.Empty;
+        public string CheckInToken { get; private set; } = string.Empty;
         public int TotalTickets { get; private set; }
         public decimal TotalAmount { get; private set; }
         public decimal DiscountAmount { get; private set; }
         public Guid? PromotionId { get; private set; }
         public BookingStatus Status { get; private set; }
         public bool IsCheckedIn { get; private set; }
+        public DateTime? CheckedInAt { get; private set; }
 
         // ── Collections ──────────────────────────────────────────────
         private readonly List<BookingTicket> _bookingTickets = [];
@@ -58,6 +60,7 @@ namespace Domain.Entities.BookingAggregate
                 BookingTime = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes),
                 BookingCode = GenerateBookingCode(),
+                CheckInToken = GenerateCheckInToken(),
                 TotalTickets = totalTickets,
                 TotalAmount = totalAmount,
                 DiscountAmount = 0,
@@ -182,6 +185,7 @@ namespace Domain.Entities.BookingAggregate
                 throw new DomainException("Booking has already been checked in.");
 
             IsCheckedIn = true;
+            CheckedInAt = DateTime.UtcNow;
         }
 
         public void ApplyPromotion(Guid promotionId, decimal discountAmount)
@@ -206,6 +210,11 @@ namespace Domain.Entities.BookingAggregate
             var timestamp = DateTime.UtcNow.ToString("yyMMddHHmm");
             var suffix = Guid.NewGuid().ToString("N")[..4].ToUpper();
             return $"BK{timestamp}{suffix}";
+        }
+
+        private static string GenerateCheckInToken()
+        {
+            return Guid.NewGuid().ToString("N").ToUpper();
         }
 
         // ── Legacy compatibility (for old code, not recommended) ─────

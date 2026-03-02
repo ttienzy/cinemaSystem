@@ -1,3 +1,4 @@
+using Application.Common.Interfaces.Services;
 using Domain.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -24,7 +25,7 @@ namespace Application.Features.Bookings.EventHandlers
 
             // Send SignalR notification to update seat map
             await seatNotificationService.NotifySeatReleasedAsync(e.ShowtimeId, e.SeatIds);
-            
+
             // TODO: Send cancellation email
         }
     }

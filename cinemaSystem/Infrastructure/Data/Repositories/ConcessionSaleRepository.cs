@@ -54,5 +54,8 @@ namespace Infrastructure.Data.Repositories
 
         public void Update(ConcessionSale sale)
             => context.ConcessionSales.Update(sale);
+
+        public IQueryable<ConcessionSale> GetQueryable()
+            => context.ConcessionSales;
     }
 }

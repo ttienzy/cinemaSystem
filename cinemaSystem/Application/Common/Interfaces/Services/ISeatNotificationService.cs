@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Infrastructure.Hubs
+namespace Application.Common.Interfaces.Services
 {
+    /// <summary>
+    /// Abstraction for real-time seat status notifications (e.g., via SignalR).
+    /// Infrastructure layer provides the concrete implementation.
+    /// </summary>
     public interface ISeatNotificationService
     {
         Task NotifySeatReservedAsync(Guid showtimeId, IEnumerable<Guid> seatIds);

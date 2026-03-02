@@ -1,5 +1,6 @@
 using Infrastructure.Identity.Constants;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,10 @@ namespace Infrastructure.Identity
 {
     public static class IdentityContextSeed
     {
-        public static async Task SeedAsync(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
+        public static async Task SeedAsync(
+            UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole<Guid>> roleManager,
+            IConfiguration configuration)
         {
             // Seed Roles
             await SeedRoleAsync(roleManager, RoleConstant.SuperAdmin);
@@ -19,11 +23,15 @@ namespace Infrastructure.Identity
             await SeedRoleAsync(roleManager, RoleConstant.Staff);
             await SeedRoleAsync(roleManager, RoleConstant.Customer);
 
+            // Get admin email and password from configuration
+            var adminEmail = configuration["Identity:DefaultAdminEmail"] ?? "admin@cinema.com";
+            var adminPassword = configuration["Identity:DefaultAdminPassword"] ?? "Admin@Cinema2024!";
+
             // Seed Default Admin
             var defaultAdmin = new ApplicationUser
             {
                 UserName = "System Admin",
-                Email = "admin@cinema.com",
+                Email = adminEmail,
                 EmailConfirmed = true,
                 PhoneNumberConfirmed = true
             };
@@ -33,7 +41,7 @@ namespace Infrastructure.Identity
                 var user = await userManager.FindByEmailAsync(defaultAdmin.Email);
                 if (user == null)
                 {
-                    await userManager.CreateAsync(defaultAdmin, "Admin123!");
+                    await userManager.CreateAsync(defaultAdmin, adminPassword);
                     await userManager.AddToRoleAsync(defaultAdmin, RoleConstant.SuperAdmin);
                 }
             }

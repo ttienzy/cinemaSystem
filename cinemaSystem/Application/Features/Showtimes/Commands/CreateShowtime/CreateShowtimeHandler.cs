@@ -50,14 +50,14 @@ namespace Application.Features.Showtimes.Commands.CreateShowtime
             // 2. Fetch Screen for Total Seats
             var cinema = await cinemaRepo.GetByIdWithScreensAsync(req.CinemaId, ct)
                 ?? throw new NotFoundException(nameof(Cinema), req.CinemaId);
-            
+
             var screen = cinema.GetScreenById(req.ScreenId)
                 ?? throw new NotFoundException(nameof(Screen), req.ScreenId);
 
             // 3. Resolve Pricing Multipliers
             var pricingTier = await showtimeRepo.GetPricingTierAsync(req.PricingTierId, ct)
                 ?? throw new NotFoundException("PricingTier", req.PricingTierId);
-            
+
             var seatTypes = await showtimeRepo.GetSeatTypesAsync(ct);
 
             // 4. Create Showtime via Factory
@@ -66,8 +66,7 @@ namespace Application.Features.Showtimes.Commands.CreateShowtime
                 req.CinemaId, req.MovieId, req.ScreenId,
                 req.SlotId, req.PricingTierId,
                 req.ShowDate, req.ActualStartTime, req.ActualEndTime,
-                100); // TODO: Get actual capacity from screen.Seats.Count once mapped. 
-                      // For now using 100 as placeholder or better, let's look at screen.
+                screen.Seats.Count); // Actual seat count from the screen
 
             // 5. Build Showtime Pricings
             foreach (var spReq in req.ShowtimePricings)

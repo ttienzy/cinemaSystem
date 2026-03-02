@@ -12,7 +12,8 @@ namespace Application.Common.Interfaces.Persistence
         Task AddAsync(Showtime showtime, CancellationToken ct = default);
         void Update(Showtime showtime);
         void Delete(Showtime showtime);
-        
+        IQueryable<Showtime> GetQueryable();
+
         // Metadata lookups for scheduling
         Task<List<Domain.Entities.SharedAggregates.SeatType>> GetSeatTypesAsync(CancellationToken ct = default);
         Task<Domain.Entities.SharedAggregates.PricingTier?> GetPricingTierAsync(Guid id, CancellationToken ct = default);

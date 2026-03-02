@@ -12,5 +12,6 @@ namespace Application.Common.Interfaces.Persistence
             int page, int pageSize, CancellationToken ct = default);
         Task AddAsync(ConcessionSale sale, CancellationToken ct = default);
         void Update(ConcessionSale sale);
+        IQueryable<ConcessionSale> GetQueryable();
     }
 }

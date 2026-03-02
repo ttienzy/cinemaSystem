@@ -1,4 +1,5 @@
 ﻿using Api.Convertors;
+using Api.BackgroundServices;
 using Application;
 using Application.Settings;
 using Infrastructure;
@@ -10,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using Api.Middleware;
 using StackExchange.Redis;
+using AspNetCoreRateLimit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,13 +32,14 @@ builder.Services.AddStackExchangeRedisCache(options => options.Configuration = r
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 {
-    options.Password.RequireDigit = false;
+    options.Password.RequireDigit = true;
     options.Password.RequiredLength = 8;
-    options.Password.RequireLowercase = false;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-    options.SignIn.RequireConfirmedAccount = false; 
-    options.User.RequireUniqueEmail = true; 
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequiredUniqueChars = 4;
+    options.SignIn.RequireConfirmedAccount = false;
+    options.User.RequireUniqueEmail = true;
     options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+ ";
 })
     .AddEntityFrameworkStores<AppIdentityContext>()
@@ -45,6 +48,9 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 // ── Clean Architecture DI ──────────────────────────────────────
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Register background services
+builder.Services.AddHostedService<BookingExpiryService>();
 
 
 builder.Services.AddAuthentication(options =>
@@ -93,6 +99,12 @@ builder.Services.AddCors(options =>
                           .AllowAnyHeader()
                           .AllowCredentials());
 });
+
+// ── Rate Limiting ────────────────────────────────────────────────
+builder.Services.AddMemoryCache();
+builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+builder.Services.AddInMemoryRateLimiting();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -149,6 +161,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowSpecificOrigins");
+app.UseIpRateLimiting();
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseAuthentication();
@@ -162,11 +175,12 @@ app.MapHub<SeatHub>("/seatHub");
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    
+
     // Identity Seeding
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-    await IdentityContextSeed.SeedAsync(userManager, roleManager);
+    var configuration = services.GetRequiredService<IConfiguration>();
+    await IdentityContextSeed.SeedAsync(userManager, roleManager, configuration);
 
     // Booking Shared Aggregates Seeding
     var bookingContext = services.GetRequiredService<Infrastructure.Data.BookingContext>();

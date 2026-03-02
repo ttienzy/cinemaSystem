@@ -29,5 +29,8 @@ namespace Infrastructure.Data.Repositories
 
         public void Update(InventoryItem item)
             => context.InventoryItems.Update(item);
+
+        public IQueryable<InventoryItem> GetQueryable()
+            => context.InventoryItems;
     }
 }

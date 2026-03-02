@@ -53,5 +53,8 @@ namespace Infrastructure.Data.Repositories
 
         public void Update(Booking booking)
             => context.Bookings.Update(booking);
+
+        public IQueryable<Booking> GetQueryable()
+            => context.Bookings;
     }
 }

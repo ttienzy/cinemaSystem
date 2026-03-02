@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 
 namespace Api.Controllers
 {
-    // [Authorize(Roles = "Admin,Manager")]
     public class PricingTiersController : BaseApiController
     {
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<List<PricingTierDto>>> GetAll()
         {
             return Ok(await Mediator.Send(new GetAllPricingTiersQuery()));
         }
-        
-        // Additional endpoints can be added for creation/updates.
+
+        // Additional mutation endpoints should use [Authorize(Roles = "Admin")]
     }
 }

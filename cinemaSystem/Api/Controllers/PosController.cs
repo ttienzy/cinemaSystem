@@ -1,6 +1,6 @@
 using Application.Features.Bookings.Commands.CreateCounterBooking;
 using Application.Features.Bookings.Commands.CreateUnifiedPosSale;
-using Application.Features.Concessions.Commands.CreateConcessionSale;
+using Application.Features.Concessions.Commands.CreateSale;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +14,7 @@ namespace Api.Controllers
     /// All endpoints require Staff, Manager, or Admin role.
     /// StaffId is automatically resolved from the JWT token — no manual input required.
     /// </summary>
-    // [Authorize(Roles = "Manager,Admin,Staff")]
+    [Authorize(Roles = "Manager,Admin,Staff")]
     [ApiController]
     [Route("api/pos")]
     public class PosController(IMediator mediator) : ControllerBase

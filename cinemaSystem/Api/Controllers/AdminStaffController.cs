@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Api.Controllers
 {
-    // [Authorize(Roles = "SuperAdmin,Admin")]
+    [Authorize(Roles = "Admin")]
     [Route("api/admin/staff")]
     public class AdminStaffController : BaseApiController
     {

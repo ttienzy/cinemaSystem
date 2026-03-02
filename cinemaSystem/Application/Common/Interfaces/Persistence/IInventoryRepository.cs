@@ -9,5 +9,6 @@ namespace Application.Common.Interfaces.Persistence
         Task<List<InventoryItem>> GetLowStockAsync(Guid cinemaId, CancellationToken ct = default);
         Task AddAsync(InventoryItem item, CancellationToken ct = default);
         void Update(InventoryItem item);
+        IQueryable<InventoryItem> GetQueryable();
     }
 }

@@ -10,21 +10,23 @@ using System.Threading.Tasks;
 
 namespace Api.Controllers
 {
-    // [Authorize(Roles = "Admin,Manager")]
     public class SeatTypesController : BaseApiController
     {
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<List<SeatTypeDto>>> GetAll()
         {
             return Ok(await Mediator.Send(new GetAllSeatTypesQuery()));
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<Guid>> Create([FromBody] CreateSeatTypeRequest request)
         {
             return Ok(await Mediator.Send(new CreateSeatTypeCommand(request)));
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSeatTypeRequest request)
         {

@@ -12,5 +12,6 @@ namespace Application.Common.Interfaces.Persistence
         Task<Booking?> GetByIdForCheckInAsync(Guid id, CancellationToken ct = default);
         Task AddAsync(Booking booking, CancellationToken ct = default);
         void Update(Booking booking);
+        IQueryable<Booking> GetQueryable();
     }
 }

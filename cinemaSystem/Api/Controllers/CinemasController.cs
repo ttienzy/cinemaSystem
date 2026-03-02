@@ -16,7 +16,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("screens/{screenId}/seats/{seatId}/block")]
-        //[Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> BlockSeat(Guid screenId, Guid seatId, [FromBody] BlockSeatRequest request)
         {
             await Mediator.Send(new BlockSeatCommand(screenId, seatId, request.Reason));
@@ -24,7 +24,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("screens/{screenId}/seats/{seatId}/link")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> LinkSeat(Guid screenId, Guid seatId, [FromBody] LinkSeatRequest request)
         {
             await Mediator.Send(new LinkSeatCommand(screenId, seatId, request.PartnerSeatNumber));

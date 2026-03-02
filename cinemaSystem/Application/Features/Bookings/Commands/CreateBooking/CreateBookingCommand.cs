@@ -6,7 +6,8 @@ namespace Application.Features.Bookings.Commands.CreateBooking
         Guid CustomerId,
         Guid ShowtimeId,
         List<SeatSelection> Seats,
-        string? PromotionCode) : IRequest<CreateBookingResult>;
+        string? PromotionCode,
+        string? ClientIpAddress = null) : IRequest<CreateBookingResult>;
 
     public record SeatSelection(Guid SeatId, decimal Price);
 

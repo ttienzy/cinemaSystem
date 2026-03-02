@@ -45,5 +45,8 @@ namespace Infrastructure.Data.Repositories
 
         public void Delete(Cinema cinema)
             => context.Cinemas.Remove(cinema);
+
+        public IQueryable<Cinema> GetQueryable()
+            => context.Cinemas;
     }
 }

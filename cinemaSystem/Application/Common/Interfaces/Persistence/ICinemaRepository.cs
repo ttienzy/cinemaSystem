@@ -13,5 +13,6 @@ namespace Application.Common.Interfaces.Persistence
         Task AddAsync(Cinema cinema, CancellationToken ct = default);
         void Update(Cinema cinema);
         void Delete(Cinema cinema);
+        IQueryable<Cinema> GetQueryable();
     }
 }

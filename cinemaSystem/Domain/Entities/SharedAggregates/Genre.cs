@@ -23,10 +23,11 @@ namespace Domain.Entities.SharedAggregates
             Description = description;
             IsActive = true;
         }
-        public void UpdateGenre(string genreName, string? description = null)
+        public void UpdateGenre(string genreName, string? description, bool isActive)
         {
             GenreName = genreName;
             Description = description;
+            IsActive = isActive;
         }
     }
 }

@@ -19,14 +19,14 @@ namespace Api.Controllers
             return Ok(await Mediator.Send(new GetAllSeatTypesQuery()));
         }
 
-        [Authorize(Roles = "Admin")]
+        // [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<Guid>> Create([FromBody] CreateSeatTypeRequest request)
         {
             return Ok(await Mediator.Send(new CreateSeatTypeCommand(request)));
         }
 
-        [Authorize(Roles = "Admin")]
+        // [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSeatTypeRequest request)
         {

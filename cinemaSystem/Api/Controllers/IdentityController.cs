@@ -8,17 +8,17 @@ namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    // [Authorize]
     public class IdentityController(IIdentityUserService identityService) : ControllerBase
     {
-        [Authorize]
+        // [Authorize]
         [HttpGet("profile/{userId}")]
         public async Task<ActionResult<UserProfileResponse>> GetProfile(Guid userId)
         {
             return Ok(await identityService.GetUserProfileAsync(userId));
         }
 
-        [Authorize]
+        // [Authorize]
         [HttpPut("profile/{userId}")]
         public async Task<IActionResult> UpdateProfile(Guid userId, [FromBody] UpdateProfileRequest request)
         {
@@ -26,7 +26,7 @@ namespace Api.Controllers
             return Ok("Profile updated successfully.");
         }
 
-        [Authorize]
+        // [Authorize]
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
@@ -58,7 +58,7 @@ namespace Api.Controllers
             return Ok("Password reset successfully.");
         }
 
-        [Authorize(Roles = "Admin")]
+        // [Authorize(Roles = "Admin")]
         [HttpPost("staff")]
         public async Task<IActionResult> CreateStaff([FromBody] CreateStaffRequest request)
         {
@@ -66,7 +66,7 @@ namespace Api.Controllers
             return Ok("Staff account created successfully and welcome email sent.");
         }
 
-        [Authorize(Roles = "Admin")]
+        // [Authorize(Roles = "Admin")]
         [HttpPut("users/{userId}/role")]
         public async Task<IActionResult> UpdateUserRole(Guid userId, [FromBody] UpdateUserRoleRequest request)
         {

@@ -9,7 +9,7 @@ using Shared.Models.DataModels.CinemaDtos;
 
 namespace Api.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public class AdminCinemasController : BaseApiController
     {
         [HttpPost]

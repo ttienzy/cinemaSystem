@@ -19,14 +19,14 @@ namespace Api.Controllers
             return Ok(await Mediator.Send(new GetAllGenresQuery(activeOnly)));
         }
 
-        [Authorize(Roles = "Admin")]
+        // [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<Guid>> Create([FromBody] CreateGenreRequest request)
         {
             return Ok(await Mediator.Send(new CreateGenreCommand(request)));
         }
 
-        [Authorize(Roles = "Admin")]
+        // [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateGenreRequest request)
         {

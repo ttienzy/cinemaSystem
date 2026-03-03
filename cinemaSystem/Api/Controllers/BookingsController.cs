@@ -13,7 +13,7 @@ using System.Security.Claims;
 
 namespace Api.Controllers
 {
-    [Authorize]
+    // [Authorize]
     public class BookingsController : BaseApiController
     {
         [HttpPost]
@@ -70,7 +70,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("{id}/approve-refund")]
-        [Authorize(Roles = "Manager,Admin")]
+        // [Authorize(Roles = "Manager,Admin")]
         public async Task<IActionResult> ApproveRefund(Guid id)
         {
             await Mediator.Send(new ApproveRefundCommand(id));
@@ -94,7 +94,7 @@ namespace Api.Controllers
         /// Check-in by booking ID (legacy - for backward compatibility)
         /// </summary>
         [HttpPost("{id}/check-in")]
-        [Authorize(Roles = "Staff,Manager,Admin")]
+        // [Authorize(Roles = "Staff,Manager,Admin")]
         public async Task<ActionResult<CheckInResult>> CheckIn(Guid id)
         {
             var result = await Mediator.Send(new CheckInBookingCommand(id));
@@ -109,7 +109,7 @@ namespace Api.Controllers
         /// Check-in by QR code scan (recommended)
         /// </summary>
         [HttpPost("check-in")]
-        [Authorize(Roles = "Staff,Manager,Admin")]
+        // [Authorize(Roles = "Staff,Manager,Admin")]
         public async Task<ActionResult<CheckInResult>> CheckInByQrCode([FromBody] CheckInByQrCodeRequest request)
         {
             var result = await Mediator.Send(new CheckInBookingCommand(request.BookingId, request.CheckInToken));

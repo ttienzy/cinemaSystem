@@ -11,7 +11,6 @@ using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using Api.Middleware;
 using StackExchange.Redis;
-using AspNetCoreRateLimit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,11 +99,7 @@ builder.Services.AddCors(options =>
                           .AllowCredentials());
 });
 
-// ── Rate Limiting ────────────────────────────────────────────────
-builder.Services.AddMemoryCache();
-builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
-builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
-builder.Services.AddInMemoryRateLimiting();
+// ── Controllers ─────────────────────────────────────────────────
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -161,7 +156,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowSpecificOrigins");
-app.UseIpRateLimiting();
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseAuthentication();

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
-    [Authorize(Roles = "Manager,Admin,Staff")]
+    // [Authorize(Roles = "Manager,Admin,Staff")]
     public class ConcessionsController : BaseApiController
     {
         [HttpPost]

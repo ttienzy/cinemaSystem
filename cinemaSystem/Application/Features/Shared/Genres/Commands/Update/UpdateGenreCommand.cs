@@ -18,7 +18,7 @@ namespace Application.Features.Shared.Genres.Commands.Update
             var genre = await genreRepo.GetByIdAsync(request.Id, ct)
                 ?? throw new NotFoundException(nameof(Genre), request.Id);
 
-            genre.UpdateGenre(request.Request.GenreName, request.Request.Description);
+            genre.UpdateGenre(request.Request.GenreName, request.Request.Description, request.Request.IsActive);
             
             // Assuming we also want to be able to set active status, though Domain model might need a specific method for it.
             // For now, if the Domain entity exposes properties privately, we can only use its methods.

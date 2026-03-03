@@ -1,12 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "2L+yfD1mhEE=",
+  "dgSpecHash": "MYBuQmO/vnM=",
   "success": true,
   "projectFilePath": "D:\\DACS4\\cinemaSystem\\Api\\Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ASUS\\.nuget\\packages\\ardalis.specification\\9.3.0\\ardalis.specification.9.3.0.nupkg.sha512",
     "C:\\Users\\ASUS\\.nuget\\packages\\ardalis.specification.entityframeworkcore\\9.3.0\\ardalis.specification.entityframeworkcore.9.3.0.nupkg.sha512",
-    "C:\\Users\\ASUS\\.nuget\\packages\\aspnetcoreratelimit\\5.0.0\\aspnetcoreratelimit.5.0.0.nupkg.sha512",
     "C:\\Users\\ASUS\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\ASUS\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
     "C:\\Users\\ASUS\\.nuget\\packages\\bouncycastle.cryptography\\2.5.1\\bouncycastle.cryptography.2.5.1.nupkg.sha512",

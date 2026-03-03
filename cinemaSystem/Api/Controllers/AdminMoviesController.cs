@@ -7,7 +7,7 @@ using Shared.Models.DataModels.MovieDtos;
 
 namespace Api.Controllers
 {
-    [Authorize(Roles = "Admin,Manager")]
+    // [Authorize(Roles = "Admin,Manager")]
     public class AdminMoviesController : BaseApiController
     {
         [HttpPost]

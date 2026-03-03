@@ -1,5 +1,6 @@
 using Application.Features.Cinemas.Commands.BlockSeat;
 using Application.Features.Cinemas.Commands.LinkSeat;
+using Application.Features.Cinemas.Commands.UnlinkSeat;
 using Application.Features.Cinemas.Queries.GetAllCinemas;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,6 +29,14 @@ namespace Api.Controllers
         public async Task<IActionResult> LinkSeat(Guid screenId, Guid seatId, [FromBody] LinkSeatRequest request)
         {
             await Mediator.Send(new LinkSeatCommand(screenId, seatId, request.PartnerSeatNumber));
+            return NoContent();
+        }
+
+        [HttpPost("screens/{screenId}/seats/{seatId}/unlink")]
+        // [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UnlinkSeat(Guid screenId, Guid seatId)
+        {
+            await Mediator.Send(new UnlinkSeatCommand(screenId, seatId));
             return NoContent();
         }
     }

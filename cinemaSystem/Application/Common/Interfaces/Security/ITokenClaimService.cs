@@ -11,7 +11,7 @@ namespace Application.Common.Interfaces.Security
         string GenerateAccessTokenn(Guid userId, string userName, string email, List<string> roles);
         string GenerateRefreshToken();
         DateTime GetRefreshTokenExpirationTime();
-        ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
+        ClaimsPrincipal? GetPrincipalFromExpiredToken(string token);
         Task<bool> IsRefreshTokenValidAsync(Guid userId, string refreshToken);
     }
 }

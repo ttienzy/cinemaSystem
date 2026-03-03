@@ -39,6 +39,13 @@ namespace Domain.Entities.CinemaAggregate
         public string SeatLabel => $"{RowName}{Number}";
         public bool IsCoupleSeat => LinkedSeatNumber.HasValue;
 
+        /// <summary>Check if this seat can be linked as couple with a partner seat number.</summary>
+        public bool CanLinkAsCouple(int partnerSeatNumber)
+        {
+            // Must be adjacent seats (difference = 1)
+            return Math.Abs(partnerSeatNumber - Number) == 1;
+        }
+
         /// <summary>Returns true if this seat can be selected for a new booking.</summary>
         public bool IsBookable() => IsActive && !IsBlocked;
 

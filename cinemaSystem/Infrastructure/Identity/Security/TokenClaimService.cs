@@ -14,6 +14,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Infrastructure.Identity.Security
 {
@@ -76,8 +77,13 @@ namespace Infrastructure.Identity.Security
             return DateTime.UtcNow.AddDays(Convert.ToDouble(_jwtSettings.RefreshTokenExpiration));
         }
 
-        public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
+        public ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
         {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                throw new ArgumentException("Token cannot be null or empty.", nameof(token));
+            }
+
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = _jwtSettings.ValidateIssuer,
@@ -90,15 +96,31 @@ namespace Infrastructure.Identity.Security
             };
             var tokenHandler = new JwtSecurityTokenHandler();
             SecurityToken securityToken;
-            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
-            var jwtSecurityToken = securityToken as JwtSecurityToken;
 
-            if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+            try
             {
-                throw new SecurityTokenException("Invalid token");
-            }
+                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
+                var jwtSecurityToken = securityToken as JwtSecurityToken;
 
-            return principal;
+                if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    throw new SecurityTokenException("Invalid token format.");
+                }
+
+                return principal;
+            }
+            catch (SecurityTokenInvalidSignatureException)
+            {
+                throw new SecurityTokenException("Invalid token signature.");
+            }
+            catch (ArgumentException ex)
+            {
+                throw new ArgumentException($"Invalid token format: {ex.Message}", nameof(token));
+            }
+            catch (Exception ex) when (ex is SecurityTokenException || ex is InvalidOperationException)
+            {
+                throw new SecurityTokenException($"Token validation failed: {ex.Message}");
+            }
         }
 
         public async Task<bool> IsRefreshTokenValidAsync(Guid userId, string refreshToken)

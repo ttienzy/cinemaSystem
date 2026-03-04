@@ -21,6 +21,16 @@ namespace Infrastructure.Data.Repositories
                 .Where(p => p.IsActive && p.StartDate <= DateTime.UtcNow && p.EndDate >= DateTime.UtcNow)
                 .ToListAsync(ct);
 
+        public async Task<List<Promotion>> GetAllAsync(bool includeInactive = false, CancellationToken ct = default)
+        {
+            var query = context.Set<Promotion>().AsQueryable();
+
+            if (!includeInactive)
+                query = query.Where(p => p.IsActive);
+
+            return await query.ToListAsync(ct);
+        }
+
         public async Task AddAsync(Promotion promotion, CancellationToken ct = default)
             => await context.Set<Promotion>().AddAsync(promotion, ct);
 

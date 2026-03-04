@@ -6,19 +6,25 @@ using Shared.Models.IdentityModels.Otps;
 
 namespace Api.Controllers
 {
+    /// <summary>
+    /// Handles user profile and identity management APIs.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    // [Authorize]
     public class IdentityController(IIdentityUserService identityService) : ControllerBase
     {
-        // [Authorize]
+        /// <summary>
+        /// Get user profile by user ID.
+        /// </summary>
         [HttpGet("profile/{userId}")]
         public async Task<ActionResult<UserProfileResponse>> GetProfile(Guid userId)
         {
             return Ok(await identityService.GetUserProfileAsync(userId));
         }
 
-        // [Authorize]
+        /// <summary>
+        /// Update user profile information.
+        /// </summary>
         [HttpPut("profile/{userId}")]
         public async Task<IActionResult> UpdateProfile(Guid userId, [FromBody] UpdateProfileRequest request)
         {
@@ -26,7 +32,9 @@ namespace Api.Controllers
             return Ok("Profile updated successfully.");
         }
 
-        // [Authorize]
+        /// <summary>
+        /// Change user password.
+        /// </summary>
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
@@ -35,6 +43,9 @@ namespace Api.Controllers
         }
 
         [AllowAnonymous]
+        /// <summary>
+        /// Request password reset OTP via email.
+        /// </summary>
         [HttpPost("forgot-password-with-otp")]
         public async Task<IActionResult> ForgotPassword([FromBody] string email)
         {
@@ -43,6 +54,9 @@ namespace Api.Controllers
         }
 
         [AllowAnonymous]
+        /// <summary>
+        /// Verify OTP for password reset.
+        /// </summary>
         [HttpPost("verify-reset-otp")]
         public async Task<IActionResult> VerifyResetOtp([FromBody] VerifyResetOtpRequest request)
         {
@@ -51,6 +65,9 @@ namespace Api.Controllers
         }
 
         [AllowAnonymous]
+        /// <summary>
+        /// Reset password using verified OTP.
+        /// </summary>
         [HttpPost("reset-password-with-otp")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordWithOtpRequest request)
         {
@@ -58,7 +75,9 @@ namespace Api.Controllers
             return Ok("Password reset successfully.");
         }
 
-        // [Authorize(Roles = "Admin")]
+        /// <summary>
+        /// Create a new staff account.
+        /// </summary>
         [HttpPost("staff")]
         public async Task<IActionResult> CreateStaff([FromBody] CreateStaffRequest request)
         {
@@ -66,7 +85,9 @@ namespace Api.Controllers
             return Ok("Staff account created successfully and welcome email sent.");
         }
 
-        // [Authorize(Roles = "Admin")]
+        /// <summary>
+        /// Update user role.
+        /// </summary>
         [HttpPut("users/{userId}/role")]
         public async Task<IActionResult> UpdateUserRole(Guid userId, [FromBody] UpdateUserRoleRequest request)
         {

@@ -13,9 +13,14 @@ using System.Security.Claims;
 
 namespace Api.Controllers
 {
-    // [Authorize]
+    /// <summary>
+    /// Handles booking-related APIs.
+    /// </summary>
     public class BookingsController : BaseApiController
     {
+        /// <summary>
+        /// Create a new booking.
+        /// </summary>
         [HttpPost]
         public async Task<ActionResult<CreateBookingResult>> CreateBooking([FromBody] CreateBookingCommand command)
         {
@@ -26,6 +31,9 @@ namespace Api.Controllers
         }
 
         [AllowAnonymous]
+        /// <summary>
+        /// Payment callback endpoint from payment gateway.
+        /// </summary>
         [HttpGet("callback")]
         public async Task<IActionResult> PaymentCallback()
         {
@@ -48,6 +56,9 @@ namespace Api.Controllers
             return Redirect($"http://localhost:5173/booking/failed?error={Uri.EscapeDataString(result.ErrorMessage ?? "Payment failed")}");
         }
 
+        /// <summary>
+        /// Mark booking as completed.
+        /// </summary>
         [HttpPost("{id}/complete")]
         public async Task<IActionResult> CompleteBooking(Guid id, [FromBody] CompleteBookingRequest request)
         {
@@ -55,6 +66,9 @@ namespace Api.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Cancel a booking.
+        /// </summary>
         [HttpPost("{id}/cancel")]
         public async Task<IActionResult> CancelBooking(Guid id, [FromBody] CancelBookingRequest request)
         {
@@ -62,6 +76,9 @@ namespace Api.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Request refund for a booking.
+        /// </summary>
         [HttpPost("{id}/request-refund")]
         public async Task<IActionResult> RequestRefund(Guid id, [FromBody] RefundRequest request)
         {
@@ -69,20 +86,28 @@ namespace Api.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Approve refund request for a booking.
+        /// </summary>
         [HttpPost("{id}/approve-refund")]
-        // [Authorize(Roles = "Manager,Admin")]
         public async Task<IActionResult> ApproveRefund(Guid id)
         {
             await Mediator.Send(new ApproveRefundCommand(id));
             return NoContent();
         }
 
+        /// <summary>
+        /// Get booking details by ID.
+        /// </summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<BookingDetailDto>> GetBooking(Guid id)
         {
             return Ok(await Mediator.Send(new GetBookingByIdQuery(id)));
         }
 
+        /// <summary>
+        /// Get current user's bookings.
+        /// </summary>
         [HttpGet("my")]
         public async Task<ActionResult<MyBookingsResult>> GetMyBookings([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
@@ -91,10 +116,9 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Check-in by booking ID (legacy - for backward compatibility)
+        /// Check-in by booking ID.
         /// </summary>
         [HttpPost("{id}/check-in")]
-        // [Authorize(Roles = "Staff,Manager,Admin")]
         public async Task<ActionResult<CheckInResult>> CheckIn(Guid id)
         {
             var result = await Mediator.Send(new CheckInBookingCommand(id));
@@ -106,10 +130,9 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Check-in by QR code scan (recommended)
+        /// Check-in by QR code.
         /// </summary>
         [HttpPost("check-in")]
-        // [Authorize(Roles = "Staff,Manager,Admin")]
         public async Task<ActionResult<CheckInResult>> CheckInByQrCode([FromBody] CheckInByQrCodeRequest request)
         {
             var result = await Mediator.Send(new CheckInBookingCommand(request.BookingId, request.CheckInToken));

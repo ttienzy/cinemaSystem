@@ -166,20 +166,20 @@ app.MapHub<SeatHub>("/seatHub");
 
 
 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
+//using (var scope = app.Services.CreateScope())
+//{
+//    var services = scope.ServiceProvider;
 
-    // Identity Seeding
-    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-    var configuration = services.GetRequiredService<IConfiguration>();
-    await IdentityContextSeed.SeedAsync(userManager, roleManager, configuration);
+//    // Identity Seeding
+//    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+//    var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+//    var configuration = services.GetRequiredService<IConfiguration>();
+//    await IdentityContextSeed.SeedAsync(userManager, roleManager, configuration);
 
-    // Booking Shared Aggregates Seeding
-    var bookingContext = services.GetRequiredService<Infrastructure.Data.BookingContext>();
-    var logger = services.GetRequiredService<ILogger<Program>>();
-    await Infrastructure.Data.BookingContextSeed.SeedAsync(bookingContext, logger);
-}
+//    // Booking Shared Aggregates Seeding
+//    var bookingContext = services.GetRequiredService<Infrastructure.Data.BookingContext>();
+//    var logger = services.GetRequiredService<ILogger<Program>>();
+//    await Infrastructure.Data.BookingContextSeed.SeedAsync(bookingContext, logger);
+//}
 
 app.Run();

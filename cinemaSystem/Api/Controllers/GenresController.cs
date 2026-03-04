@@ -4,14 +4,17 @@ using Application.Features.Shared.Genres.Queries.GetAll;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models.DataModels.SharedDtos;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Api.Controllers
 {
+    /// <summary>
+    /// Handles genre management APIs.
+    /// </summary>
     public class GenresController : BaseApiController
     {
+        /// <summary>
+        /// Get all genres.
+        /// </summary>
         [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<List<GenreDto>>> GetAll([FromQuery] bool activeOnly = false)
@@ -19,14 +22,18 @@ namespace Api.Controllers
             return Ok(await Mediator.Send(new GetAllGenresQuery(activeOnly)));
         }
 
-        // [Authorize(Roles = "Admin")]
+        /// <summary>
+        /// Create a new genre.
+        /// </summary>
         [HttpPost]
         public async Task<ActionResult<Guid>> Create([FromBody] CreateGenreRequest request)
         {
             return Ok(await Mediator.Send(new CreateGenreCommand(request)));
         }
 
-        // [Authorize(Roles = "Admin")]
+        /// <summary>
+        /// Update a genre.
+        /// </summary>
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateGenreRequest request)
         {

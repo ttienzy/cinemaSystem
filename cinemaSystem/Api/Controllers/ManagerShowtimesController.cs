@@ -1,34 +1,28 @@
 using Application.Features.Showtimes.Commands.CreateShowtime;
 using Application.Features.Showtimes.Commands.UpdateShowtime;
 using Application.Features.Showtimes.Commands.DeleteShowtime;
+using Application.Features.Showtimes.Commands.BulkCreateShowtimes;
+using Application.Features.Showtimes.Commands.ConfirmShowtime;
 using Application.Features.Showtimes.Queries.GetShowtimesByCinema;
-using Application.Common.Interfaces.Persistence;
-using Application.Common.Interfaces.Services;
+using Application.Features.Showtimes.Queries.GetShowtimeDetails;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models.DataModels.ShowtimeDtos;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Api.Controllers
 {
     /// <summary>
-    /// Manager-facing Showtime management.
-    /// Managers can only operate on their assigned cinema (enforced at handler level via Staff-Cinema mapping).
-    /// Admins can operate on any cinema.
+    /// Handles manager showtime management APIs.
     /// </summary>
-    // [Authorize(Roles = "Manager,Admin")]
     [ApiController]
     [Route("api/manager/showtimes")]
     public class ManagerShowtimesController(IMediator mediator) : ControllerBase
     {
         /// <summary>
-        /// Schedule a new showtime. Conflict detection + cleaning offset (20 min) enforced.
+        /// Schedule a new showtime.
         /// </summary>
         [HttpPost]
-        [ProducesResponseType(typeof(CreateShowtimeResult), 201)]
         public async Task<IActionResult> CreateShowtime([FromBody] ShowtimeUpsertRequest request)
         {
             var result = await mediator.Send(new CreateShowtimeCommand(request));
@@ -38,10 +32,19 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Reschedule an existing showtime. Blocked if any tickets have been sold.
+        /// Bulk create multiple showtimes.
+        /// </summary>
+        [HttpPost("bulk")]
+        public async Task<IActionResult> BulkCreateShowtimes([FromBody] BulkShowtimeRequest request)
+        {
+            var result = await mediator.Send(new BulkCreateShowtimesCommand(request));
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Update an existing showtime.
         /// </summary>
         [HttpPut("{showtimeId:guid}")]
-        [ProducesResponseType(typeof(UpdateShowtimeResult), 200)]
         public async Task<IActionResult> UpdateShowtime(Guid showtimeId, [FromBody] ShowtimeUpsertRequest request)
         {
             var result = await mediator.Send(new UpdateShowtimeCommand(showtimeId, request));
@@ -49,10 +52,9 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Cancel a showtime (soft delete). Blocked if any tickets have been sold.
+        /// Cancel a showtime (soft delete).
         /// </summary>
         [HttpDelete("{showtimeId:guid}")]
-        [ProducesResponseType(204)]
         public async Task<IActionResult> CancelShowtime(Guid showtimeId)
         {
             await mediator.Send(new DeleteShowtimeCommand(showtimeId));
@@ -60,13 +62,32 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Get all showtimes for a cinema on a given date. Manager can only see their own cinema.
+        /// Confirm a scheduled showtime.
+        /// </summary>
+        [HttpPost("{showtimeId:guid}/confirm")]
+        public async Task<IActionResult> ConfirmShowtime(Guid showtimeId)
+        {
+            var result = await mediator.Send(new ConfirmShowtimeCommand(showtimeId));
+            return Ok(new { success = result, message = "Showtime confirmed successfully." });
+        }
+
+        /// <summary>
+        /// Get showtimes by cinema.
         /// </summary>
         [HttpGet("{cinemaId:guid}")]
-        [ProducesResponseType(typeof(List<ShowtimeDetailResponse>), 200)]
         public async Task<IActionResult> GetByCinema(Guid cinemaId, [FromQuery] DateTime? date)
         {
             var result = await mediator.Send(new GetShowtimesByCinemaQuery(cinemaId, date ?? DateTime.Today));
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Get showtime details.
+        /// </summary>
+        [HttpGet("detail/{showtimeId:guid}")]
+        public async Task<IActionResult> GetShowtimeDetails(Guid showtimeId)
+        {
+            var result = await mediator.Send(new GetShowtimeDetailsQuery(showtimeId));
             return Ok(result);
         }
     }

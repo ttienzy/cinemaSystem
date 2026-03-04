@@ -5,14 +5,23 @@ using Shared.Models.DataModels.MovieDtos;
 
 namespace Api.Controllers
 {
+    /// <summary>
+    /// Handles movie-related public APIs.
+    /// </summary>
     public class MoviesController : BaseApiController
     {
+        /// <summary>
+        /// Get paginated list of movies.
+        /// </summary>
         [HttpGet]
         public async Task<ActionResult<PagedMovieResponse>> GetMovies([FromQuery] GetMoviesPagedQuery query)
         {
             return Ok(await Mediator.Send(query));
         }
 
+        /// <summary>
+        /// Get movie details by ID.
+        /// </summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<MovieDetailsResponse>> GetMovieDetails(Guid id)
         {

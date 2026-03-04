@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "d:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {}
+    "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {}
   },
   "projects": {
-    "d:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
+    "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\DACS4\\cinemaSystem\\Application\\Application.csproj",
+        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj",
         "projectName": "Application",
-        "projectPath": "d:\\DACS4\\cinemaSystem\\Application\\Application.csproj",
+        "projectPath": "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "d:\\DACS4\\cinemaSystem\\Application\\obj\\",
+        "outputPath": "D:\\DACS4\\cinemaSystem\\Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -35,8 +35,8 @@
               "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
                 "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
               },
-              "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
-                "projectPath": "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"
+              "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
+                "projectPath": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"
               }
             }
           }
@@ -201,14 +201,14 @@
         }
       }
     },
-    "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
+    "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj",
+        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj",
         "projectName": "Shared",
-        "projectPath": "d:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj",
+        "projectPath": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "d:\\DACS4\\cinemaSystem\\Shared\\obj\\",
+        "outputPath": "D:\\DACS4\\cinemaSystem\\Shared\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

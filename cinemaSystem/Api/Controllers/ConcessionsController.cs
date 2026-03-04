@@ -5,15 +5,23 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
-    // [Authorize(Roles = "Manager,Admin,Staff")]
+    /// <summary>
+    /// Handles concession sales APIs.
+    /// </summary>
     public class ConcessionsController : BaseApiController
     {
+        /// <summary>
+        /// Create a new concession sale.
+        /// </summary>
         [HttpPost]
         public async Task<ActionResult<Guid>> CreateSale([FromBody] CreateConcessionSaleCommand command)
         {
             return Ok(await Mediator.Send(command));
         }
 
+        /// <summary>
+        /// Get concession sales by cinema.
+        /// </summary>
         [HttpGet("{cinemaId}")]
         public async Task<ActionResult<ConcessionSalesResponse>> GetSales(
             Guid cinemaId,

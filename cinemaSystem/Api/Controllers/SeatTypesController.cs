@@ -4,14 +4,17 @@ using Application.Features.Shared.SeatTypes.Queries.GetAll;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models.DataModels.SharedDtos;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Api.Controllers
 {
+    /// <summary>
+    /// Handles seat type management APIs.
+    /// </summary>
     public class SeatTypesController : BaseApiController
     {
+        /// <summary>
+        /// Get all seat types.
+        /// </summary>
         [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<List<SeatTypeDto>>> GetAll()
@@ -19,14 +22,18 @@ namespace Api.Controllers
             return Ok(await Mediator.Send(new GetAllSeatTypesQuery()));
         }
 
-        // [Authorize(Roles = "Admin")]
+        /// <summary>
+        /// Create a new seat type.
+        /// </summary>
         [HttpPost]
         public async Task<ActionResult<Guid>> Create([FromBody] CreateSeatTypeRequest request)
         {
             return Ok(await Mediator.Send(new CreateSeatTypeCommand(request)));
         }
 
-        // [Authorize(Roles = "Admin")]
+        /// <summary>
+        /// Update a seat type.
+        /// </summary>
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSeatTypeRequest request)
         {

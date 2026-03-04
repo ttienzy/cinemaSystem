@@ -17,5 +17,7 @@ namespace Application.Common.Interfaces.Persistence
         // Metadata lookups for scheduling
         Task<List<Domain.Entities.SharedAggregates.SeatType>> GetSeatTypesAsync(CancellationToken ct = default);
         Task<Domain.Entities.SharedAggregates.PricingTier?> GetPricingTierAsync(Guid id, CancellationToken ct = default);
+        Task<List<Domain.Entities.SharedAggregates.TimeSlot>> GetTimeSlotsAsync(CancellationToken ct = default);
+        Task<Domain.Entities.SharedAggregates.TimeSlot?> GetTimeSlotAsync(Guid id, CancellationToken ct = default);
     }
 }

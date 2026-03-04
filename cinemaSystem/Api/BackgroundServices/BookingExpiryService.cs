@@ -3,6 +3,10 @@ using MediatR;
 
 namespace Api.BackgroundServices
 {
+    /// <summary>
+    /// Background service that runs periodically to cancel expired bookings.
+    /// Runs every minute to check and cancel unpaid bookings.
+    /// </summary>
     public class BookingExpiryService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;

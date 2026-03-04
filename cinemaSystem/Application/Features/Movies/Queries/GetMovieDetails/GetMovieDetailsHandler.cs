@@ -28,9 +28,27 @@ namespace Application.Features.Movies.Queries.GetMovieDetails
                     CreatedAt = movie.CreatedAt
                 },
                 Genres = movie.MovieGenres.Select(mg => mg.Genre).ToList(),
-                Certifications = new(),
-                Copyrights = new(),
-                CastCrews = new()
+                Certifications = movie.Certifications.Select(c => new MovieCertificationResponse
+                {
+                    Id = c.Id,
+                    CertificationBody = c.CertificationBody ?? string.Empty,
+                    Rating = c.Rating ?? string.Empty,
+                    IssueDate = c.IssueDate
+                }).ToList(),
+                Copyrights = (List<MovieCopyrightResponse>)movie.Copyrights.Select(c => new MovieCopyrightResponse
+                {
+                    Id = c.Id,
+                    DistributorCompany = c.DistributorCompany ?? string.Empty,
+                    LicenseEndDate = c.LicenseEndDate,
+                    LicenseStartDate = c.LicenseStartDate,
+                    Status = (Domain.Entities.MovieAggregate.Enum.MovieCopyrightStatus)c.Status
+                }).ToList(),
+                CastCrews = movie.CastCrew.Select(cc => new MovieCastCrewResponse
+                {
+                    Id = cc.Id,
+                    PersonName = cc.PersonName ?? string.Empty,
+                    RoleType = cc.RoleType ?? string.Empty,
+                }).ToList()
             };
         }
     }

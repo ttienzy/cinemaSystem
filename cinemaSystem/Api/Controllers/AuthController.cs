@@ -5,12 +5,18 @@ using System.Security.Claims;
 
 namespace Api.Controllers
 {
+    /// <summary>
+    /// Handles authentication and token management APIs.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController(
-        ITokenClaimService tokenClaimService, 
+        ITokenClaimService tokenClaimService,
         IIdentityUserService identityService) : ControllerBase
     {
+        /// <summary>
+        /// Register a new user account.
+        /// </summary>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
@@ -18,12 +24,18 @@ namespace Api.Controllers
             return Ok("User registered successfully.");
         }
 
+        /// <summary>
+        /// Login and receive access/refresh tokens.
+        /// </summary>
         [HttpPost("login")]
         public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
         {
             return Ok(await identityService.LoginUserAsync(request));
         }
 
+        /// <summary>
+        /// Refresh access token using refresh token.
+        /// </summary>
         [HttpPost("refresh")]
         public async Task<IActionResult> RefreshToken([FromBody] TokenResponse request)
         {
@@ -40,7 +52,7 @@ namespace Api.Controllers
             var roles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
 
             if (userId == null || userName == null || email == null)
-                 return Unauthorized("Invalid token claims");
+                return Unauthorized("Invalid token claims");
 
             var isValid = await tokenClaimService.IsRefreshTokenValidAsync(Guid.Parse(userId), request.RefreshToken);
             if (!isValid)

@@ -16,7 +16,7 @@ namespace Domain.Entities.SharedAggregates
         public TimeSlot()
         {
         }
-        public TimeSlot(TimeSpan startTime, TimeSpan endTime, string dayType, bool isActive)
+        public TimeSlot( TimeSpan startTime, TimeSpan endTime, string dayType, bool isActive)
         {
             StartTime = startTime;
             EndTime = endTime;

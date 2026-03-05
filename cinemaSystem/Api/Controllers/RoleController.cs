@@ -6,10 +6,12 @@ using Shared.Models.IdentityModels;
 namespace Api.Controllers
 {
     /// <summary>
-    /// Handles role management APIs.
+    /// Quản lý vai trò (Role) — Chỉ dành cho Admin.
+    /// Bao gồm: CRUD Role (tạo/sửa/xóa vai trò người dùng).
     /// </summary>
-    [Route("api/[controller]")]
+    [Route("api/admin/roles")]
     [ApiController]
+    [Authorize(Roles = "Admin")]
     public class RoleController(IRoleService roleService) : ControllerBase
     {
         /// <summary>

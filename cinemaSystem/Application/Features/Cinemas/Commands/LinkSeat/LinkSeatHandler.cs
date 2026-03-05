@@ -22,7 +22,7 @@ namespace Application.Features.Cinemas.Commands.LinkSeat
                 ?? throw new NotFoundException(nameof(Seat), request.SeatId);
 
             // Step 2: Get partner seat by seat number
-            var partnerSeat = screen.Seats.FirstOrDefault(s => s.Number == request.PartnerSeatNumber)
+            var partnerSeat = screen.Seats.FirstOrDefault(s => s.Number == request.PartnerSeatNumber && s.RowName == seat.RowName)
                 ?? throw new NotFoundException("Partner seat", $"number {request.PartnerSeatNumber}");
 
             // Step 3: Validate SeatTypeId match (both must be same seat type)

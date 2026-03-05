@@ -43,6 +43,9 @@ namespace Infrastructure.Data.Migrations
                     b.Property<DateTime?>("CheckedInAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("CinemaId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uniqueidentifier");
 
@@ -65,9 +68,6 @@ namespace Infrastructure.Data.Migrations
                     b.Property<Guid>("ShowtimeId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("StaffId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -84,11 +84,11 @@ namespace Infrastructure.Data.Migrations
                     b.HasIndex("BookingCode")
                         .IsUnique();
 
+                    b.HasIndex("CinemaId");
+
                     b.HasIndex("PromotionId");
 
                     b.HasIndex("ShowtimeId");
-
-                    b.HasIndex("StaffId");
 
                     b.ToTable("Bookings", (string)null);
                 });
@@ -722,6 +722,9 @@ namespace Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("CurrentUsageCount")
                         .HasColumnType("int");
 
@@ -742,6 +745,9 @@ namespace Infrastructure.Data.Migrations
                     b.Property<int>("MaxUsageCount")
                         .HasColumnType("int");
 
+                    b.Property<int?>("MaxUsagePerUser")
+                        .HasColumnType("int");
+
                     b.Property<decimal?>("MinOrderValue")
                         .HasColumnType("decimal(18, 2)");
 
@@ -750,12 +756,21 @@ namespace Infrastructure.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<Guid?>("SpecificCinemaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("SpecificMovieId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<decimal>("Value")
                         .HasColumnType("decimal(18, 2)");
@@ -984,6 +999,9 @@ namespace Infrastructure.Data.Migrations
                     b.Property<Guid>("CinemaId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("CinemaId1")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Department")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -1019,6 +1037,8 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasIndex("CinemaId");
 
+                    b.HasIndex("CinemaId1");
+
                     b.ToTable("Staffs", (string)null);
                 });
 
@@ -1051,6 +1071,11 @@ namespace Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Domain.Entities.BookingAggregate.Booking", b =>
                 {
+                    b.HasOne("Domain.Entities.CinemaAggregate.Cinema", null)
+                        .WithMany()
+                        .HasForeignKey("CinemaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Domain.Entities.PromotionAggregate.Promotion", null)
                         .WithMany()
                         .HasForeignKey("PromotionId")
@@ -1061,11 +1086,6 @@ namespace Infrastructure.Data.Migrations
                         .HasForeignKey("ShowtimeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("Domain.Entities.StaffAggregate.Staff", null)
-                        .WithMany()
-                        .HasForeignKey("StaffId")
-                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Domain.Entities.BookingAggregate.BookingTicket", b =>
@@ -1317,6 +1337,12 @@ namespace Infrastructure.Data.Migrations
                         .HasForeignKey("CinemaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Domain.Entities.CinemaAggregate.Cinema", "Cinema")
+                        .WithMany()
+                        .HasForeignKey("CinemaId1");
+
+                    b.Navigation("Cinema");
                 });
 
             modelBuilder.Entity("Domain.Entities.StaffAggregate.WorkSchedule", b =>

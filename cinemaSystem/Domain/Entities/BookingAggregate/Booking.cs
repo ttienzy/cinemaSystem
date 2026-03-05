@@ -13,7 +13,7 @@ namespace Domain.Entities.BookingAggregate
     {
         // ── Core Properties ─────────────────────────────────────────
         public Guid? CustomerId { get; private set; }
-        public Guid? StaffId { get; private set; }
+        public Guid? CinemaId { get; private set; }
         public Guid ShowtimeId { get; private set; }
         public DateTime BookingTime { get; private set; }
         public DateTime ExpiresAt { get; private set; }
@@ -83,7 +83,7 @@ namespace Domain.Entities.BookingAggregate
         /// </summary>
         public static Booking CreateAtCounter(
             Guid? customerId,
-            Guid staffId,
+            Guid cinemaId,
             Guid showtimeId,
             int totalTickets,
             decimal totalAmount,
@@ -92,7 +92,7 @@ namespace Domain.Entities.BookingAggregate
             var booking = new Booking
             {
                 CustomerId = customerId,
-                StaffId = staffId,
+                CinemaId = cinemaId,
                 ShowtimeId = showtimeId,
                 BookingTime = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddYears(1), // Counter bookings don't "expire" in the typical online sense

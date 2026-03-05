@@ -5836,11 +5836,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj",
+      "projectUniqueName": "d:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj",
       "projectName": "Infrastructure",
-      "projectPath": "D:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj",
+      "projectPath": "d:\\DACS4\\cinemaSystem\\Infrastructure\\Infrastructure.csproj",
       "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-      "outputPath": "D:\\DACS4\\cinemaSystem\\Infrastructure\\obj\\",
+      "outputPath": "d:\\DACS4\\cinemaSystem\\Infrastructure\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -5864,8 +5864,8 @@
             "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj": {
               "projectPath": "D:\\DACS4\\cinemaSystem\\Application\\Application.csproj"
             },
-            "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
-              "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
+            "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+              "projectPath": "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
             },
             "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj": {
               "projectPath": "D:\\DACS4\\cinemaSystem\\Shared\\Shared.csproj"

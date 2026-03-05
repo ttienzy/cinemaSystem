@@ -9,8 +9,10 @@ namespace Application.Common.Interfaces.Persistence
         Task<(List<Movie> Items, int Total)> GetPagedAsync(
             string? search, Guid? genreId, Guid? cinemaId, string? status, int page, int pageSize, CancellationToken ct = default);
         Task<List<Movie>> GetNowShowingAsync(DateTime date, CancellationToken ct = default);
+        Task<List<Movie>> GetComingSoonAsync(DateTime date, CancellationToken ct = default);
         Task AddAsync(Movie movie, CancellationToken ct = default);
         void Update(Movie movie);
         void Delete(Movie movie);
+        IQueryable<Movie> GetQueryable();
     }
 }

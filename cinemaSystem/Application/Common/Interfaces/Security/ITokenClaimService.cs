@@ -13,5 +13,9 @@ namespace Application.Common.Interfaces.Security
         DateTime GetRefreshTokenExpirationTime();
         ClaimsPrincipal? GetPrincipalFromExpiredToken(string token);
         Task<bool> IsRefreshTokenValidAsync(Guid userId, string refreshToken);
+        /// <summary>
+        /// Hủy refresh token — dùng cho chức năng đăng xuất.
+        /// </summary>
+        Task RevokeRefreshTokenAsync(Guid userId);
     }
 }

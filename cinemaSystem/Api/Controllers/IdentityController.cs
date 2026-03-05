@@ -74,25 +74,5 @@ namespace Api.Controllers
             await identityService.ResetPasswordAsync(request);
             return Ok("Password reset successfully.");
         }
-
-        /// <summary>
-        /// Create a new staff account.
-        /// </summary>
-        [HttpPost("staff")]
-        public async Task<IActionResult> CreateStaff([FromBody] CreateStaffRequest request)
-        {
-            await identityService.CreateStaffAsync(request);
-            return Ok("Staff account created successfully and welcome email sent.");
-        }
-
-        /// <summary>
-        /// Update user role.
-        /// </summary>
-        [HttpPut("users/{userId}/role")]
-        public async Task<IActionResult> UpdateUserRole(Guid userId, [FromBody] UpdateUserRoleRequest request)
-        {
-            await identityService.UpdateUserRoleAsync(userId, request);
-            return Ok("User role updated successfully.");
-        }
     }
 }

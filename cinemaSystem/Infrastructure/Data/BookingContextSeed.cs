@@ -75,8 +75,8 @@ namespace Infrastructure.Data
                 var timeSlots = new List<TimeSlot>
                 {
                     new TimeSlot(new TimeSpan(8, 0, 0), new TimeSpan(12, 0, 0), "Weekday", true),
-                    new TimeSlot(new TimeSpan(12, 0, 0), new TimeSpan(17, 0, 0), "Weekday", true),
-                    new TimeSlot(new TimeSpan(17, 0, 0), new TimeSpan(23, 59, 59), "Weekday", true),
+                    new TimeSlot( new TimeSpan(12, 0, 0), new TimeSpan(17, 0, 0), "Weekday", true),
+                    new TimeSlot( new TimeSpan(17, 0, 0), new TimeSpan(23, 59, 59), "Weekday", true),
                     new TimeSlot(new TimeSpan(8, 0, 0), new TimeSpan(23, 59, 59), "Weekend", true)
                 };
 

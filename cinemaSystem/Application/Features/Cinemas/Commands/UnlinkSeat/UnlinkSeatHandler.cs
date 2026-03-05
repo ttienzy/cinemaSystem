@@ -21,13 +21,15 @@ namespace Application.Features.Cinemas.Commands.UnlinkSeat
             if (!seat.LinkedSeatNumber.HasValue)
                 throw new DomainException("Seat is not linked to any partner.");
 
-            // Find and unlink partner seat
-            var partnerSeat = screen.Seats.FirstOrDefault(s => s.Number == seat.LinkedSeatNumber);
+            // Find and unlink partner seat (both seats should be unlinked)
+            var partnerSeat = screen.Seats.FirstOrDefault(s => s.Number == seat.LinkedSeatNumber && s.RowName == seat.RowName);
             if (partnerSeat != null)
             {
+                // Unlink the partner seat first
                 partnerSeat.UnlinkCoupleSeat();
             }
 
+            // Always unlink the primary seat
             seat.UnlinkCoupleSeat();
 
             await uow.SaveChangesAsync(ct);

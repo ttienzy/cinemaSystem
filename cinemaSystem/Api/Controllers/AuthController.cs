@@ -6,7 +6,7 @@ using System.Security.Claims;
 namespace Api.Controllers
 {
     /// <summary>
-    /// Handles authentication and token management APIs.
+    /// Xác thực người dùng — đăng ký, đăng nhập, refresh token, đăng xuất.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
@@ -15,7 +15,7 @@ namespace Api.Controllers
         IIdentityUserService identityService) : ControllerBase
     {
         /// <summary>
-        /// Register a new user account.
+        /// Đăng ký tài khoản mới.
         /// </summary>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
@@ -25,7 +25,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Login and receive access/refresh tokens.
+        /// Đăng nhập — trả về access token + refresh token.
         /// </summary>
         [HttpPost("login")]
         public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
@@ -34,7 +34,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Refresh access token using refresh token.
+        /// Refresh access token — dùng refresh token để lấy access token mới.
         /// </summary>
         [HttpPost("refresh")]
         public async Task<IActionResult> RefreshToken([FromBody] TokenResponse request)
@@ -60,6 +60,21 @@ namespace Api.Controllers
 
             var newAccessToken = tokenClaimService.GenerateAccessTokenn(Guid.Parse(userId), userName, email, roles);
             return Ok(new { NewAccessToken = newAccessToken });
+        }
+
+        /// <summary>
+        /// Đăng xuất — hủy refresh token, buộc user phải đăng nhập lại.
+        /// </summary>
+        [HttpPost("logout")]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId != null)
+            {
+                await tokenClaimService.RevokeRefreshTokenAsync(Guid.Parse(userId));
+            }
+            return Ok(new { message = "Đăng xuất thành công." });
         }
     }
 }

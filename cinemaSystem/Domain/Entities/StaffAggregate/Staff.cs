@@ -11,7 +11,8 @@ namespace Domain.Entities.StaffAggregate
 {
     public class Staff : BaseEntity, IAggregateRoot
     {
-        public Guid CinemaId { get; private set; } 
+        public Guid CinemaId { get; private set; }
+        public virtual CinemaAggregate.Cinema? Cinema { get; set; }
         public string? FullName { get; private set; }
         public string? Position { get; private set; }
         public string? Department { get; private set; }

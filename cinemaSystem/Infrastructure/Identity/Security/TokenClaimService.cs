@@ -143,5 +143,13 @@ namespace Infrastructure.Identity.Security
             }
             return true;
         }
+
+        /// <summary>
+        /// Hủy refresh token — xóa khỏi Redis cache, buộc user phải đăng nhập lại.
+        /// </summary>
+        public async Task RevokeRefreshTokenAsync(Guid userId)
+        {
+            await _cacheService.RemoveAsync(CacheKey.RefreshToken(userId));
+        }
     }
 }

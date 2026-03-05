@@ -46,12 +46,12 @@ namespace Infrastructure.Data.Configs
                 .HasForeignKey(b => b.ShowtimeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // StaffId: populated for counter sales, null for online bookings
-            builder.Property(b => b.StaffId).IsRequired(false);
+            // CinemaId is optional because some bookings might be made before a showtime is assigned to a cinema
+            builder.Property(b => b.CinemaId).IsRequired(false);
 
-            builder.HasOne<Domain.Entities.StaffAggregate.Staff>()
+            builder.HasOne<Domain.Entities.CinemaAggregate.Cinema>()
                 .WithMany()
-                .HasForeignKey(b => b.StaffId)
+                .HasForeignKey(b => b.CinemaId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
 

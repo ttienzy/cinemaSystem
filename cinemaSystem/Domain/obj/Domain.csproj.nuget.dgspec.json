@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {}
+    "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {}
   },
   "projects": {
-    "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+    "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
+        "projectUniqueName": "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
         "projectName": "Domain",
-        "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
+        "projectPath": "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj",
         "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
-        "outputPath": "D:\\DACS4\\cinemaSystem\\Domain\\obj\\",
+        "outputPath": "d:\\DACS4\\cinemaSystem\\Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

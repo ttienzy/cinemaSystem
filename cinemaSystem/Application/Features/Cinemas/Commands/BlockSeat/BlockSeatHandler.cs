@@ -19,7 +19,18 @@ namespace Application.Features.Cinemas.Commands.BlockSeat
             var seat = screen.Seats.FirstOrDefault(s => s.Id == request.SeatId)
                 ?? throw new NotFoundException(nameof(Seat), request.SeatId);
 
+            // Block the primary seat
             seat.Block(request.Reason);
+
+            // If seat is linked to a partner, automatically block the partner seat as well
+            if (seat.LinkedSeatNumber.HasValue)
+            {
+                var partnerSeat = screen.Seats.FirstOrDefault(s => s.Number == seat.LinkedSeatNumber && s.RowName == seat.RowName);
+                if (partnerSeat != null)
+                {
+                    partnerSeat.Block(request.Reason);
+                }
+            }
 
             await uow.SaveChangesAsync(ct);
             return Unit.Value;

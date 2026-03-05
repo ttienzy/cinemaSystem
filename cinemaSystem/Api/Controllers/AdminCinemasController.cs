@@ -3,15 +3,24 @@ using Application.Features.Cinemas.Commands.UpdateCinema;
 using Application.Features.Cinemas.Commands.DeleteCinema;
 using Application.Features.Cinemas.Commands.CreateScreen;
 using Application.Features.Cinemas.Commands.CreateSeatsBulk;
+using Application.Features.Cinemas.Commands.UpdateScreen;
+using Application.Features.Cinemas.Commands.DeleteScreen;
+using Application.Features.Cinemas.Commands.UpdateSeat;
+using Application.Features.Cinemas.Commands.DeleteSeat;
+using Application.Features.Cinemas.Queries.GetScreens;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Application.Features.Cinemas.Queries.GetScreens;
 using Shared.Models.DataModels.CinemaDtos;
 
 namespace Api.Controllers
 {
     /// <summary>
-    /// Handles admin cinema management APIs.
+    /// Quản lý rạp chiếu phim — Chỉ dành cho Admin.
+    /// Bao gồm: CRUD Cinema, tạo Screen, tạo Seat hàng loạt.
     /// </summary>
+    [Route("api/admin/cinemas")]
+    [Authorize(Roles = "Admin")]
     public class AdminCinemasController : BaseApiController
     {
         /// <summary>
@@ -53,6 +62,15 @@ namespace Api.Controllers
         }
 
         /// <summary>
+        /// Get all screens in a cinema.
+        /// </summary>
+        [HttpGet("{cinemaId}/screens")]
+        public async Task<ActionResult<List<ScreenResponse>>> GetScreens(Guid cinemaId)
+        {
+            return Ok(await Mediator.Send(new GetScreensQuery(cinemaId)));
+        }
+
+        /// <summary>
         /// Bulk create seats for a screen.
         /// </summary>
         [HttpPost("screens/{screenId}/seats/bulk")]
@@ -60,5 +78,48 @@ namespace Api.Controllers
         {
             return Ok(await Mediator.Send(new CreateSeatsBulkCommand(screenId, requests)));
         }
+
+        /// <summary>
+        /// Update a screen in a cinema.
+        /// </summary>
+        [HttpPut("{cinemaId}/screens/{screenId}")]
+        public async Task<IActionResult> UpdateScreen(Guid cinemaId, Guid screenId, [FromBody] ScreenUpdateRequest request)
+        {
+            await Mediator.Send(new UpdateScreenCommand(cinemaId, screenId, request.ScreenName, request.ScreenType, request.Status));
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Delete (soft) a screen in a cinema.
+        /// </summary>
+        [HttpDelete("{cinemaId}/screens/{screenId}")]
+        public async Task<IActionResult> DeleteScreen(Guid cinemaId, Guid screenId)
+        {
+            await Mediator.Send(new DeleteScreenCommand(cinemaId, screenId));
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Update a seat in a screen.
+        /// </summary>
+        [HttpPut("screens/{screenId}/seats/{seatId}")]
+        public async Task<IActionResult> UpdateSeat(Guid cinemaId, Guid screenId, Guid seatId, [FromBody] SeatUpdateRequest request)
+        {
+            await Mediator.Send(new UpdateSeatCommand(cinemaId, screenId, seatId, request.SeatTypeId, request.RowName, request.Number, request.IsActive));
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Delete (soft) a seat in a screen.
+        /// </summary>
+        [HttpDelete("screens/{screenId}/seats/{seatId}")]
+        public async Task<IActionResult> DeleteSeat(Guid cinemaId, Guid screenId, Guid seatId)
+        {
+            await Mediator.Send(new DeleteSeatCommand(cinemaId, screenId, seatId));
+            return NoContent();
+        }
     }
+
+    public record ScreenUpdateRequest(string ScreenName, string ScreenType, string Status);
+    public record SeatUpdateRequest(Guid SeatTypeId, string RowName, int Number, bool IsActive);
 }

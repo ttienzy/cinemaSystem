@@ -57,7 +57,7 @@ namespace Infrastructure
             services.AddScoped<IInventoryRepository, InventoryRepository>();
             services.AddScoped<IPromotionRepository, PromotionRepository>();
             services.AddScoped<IStaffRepository, StaffRepository>();
-            
+
             // Shared Aggregates
             services.AddScoped<IGenreRepository, GenreRepository>();
             services.AddScoped<ISeatTypeRepository, SeatTypeRepository>();
@@ -78,6 +78,15 @@ namespace Infrastructure
             services.AddScoped<ITokenClaimService, TokenClaimService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IOtpService, OtpService>();
+            services.AddScoped<IUserManagementService, Infrastructure.Identity.Services.UserManagementService>();
+
+            // ── Staff Management (Shifts & Schedules) ────────────────
+            services.AddScoped<IShiftRepository, ShiftRepository>();
+            services.AddScoped<IWorkScheduleRepository, WorkScheduleRepository>();
+
+            // ── Equipment Management ─────────────────────────────────
+            services.AddScoped<IEquipmentRepository, EquipmentRepository>();
+            services.AddScoped<IMaintenanceLogRepository, MaintenanceLogRepository>();
 
             // ── SignalR ───────────────────────────────────────────────
             var redisConnStr = configuration.GetConnectionString("RedisConnection");

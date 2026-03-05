@@ -15,6 +15,11 @@ namespace Infrastructure.Data.Repositories
         public async Task<Staff?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => await context.Staffs.FindAsync([id], ct);
 
+        public async Task<Staff?> GetByIdWithCinemaAsync(Guid id, CancellationToken ct = default)
+            => await context.Staffs
+                .Include(s => s.Cinema)
+                .FirstOrDefaultAsync(s => s.Id == id, ct);
+
         public async Task<Staff?> GetByEmailAsync(string email, CancellationToken ct = default)
             => await context.Staffs.FirstOrDefaultAsync(s => s.Email == email, ct);
 
@@ -23,5 +28,8 @@ namespace Infrastructure.Data.Repositories
 
         public void Update(Staff staff)
             => context.Staffs.Update(staff);
+
+        public IQueryable<Staff> GetQueryable()
+            => context.Staffs.AsQueryable();
     }
 }

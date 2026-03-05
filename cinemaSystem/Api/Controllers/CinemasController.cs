@@ -23,7 +23,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Block a seat in a screen.
+        /// Block a seat in a screen. If the seat is linked to a partner seat, both seats will be blocked together.
         /// </summary>
         [HttpPost("screens/{screenId}/seats/{seatId}/block")]
         public async Task<IActionResult> BlockSeat(Guid screenId, Guid seatId, [FromBody] BlockSeatRequest request)
@@ -33,7 +33,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Link a seat to another seat (couple seats).
+        /// Link two seats as couple seats.
         /// </summary>
         [HttpPost("screens/{screenId}/seats/{seatId}/link")]
         public async Task<IActionResult> LinkSeat(Guid screenId, Guid seatId, [FromBody] LinkSeatRequest request)
@@ -43,7 +43,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Unlink a seat from its partner.
+        /// Unlink a seat from its partner. Both seats will be unlinked.
         /// </summary>
         [HttpPost("screens/{screenId}/seats/{seatId}/unlink")]
         public async Task<IActionResult> UnlinkSeat(Guid screenId, Guid seatId)

@@ -18,7 +18,7 @@ namespace Shared.Models.DataModels.ShowtimeDtos
         /// <summary>
         /// List of time slot definitions for bulk creation.
         /// </summary>
-        public List<TimeSlotRequest> TimeSlots { get; set; } = new();
+        public List<ShowtimeTimeSlotRequest> TimeSlots { get; set; } = new();
 
         /// <summary>
         /// Dates to exclude from scheduling (e.g., maintenance days).
@@ -34,7 +34,7 @@ namespace Shared.Models.DataModels.ShowtimeDtos
     /// <summary>
     /// Time slot definition for bulk creation.
     /// </summary>
-    public class TimeSlotRequest
+    public class ShowtimeTimeSlotRequest
     {
         /// <summary>
         /// TimeSlot ID to use for this showtime.

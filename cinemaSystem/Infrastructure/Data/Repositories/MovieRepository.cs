@@ -40,7 +40,7 @@ namespace Infrastructure.Data.Repositories
                 var movieIdsInCinema = context.Showtimes
                     .Where(s => s.CinemaId == cinemaId.Value)
                     .Select(s => s.MovieId);
-                
+
                 query = query.Where(m => movieIdsInCinema.Contains(m.Id));
             }
 
@@ -66,6 +66,13 @@ namespace Infrastructure.Data.Repositories
                 .OrderByDescending(m => m.ReleaseDate)
                 .ToListAsync(ct);
 
+        public async Task<List<Movie>> GetComingSoonAsync(DateTime date, CancellationToken ct = default)
+            => await context.Movies
+                .Where(m => m.Status == MovieStatus.ComingSoon
+                    && m.ReleaseDate > date)
+                .OrderBy(m => m.ReleaseDate)
+                .ToListAsync(ct);
+
         public async Task<List<Movie>> GetAllAsync(CancellationToken ct = default)
             => await context.Movies
                 .OrderByDescending(m => m.ReleaseDate)
@@ -79,5 +86,8 @@ namespace Infrastructure.Data.Repositories
 
         public void Delete(Movie movie)
             => context.Movies.Remove(movie);
+
+        public IQueryable<Movie> GetQueryable()
+            => context.Movies;
     }
 }

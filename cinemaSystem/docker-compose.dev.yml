@@ -1,0 +1,36 @@
+# ============================================
+# Development Override for Docker Compose
+# ============================================
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  api:
+    build:
+      target: build
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      # Hot reload support
+      - ./Api:/src/Api:ro
+      - ./Application:/src/Application:ro
+      - ./Domain:/src/Domain:ro
+      - ./Infrastructure:/src/Infrastructure:ro
+      - ./Shared:/src/Shared:ro
+    command: dotnet watch run --project /src/Api/Api.csproj
+
+  frontend:
+    build:
+      target: build
+    command: npm run dev -- --host 0.0.0.0
+    volumes:
+      # Hot reload support
+      - ./Web/cinema-ui/src:/app/src:ro
+      - ./Web/cinema-ui/public:/app/public:ro
+    ports:
+      - "5173:5173"
+
+  # Enable Redis Commander in dev
+  redis-commander:
+    profiles: []

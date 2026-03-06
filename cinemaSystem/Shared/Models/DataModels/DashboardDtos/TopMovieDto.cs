@@ -1,26 +1,26 @@
 namespace Shared.Models.DataModels.DashboardDtos
 {
     /// <summary>
-    /// DTO phim ăn khách — thống kê theo doanh thu và lượng vé bán ra.
+    /// Dashboard top movie DTO — statistics by revenue and tickets sold.
     /// </summary>
     public class TopMovieDto
     {
-        /// <summary>ID phim.</summary>
+        /// <summary>Movie ID.</summary>
         public Guid MovieId { get; set; }
 
-        /// <summary>Tên phim.</summary>
+        /// <summary>Movie Title.</summary>
         public string Title { get; set; } = string.Empty;
 
-        /// <summary>Ảnh poster.</summary>
+        /// <summary>Poster URL.</summary>
         public string? PosterUrl { get; set; }
 
-        /// <summary>Tổng doanh thu từ phim này.</summary>
+        /// <summary>Total revenue from this movie.</summary>
         public decimal TotalRevenue { get; set; }
 
-        /// <summary>Tổng số vé bán ra.</summary>
+        /// <summary>Total tickets sold.</summary>
         public int TotalTicketsSold { get; set; }
 
-        /// <summary>Số suất chiếu.</summary>
+        /// <summary>Total number of showtimes.</summary>
         public int ShowtimeCount { get; set; }
     }
 }

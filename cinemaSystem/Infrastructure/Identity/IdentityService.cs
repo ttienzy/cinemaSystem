@@ -77,17 +77,14 @@ namespace Infrastructure.Identity
             var refreshTokenExpiry = tokenClaimService.GetRefreshTokenExpirationTime();
 
             await cacheService.SetAsync(
-                CacheKey.RefreshToken(user.Id), 
-                new RefreshTokenModel { RefreshToken = refreshToken, Expiration = refreshTokenExpiry }, 
+                CacheKey.RefreshToken(user.Id),
+                new RefreshTokenModel { RefreshToken = refreshToken, Expiration = refreshTokenExpiry },
                 refreshTokenExpiry - DateTime.UtcNow);
 
             return new LoginResponse
             {
-                Token = new TokenResponse
-                {
-                    AccessToken = accessToken,
-                    RefreshToken = refreshToken
-                }
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
             };
         }
 
@@ -164,7 +161,7 @@ namespace Infrastructure.Identity
                 Email = request.Email,
                 PhoneNumber = request.PhoneNumber,
                 CreatedAt = DateTime.UtcNow,
-                EmailConfirmed = true 
+                EmailConfirmed = true
             };
 
             var temporaryPassword = $"Staff@{Guid.NewGuid().ToString("N")[..8]}!";

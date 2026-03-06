@@ -1,6 +1,6 @@
 namespace Shared.Models.DataModels.EquipmentDtos
 {
-    /// <summary>Request tạo mới thiết bị.</summary>
+    /// <summary>Request to create new equipment.</summary>
     public record EquipmentRequest(
         Guid CinemaId,
         Guid? ScreenId,
@@ -9,7 +9,7 @@ namespace Shared.Models.DataModels.EquipmentDtos
         string Status = "working"
     );
 
-    /// <summary>Response thông tin thiết bị.</summary>
+    /// <summary>Response containing equipment information.</summary>
     public record EquipmentResponse(
         Guid Id,
         Guid CinemaId,
@@ -20,7 +20,7 @@ namespace Shared.Models.DataModels.EquipmentDtos
         string Status
     );
 
-    /// <summary>Request tạo log bảo trì.</summary>
+    /// <summary>Request to create maintenance log.</summary>
     public record MaintenanceLogRequest(
         Guid EquipmentId,
         DateTime MaintenanceDate,
@@ -29,7 +29,7 @@ namespace Shared.Models.DataModels.EquipmentDtos
         bool IsCompleted = false
     );
 
-    /// <summary>Response log bảo trì.</summary>
+    /// <summary>Response for maintenance log.</summary>
     public record MaintenanceLogResponse(
         Guid Id,
         Guid EquipmentId,

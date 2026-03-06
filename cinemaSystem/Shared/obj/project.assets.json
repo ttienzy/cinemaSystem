@@ -4649,8 +4649,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
-              "projectPath": "d:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
+            "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj": {
+              "projectPath": "D:\\DACS4\\cinemaSystem\\Domain\\Domain.csproj"
             }
           }
         }

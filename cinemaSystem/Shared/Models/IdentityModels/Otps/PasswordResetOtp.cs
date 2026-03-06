@@ -13,7 +13,7 @@ namespace Shared.Models.IdentityModels.Otps
         public string Email { get; set; }
         public string OtpCode { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(10); // 10 phút hết hạn
+        public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(10); // Expire in 10 minutes
         public bool IsUsed { get; set; } = false;
         public int AttemptCount { get; set; } = 0;
     }

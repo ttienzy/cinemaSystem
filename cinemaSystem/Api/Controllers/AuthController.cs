@@ -37,7 +37,7 @@ namespace Api.Controllers
         /// Refresh access token — dùng refresh token để lấy access token mới.
         /// </summary>
         [HttpPost("refresh")]
-        public async Task<IActionResult> RefreshToken([FromBody] TokenResponse request)
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
         {
             if (string.IsNullOrEmpty(request.RefreshToken) || string.IsNullOrEmpty(request.AccessToken))
                 return BadRequest("Invalid request");
@@ -59,7 +59,18 @@ namespace Api.Controllers
                 return Unauthorized("Invalid refresh token");
 
             var newAccessToken = tokenClaimService.GenerateAccessTokenn(Guid.Parse(userId), userName, email, roles);
-            return Ok(new { NewAccessToken = newAccessToken });
+            var newRefreshToken = tokenClaimService.GenerateRefreshToken();
+            var refreshTokenExpiry = tokenClaimService.GetRefreshTokenExpirationTime();
+
+            // Revoke old refresh token and store new one
+            await tokenClaimService.RevokeRefreshTokenAsync(Guid.Parse(userId));
+            await tokenClaimService.StoreRefreshTokenAsync(Guid.Parse(userId), newRefreshToken, refreshTokenExpiry);
+
+            return Ok(new LoginResponse
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken
+            });
         }
 
         /// <summary>

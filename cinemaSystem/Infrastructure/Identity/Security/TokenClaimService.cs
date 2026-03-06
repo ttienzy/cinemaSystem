@@ -36,7 +36,8 @@ namespace Infrastructure.Identity.Security
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Email, email)
             };
-            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+            // Normalize roles to lowercase for consistent comparison
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role.ToLowerInvariant())));
 
             var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
             var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
@@ -150,6 +151,17 @@ namespace Infrastructure.Identity.Security
         public async Task RevokeRefreshTokenAsync(Guid userId)
         {
             await _cacheService.RemoveAsync(CacheKey.RefreshToken(userId));
+        }
+
+        /// <summary>
+        /// Lưu refresh token vào cache.
+        /// </summary>
+        public async Task StoreRefreshTokenAsync(Guid userId, string refreshToken, DateTime expiration)
+        {
+            await _cacheService.SetAsync(
+                CacheKey.RefreshToken(userId),
+                new RefreshTokenModel { RefreshToken = refreshToken, Expiration = expiration },
+                expiration - DateTime.UtcNow);
         }
     }
 }

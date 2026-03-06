@@ -1,47 +1,47 @@
 namespace Shared.Models.DataModels.DashboardDtos
 {
     /// <summary>
-    /// DTO báo cáo doanh thu — chứa tổng doanh thu và chi tiết theo khoảng thời gian.
+    /// Revenue report DTO — contains total revenue and details by time period.
     /// </summary>
     public class RevenueReportDto
     {
-        /// <summary>Tổng doanh thu vé trong khoảng.</summary>
+        /// <summary>Total ticket revenue in period.</summary>
         public decimal TotalTicketRevenue { get; set; }
 
-        /// <summary>Tổng doanh thu bắp nước trong khoảng.</summary>
+        /// <summary>Total concession revenue in period.</summary>
         public decimal TotalConcessionRevenue { get; set; }
 
-        /// <summary>Tổng doanh thu (vé + bắp nước).</summary>
+        /// <summary>Grand total revenue (tickets + concessions).</summary>
         public decimal GrandTotal { get; set; }
 
-        /// <summary>Khoảng thời gian bắt đầu.</summary>
+        /// <summary>Start time period.</summary>
         public DateTime From { get; set; }
 
-        /// <summary>Khoảng thời gian kết thúc.</summary>
+        /// <summary>End time period.</summary>
         public DateTime To { get; set; }
 
-        /// <summary>Chi tiết doanh thu theo từng nhóm (ngày/tuần/tháng).</summary>
+        /// <summary>Revenue details by group (day/week/month).</summary>
         public List<RevenueItemDto> Items { get; set; } = new();
     }
 
     /// <summary>
-    /// Một dòng doanh thu trong báo cáo — đại diện 1 ngày/tuần/tháng.
+    /// A single revenue line in report — represents 1 day/week/month.
     /// </summary>
     public class RevenueItemDto
     {
-        /// <summary>Nhãn thời gian (ví dụ: "2026-03-01", "Tuần 10", "Tháng 3").</summary>
+        /// <summary>Time label (e.g. "2026-03-01", "Week 10", "March").</summary>
         public string Label { get; set; } = string.Empty;
 
-        /// <summary>Doanh thu vé.</summary>
+        /// <summary>Ticket revenue.</summary>
         public decimal TicketRevenue { get; set; }
 
-        /// <summary>Doanh thu bắp nước.</summary>
+        /// <summary>Concession revenue.</summary>
         public decimal ConcessionRevenue { get; set; }
 
-        /// <summary>Tổng doanh thu.</summary>
+        /// <summary>Total revenue.</summary>
         public decimal Total { get; set; }
 
-        /// <summary>Số booking.</summary>
+        /// <summary>Number of bookings.</summary>
         public int BookingCount { get; set; }
     }
 }

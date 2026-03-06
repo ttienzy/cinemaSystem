@@ -8,11 +8,11 @@ namespace Domain.Entities.MovieAggregate.Enum
 {
     public enum RatingStatus
     {
-        P,    // Phổ biến
-        K,    // Trẻ em
-        T13,  // Trên 13 tuổi
-        T16,  // Trên 16 tuổi  
-        T18,  // Trên 18 tuổi
-        C     // Cấm chiếu
+        P,    // General Audience
+        K,    // Children under 13 must be accompanied by an adult
+        T13,  // 13+
+        T16,  // 16+
+        T18,  // 18+
+        C     // Banned
     }
 }

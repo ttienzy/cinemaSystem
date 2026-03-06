@@ -1,7 +1,7 @@
 namespace Shared.Models.DataModels.StaffDtos
 {
     /// <summary>
-    /// DTO ca làm — dùng cho danh sách ca và response.
+    /// Shift DTO — used for shift list and response.
     /// </summary>
     public class ShiftDto
     {
@@ -13,7 +13,7 @@ namespace Shared.Models.DataModels.StaffDtos
     }
 
     /// <summary>
-    /// Request tạo/cập nhật ca làm.
+    /// Request to create or update a shift.
     /// </summary>
     public class ShiftUpsertRequest
     {
@@ -24,7 +24,7 @@ namespace Shared.Models.DataModels.StaffDtos
     }
 
     /// <summary>
-    /// DTO lịch làm nhân viên.
+    /// Staff work schedule DTO.
     /// </summary>
     public class WorkScheduleDto
     {
@@ -39,7 +39,7 @@ namespace Shared.Models.DataModels.StaffDtos
     }
 
     /// <summary>
-    /// Request tạo lịch làm cho nhân viên.
+    /// Request to create a work schedule for a staff member.
     /// </summary>
     public class ScheduleCreateRequest
     {
@@ -49,7 +49,7 @@ namespace Shared.Models.DataModels.StaffDtos
     }
 
     /// <summary>
-    /// Request tạo lịch làm hàng loạt (cả tuần).
+    /// Request to create schedules in bulk (for a whole week).
     /// </summary>
     public class BulkScheduleRequest
     {

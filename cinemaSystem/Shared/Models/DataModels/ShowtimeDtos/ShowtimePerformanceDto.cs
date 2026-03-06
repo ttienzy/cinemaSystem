@@ -11,14 +11,14 @@ namespace Shared.Models.DataModels.ShowtimeDtos
     {
         public Guid ShowtimeId { get; set; }
 
-        // Thông tin phim
+        // Movie Information
         public string Title { get; set; } = string.Empty;
 
-        // Thông tin phòng chiếu
+        // Screen Information
         public string ScreenName { get; set; } = string.Empty;
         public string ScreenType { get; set; } = string.Empty;
 
-        // Ngày và thời gian chiếu
+        // Date and Time Information
         public DateTime ShowDate { get; set; }
         public TimeSpan SlotStartTime { get; set; }
         public TimeSpan SlotEndTime { get; set; }
@@ -26,11 +26,11 @@ namespace Shared.Models.DataModels.ShowtimeDtos
         public DateTime? ActualEndTime { get; set; }
         public string Status { get; set; }
 
-        // Thông tin bảng giá
+        // Pricing Information
         public string PricingTier { get; set; } = string.Empty;
         public decimal Multiplier { get; set; }
 
-        // Thông tin thống kê
+        // Statistics Information
         public long TotalBookings { get; set; }
         public decimal? AvgTicketPrice { get; set; }
     }

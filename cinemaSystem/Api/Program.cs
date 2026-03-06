@@ -75,13 +75,26 @@ builder.Services.AddAuthentication(options =>
         {
             OnMessageReceived = context =>
             {
-                var accessToken = context.Request.Query["access_token"];
                 var path = context.HttpContext.Request.Path;
 
-                if (!string.IsNullOrEmpty(accessToken) &&
-                (path.StartsWithSegments("/seatHub") || path.StartsWithSegments("/seatHub/")))
+                // For SignalR hubs, try to get token from Authorization header first
+                if (path.StartsWithSegments("/seatHub") || path.StartsWithSegments("/seatHub/"))
                 {
-                    context.Token = accessToken;
+                    // First priority: Authorization header (secure)
+                    var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                    if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+                    {
+                        context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                    }
+                    // Fallback: Query string (for backward compatibility, but less secure)
+                    else
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        if (!string.IsNullOrEmpty(accessToken))
+                        {
+                            context.Token = accessToken;
+                        }
+                    }
                 }
 
                 return Task.CompletedTask;

@@ -17,5 +17,9 @@ namespace Application.Common.Interfaces.Security
         /// Hủy refresh token — dùng cho chức năng đăng xuất.
         /// </summary>
         Task RevokeRefreshTokenAsync(Guid userId);
+        /// <summary>
+        /// Lưu refresh token vào cache.
+        /// </summary>
+        Task StoreRefreshTokenAsync(Guid userId, string refreshToken, DateTime expiration);
     }
 }

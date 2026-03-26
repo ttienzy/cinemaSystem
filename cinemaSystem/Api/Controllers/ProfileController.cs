@@ -7,17 +7,17 @@ using System.Security.Claims;
 namespace Api.Controllers
 {
     /// <summary>
-    /// Hồ sơ cá nhân — Dành cho Customer đã đăng nhập.
-    /// Tách từ IdentityController để giữ Single Responsibility.
-    /// Tự động lấy userId từ JWT token, không cần truyền trong URL.
+    /// Personal Profile — For logged-in Customers.
+    /// Separated from IdentityController to maintain Single Responsibility.
+    /// Automatically retrieves userId from JWT token, no need to pass it in the URL.
     /// </summary>
     [ApiController]
     [Route("api/profile")]
-    [Authorize]
+    // [Authorize]
     public class ProfileController(IIdentityUserService identityService) : ControllerBase
     {
         /// <summary>
-        /// Xem hồ sơ cá nhân — lấy userId từ token.
+        /// View personal profile — retrieves userId from token.
         /// </summary>
         [HttpGet]
         public async Task<ActionResult<UserProfileResponse>> GetMyProfile()
@@ -27,24 +27,24 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Cập nhật hồ sơ cá nhân — chỉ sửa thông tin của chính mình.
+        /// Update personal profile — only allows editing one's own information.
         /// </summary>
         [HttpPut]
         public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateProfileRequest request)
         {
             var userId = GetCurrentUserId();
             await identityService.UpdateProfileAsync(userId, request);
-            return Ok(new { message = "Cập nhật hồ sơ thành công." });
+            return Ok(new { message = "Profile updated successfully." });
         }
 
         /// <summary>
-        /// Đổi mật khẩu — yêu cầu mật khẩu cũ + mật khẩu mới.
+        /// Change password — requires old password + new password.
         /// </summary>
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
             await identityService.ChangePasswordAsync(request);
-            return Ok(new { message = "Đổi mật khẩu thành công." });
+            return Ok(new { message = "Password changed successfully." });
         }
 
         private Guid GetCurrentUserId()

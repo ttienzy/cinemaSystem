@@ -4,7 +4,7 @@ using Shared.Models.DataModels.DashboardDtos;
 namespace Application.Features.Dashboard.Queries.GetTopMovies
 {
     /// <summary>
-    /// Truy vấn top phim ăn khách — sắp xếp theo doanh thu hoặc lượng vé bán.
+    /// Query for top-grossing movies — sorted by revenue or ticket volume.
     /// </summary>
     public record GetTopMoviesQuery(
         int Limit = 10,

@@ -14,11 +14,11 @@ namespace Application.Common.Interfaces.Security
         ClaimsPrincipal? GetPrincipalFromExpiredToken(string token);
         Task<bool> IsRefreshTokenValidAsync(Guid userId, string refreshToken);
         /// <summary>
-        /// Hủy refresh token — dùng cho chức năng đăng xuất.
+        /// Revoke refresh token — used for logout functionality.
         /// </summary>
         Task RevokeRefreshTokenAsync(Guid userId);
         /// <summary>
-        /// Lưu refresh token vào cache.
+        /// Store refresh token in cache.
         /// </summary>
         Task StoreRefreshTokenAsync(Guid userId, string refreshToken, DateTime expiration);
     }

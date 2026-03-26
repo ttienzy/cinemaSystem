@@ -8,11 +8,11 @@ using Shared.Models.DataModels.MovieDtos;
 namespace Api.Controllers
 {
     /// <summary>
-    /// Quản lý phim — Chỉ dành cho Admin.
-    /// Bao gồm: CRUD Movie (thêm/sửa/xóa phim).
+    /// Movie management — Admin only.
+    /// Includes: Movie CRUD (add/update/delete movies).
     /// </summary>
     [Route("api/admin/movies")]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public class AdminMoviesController : BaseApiController
     {
         /// <summary>

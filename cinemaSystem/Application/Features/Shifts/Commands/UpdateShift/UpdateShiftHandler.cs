@@ -5,7 +5,7 @@ using Shared.Models.DataModels.StaffDtos;
 namespace Application.Features.Shifts.Commands.UpdateShift
 {
     /// <summary>
-    /// Cập nhật ca làm — thay đổi tên, giờ bắt đầu/kết thúc.
+    /// Update shift — change name, start/end times.
     /// </summary>
     public record UpdateShiftCommand(Guid ShiftId, ShiftUpsertRequest Request) : IRequest;
 
@@ -17,9 +17,9 @@ namespace Application.Features.Shifts.Commands.UpdateShift
         public async Task Handle(UpdateShiftCommand request, CancellationToken ct)
         {
             var shift = await shiftRepo.GetByIdAsync(request.ShiftId, ct)
-                ?? throw new KeyNotFoundException($"Không tìm thấy ca làm với ID: {request.ShiftId}");
+                ?? throw new KeyNotFoundException($"Shift not found with ID: {request.ShiftId}");
 
-            // Sử dụng domain method UpdateShift
+            // Use domain method UpdateShift
             shift.UpdateShift(
                 request.Request.CinemaId,
                 request.Request.Name,

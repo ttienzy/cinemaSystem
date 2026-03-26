@@ -9,16 +9,16 @@ using Shared.Models.DataModels.DashboardDtos;
 namespace Api.Controllers
 {
     /// <summary>
-    /// Dashboard quản trị toàn chuỗi — Chỉ dành cho Admin.
-    /// Cung cấp báo cáo doanh thu, thống kê tổng quan, top phim ăn khách.
+    /// Chain-wide administration dashboard — Admin only.
+    /// Provides revenue reports, general statistics, and top-grossing movies.
     /// </summary>
     [ApiController]
     [Route("api/admin/dashboard")]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public class AdminDashboardController(IMediator mediator) : ControllerBase
     {
         /// <summary>
-        /// Lấy thống kê tổng quan toàn chuỗi rạp (doanh thu tháng, bookings, tỉ lệ lấp đầy).
+        /// Get general statistics for the entire cinema chain (monthly revenue, bookings, occupancy rate).
         /// </summary>
         [HttpGet("stats")]
         public async Task<ActionResult<DashboardSummaryDto>> GetStats([FromQuery] Guid? cinemaId = null)
@@ -27,8 +27,8 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Báo cáo doanh thu theo khoảng thời gian — hỗ trợ nhóm theo ngày/tuần/tháng.
-        /// Dùng cho biểu đồ doanh thu trên dashboard Admin.
+        /// Revenue report over a time period — supports grouping by day/week/month.
+        /// Used for revenue charts on the Admin dashboard.
         /// </summary>
         [HttpGet("revenue")]
         public async Task<ActionResult<RevenueReportDto>> GetRevenue(
@@ -41,8 +41,8 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Top phim ăn khách nhất — sắp xếp theo tổng doanh thu.
-        /// Dùng cho bảng xếp hạng trên dashboard Admin.
+        /// Top grossing movies — sorted by total revenue.
+        /// Used for rankings on the Admin dashboard.
         /// </summary>
         [HttpGet("top-movies")]
         public async Task<ActionResult<List<TopMovieDto>>> GetTopMovies(

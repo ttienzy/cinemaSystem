@@ -53,11 +53,12 @@ namespace Infrastructure.Redis
             await _database.KeyDeleteAsync(key);
         }
 
-        public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)
+        public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken ct = default)
         {
             var serializedValue = JsonConvert.SerializeObject(value);
-            await _database.StringSetAsync(key, serializedValue, expiration, keepTtl:true);
+            await _database.StringSetAsync(key, serializedValue, expiration, keepTtl: true);
         }
+
         public async Task UpdateAsync<T>(string key, T value)
         {
             var serializedValue = JsonConvert.SerializeObject(value);

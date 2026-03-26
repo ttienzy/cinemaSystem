@@ -1,31 +1,31 @@
 namespace Application.Common.Interfaces.Security
 {
     /// <summary>
-    /// Quản lý users nâng cao — danh sách, khóa/mở khóa tài khoản.
-    /// Tách khỏi IIdentityUserService để giữ Single Responsibility.
+    /// Advanced user management — list, lock/unlock accounts.
+    /// Separated from IIdentityUserService to maintain Single Responsibility.
     /// </summary>
     public interface IUserManagementService
     {
         /// <summary>
-        /// Lấy danh sách users phân trang, hỗ trợ lọc theo role/trạng thái/từ khóa tìm kiếm.
+        /// Get paginated user list, supports filtering by role/status/search keyword.
         /// </summary>
         Task<PagedUserResult> GetAllUsersAsync(
             string? role, string? search, bool? isLocked,
             int page, int pageSize);
 
         /// <summary>
-        /// Khóa tài khoản — user không thể đăng nhập cho đến khi mở khóa.
+        /// Lock account — user cannot login until unlocked.
         /// </summary>
         Task LockUserAsync(Guid userId);
 
         /// <summary>
-        /// Mở khóa tài khoản — cho phép đăng nhập trở lại.
+        /// Unlock account — allows login again.
         /// </summary>
         Task UnlockUserAsync(Guid userId);
     }
 
     /// <summary>
-    /// Kết quả phân trang danh sách users.
+    /// Paginated result of user list.
     /// </summary>
     public class PagedUserResult
     {
@@ -36,7 +36,7 @@ namespace Application.Common.Interfaces.Security
     }
 
     /// <summary>
-    /// Thông tin user trong danh sách (tóm tắt, không chứa thông tin nhạy cảm).
+    /// User information in list (summary, excludes sensitive data).
     /// </summary>
     public class UserListItem
     {

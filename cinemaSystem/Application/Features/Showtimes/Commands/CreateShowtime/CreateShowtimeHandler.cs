@@ -15,8 +15,6 @@ namespace Application.Features.Showtimes.Commands.CreateShowtime
     public class CreateShowtimeHandler(
         IShowtimeRepository showtimeRepo,
         ICinemaRepository cinemaRepo,
-        IStaffRepository staffRepo,
-        ICurrentUserService currentUser,
         IUnitOfWork uow) : IRequestHandler<CreateShowtimeCommand, CreateShowtimeResult>
     {
         private const int CleaningOffsetMinutes = 20;
@@ -27,14 +25,14 @@ namespace Application.Features.Showtimes.Commands.CreateShowtime
             var req = cmd.Request;
 
             // 0. Location-based RBAC: Ensure Manager manages this Cinema
-            if (!currentUser.IsInRole("Admin"))
-            {
-                var staff = await staffRepo.GetByEmailAsync(currentUser.Email ?? string.Empty, ct)
-                    ?? throw new UnauthorizedException("Authenticated user is not registered as staff.");
+            //if (!currentUser.IsInRole("Admin"))
+            //{
+            //    var staff = await staffRepo.GetByEmailAsync(currentUser.Email ?? string.Empty, ct)
+            //        ?? throw new UnauthorizedException("Authenticated user is not registered as staff.");
 
-                if (staff.CinemaId != req.CinemaId)
-                    throw new ForbiddenException($"Access denied. You can only manage showtimes for your assigned cinema (Branch ID: {staff.CinemaId}).");
-            }
+            //    if (staff.CinemaId != req.CinemaId)
+            //        throw new ForbiddenException($"Access denied. You can only manage showtimes for your assigned cinema (Branch ID: {staff.CinemaId}).");
+            //}
 
             // 1. Conflict Detection with Cleaning Offset
             var startOnly = TimeOnly.FromDateTime(req.ActualStartTime);

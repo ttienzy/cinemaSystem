@@ -3,8 +3,8 @@ using Domain.Entities.StaffAggregate;
 namespace Application.Common.Interfaces.Persistence
 {
     /// <summary>
-    /// Repository lịch làm nhân viên (WorkSchedule).
-    /// Quản lý phân công nhân viên vào ca làm theo ngày.
+    /// Employee Work Schedule Repository.
+    /// Manages assigning staff to shifts by date.
     /// </summary>
     public interface IWorkScheduleRepository
     {

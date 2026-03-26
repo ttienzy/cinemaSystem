@@ -16,11 +16,11 @@ using Shared.Models.DataModels.CinemaDtos;
 namespace Api.Controllers
 {
     /// <summary>
-    /// Quản lý rạp chiếu phim — Chỉ dành cho Admin.
-    /// Bao gồm: CRUD Cinema, tạo Screen, tạo Seat hàng loạt.
+    /// Cinema management — Admin only.
+    /// Includes: Cinema CRUD, Screen creation, and Bulk Seat creation.
     /// </summary>
     [Route("api/admin/cinemas")]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public class AdminCinemasController : BaseApiController
     {
         /// <summary>

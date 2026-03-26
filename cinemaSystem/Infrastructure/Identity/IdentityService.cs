@@ -2,7 +2,6 @@
 using Application.Common.Interfaces.Services;
 using Application.Common.Interfaces.Security;
 using Infrastructure.Identity.Constants;
-using Infrastructure.Redis.Constants;
 using Microsoft.AspNetCore.Identity;
 using Shared.Models.IdentityModels;
 using Shared.Models.IdentityModels.Otps;
@@ -13,6 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Shared.Templates;
 using Shared.Models.ExtenalModels;
+using Application.Common.Constants;
 
 namespace Infrastructure.Identity
 {
@@ -77,7 +77,7 @@ namespace Infrastructure.Identity
             var refreshTokenExpiry = tokenClaimService.GetRefreshTokenExpirationTime();
 
             await cacheService.SetAsync(
-                CacheKey.RefreshToken(user.Id),
+                RedisKey.RefreshToken(user.Id),
                 new RefreshTokenModel { RefreshToken = refreshToken, Expiration = refreshTokenExpiry },
                 refreshTokenExpiry - DateTime.UtcNow);
 
@@ -182,7 +182,7 @@ namespace Infrastructure.Identity
                 throw new ValidationException("Role", $"Role {request.Role} does not exist.");
             }
 
-            // Gửi email thông báo
+            // Send notification email
             var emailRequest = StaffTemplates.WelcomeStaff(user.Email, user.UserName, temporaryPassword, request.Role);
             await emailService.SendEmailAsync(emailRequest);
         }

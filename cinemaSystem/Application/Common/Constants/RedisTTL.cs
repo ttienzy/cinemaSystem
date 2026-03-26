@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Infrastructure.Redis.Constants
+namespace Application.Common.Constants
 {
-    public class RedisConstants
+    public class RedisTTL
     {
-        public const int TTLInMinutes = 5; 
+        public const int TTLInMinutes = 5;
     }
 }

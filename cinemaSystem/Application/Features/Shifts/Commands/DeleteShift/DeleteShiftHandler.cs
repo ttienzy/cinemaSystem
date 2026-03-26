@@ -4,7 +4,7 @@ using MediatR;
 namespace Application.Features.Shifts.Commands.DeleteShift
 {
     /// <summary>
-    /// Xóa ca làm — kiểm tra không có lịch làm đang active trước khi xóa.
+    /// Delete shift — ensures no active schedules exist before deletion.
     /// </summary>
     public record DeleteShiftCommand(Guid ShiftId) : IRequest;
 
@@ -17,14 +17,14 @@ namespace Application.Features.Shifts.Commands.DeleteShift
         public async Task Handle(DeleteShiftCommand request, CancellationToken ct)
         {
             var shift = await shiftRepo.GetByIdAsync(request.ShiftId, ct)
-                ?? throw new KeyNotFoundException($"Không tìm thấy ca làm với ID: {request.ShiftId}");
+                ?? throw new KeyNotFoundException($"Shift not found with ID: {request.ShiftId}");
 
-            // Kiểm tra có lịch làm trong tương lai không
+            // Check for future schedules
             var hasActiveSchedules = scheduleRepo.GetQueryable()
                 .Any(ws => ws.ShiftId == request.ShiftId && ws.WorkDate >= DateTime.UtcNow.Date);
 
             if (hasActiveSchedules)
-                throw new InvalidOperationException("Không thể xóa ca làm đang có lịch phân công trong tương lai.");
+                throw new InvalidOperationException("Cannot delete a shift that has future schedule assignments.");
 
             shiftRepo.Delete(shift);
             await unitOfWork.SaveChangesAsync(ct);

@@ -1,8 +1,6 @@
 ﻿using Application.Common.Interfaces.Services;
 using Application.Common.Interfaces.Security;
 using Application.Settings;
-using Infrastructure.Redis.Constants;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Models.IdentityModels;
@@ -15,6 +13,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Application.Common.Constants;
 
 namespace Infrastructure.Identity.Security
 {
@@ -126,7 +125,7 @@ namespace Infrastructure.Identity.Security
 
         public async Task<bool> IsRefreshTokenValidAsync(Guid userId, string refreshToken)
         {
-            var cachedToken = await _cacheService.GetAsync<RefreshTokenModel>(CacheKey.RefreshToken(userId));
+            var cachedToken = await _cacheService.GetAsync<RefreshTokenModel>(RedisKey.RefreshToken(userId));
 
             if (cachedToken == null)
             {
@@ -134,12 +133,12 @@ namespace Infrastructure.Identity.Security
             }
             if (cachedToken.RefreshToken != refreshToken)
             {
-                await _cacheService.RemoveAsync(CacheKey.RefreshToken(userId));
+                await _cacheService.RemoveAsync(RedisKey.RefreshToken(userId));
                 return false; // Refresh token does not match
             }
             if (cachedToken.Expiration < DateTime.UtcNow)
             {
-                await _cacheService.RemoveAsync(CacheKey.RefreshToken(userId));
+                await _cacheService.RemoveAsync(RedisKey.RefreshToken(userId));
                 return false; // Refresh token has expired
             }
             return true;
@@ -150,7 +149,7 @@ namespace Infrastructure.Identity.Security
         /// </summary>
         public async Task RevokeRefreshTokenAsync(Guid userId)
         {
-            await _cacheService.RemoveAsync(CacheKey.RefreshToken(userId));
+            await _cacheService.RemoveAsync(RedisKey.RefreshToken(userId));
         }
 
         /// <summary>
@@ -159,7 +158,7 @@ namespace Infrastructure.Identity.Security
         public async Task StoreRefreshTokenAsync(Guid userId, string refreshToken, DateTime expiration)
         {
             await _cacheService.SetAsync(
-                CacheKey.RefreshToken(userId),
+                RedisKey.RefreshToken(userId),
                 new RefreshTokenModel { RefreshToken = refreshToken, Expiration = expiration },
                 expiration - DateTime.UtcNow);
         }

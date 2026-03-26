@@ -5,7 +5,7 @@ using Shared.Models.DataModels.StaffDtos;
 namespace Application.Features.Shifts.Queries.GetShiftsByCinema
 {
     /// <summary>
-    /// Lấy danh sách ca làm theo rạp — dùng cho dropdown xếp lịch.
+    /// Get list of shifts by cinema — used for scheduling dropdowns.
     /// </summary>
     public record GetShiftsByCinemaQuery(Guid CinemaId) : IRequest<List<ShiftDto>>;
 

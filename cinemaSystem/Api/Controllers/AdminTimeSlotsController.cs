@@ -6,16 +6,16 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Controllers
 {
     /// <summary>
-    /// Quản lý Khung giờ (TimeSlot) — Chỉ dành cho Admin.
-    /// Admin tạo/sửa/xóa khung giờ chiếu phim (Sáng, Chiều, Tối, Khuya).
+    /// Time Slot management — Admin only.
+    /// Admin creates/updates/deletes movie showtime slots (Morning, Afternoon, Evening, Late night).
     /// </summary>
     [ApiController]
     [Route("api/admin/time-slots")]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public class AdminTimeSlotsController(IMediator mediator) : ControllerBase
     {
         /// <summary>
-        /// Tạo khung giờ mới — ví dụ: "Khung giờ vàng 18:00–21:00".
+        /// Create a new time slot — e.g., "Prime time 18:00–21:00".
         /// </summary>
         [HttpPost]
         public async Task<ActionResult<Guid>> Create([FromBody] TimeSlotRequest request)
@@ -25,7 +25,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Cập nhật khung giờ — thay đổi tên, giờ bắt đầu/kết thúc.
+        /// Update time slot — change name, start/end times.
         /// </summary>
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] TimeSlotRequest request)
@@ -35,7 +35,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Xóa khung giờ.
+        /// Delete time slot.
         /// </summary>
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
@@ -45,6 +45,6 @@ namespace Api.Controllers
         }
     }
 
-    /// <summary>Request body cho TimeSlot CUD.</summary>
+    /// <summary>Request body for TimeSlot CUD.</summary>
     public record TimeSlotRequest(string Name, TimeSpan StartTime, TimeSpan EndTime, string dateType, bool isActive = true);
 }

@@ -6,7 +6,7 @@ using System.Security.Claims;
 namespace Api.Controllers
 {
     /// <summary>
-    /// Xác thực người dùng — đăng ký, đăng nhập, refresh token, đăng xuất.
+    /// User authentication — register, login, refresh token, logout.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
@@ -15,7 +15,7 @@ namespace Api.Controllers
         IIdentityUserService identityService) : ControllerBase
     {
         /// <summary>
-        /// Đăng ký tài khoản mới.
+        /// Register a new account.
         /// </summary>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
@@ -25,7 +25,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Đăng nhập — trả về access token + refresh token.
+        /// Login — returns access token + refresh token.
         /// </summary>
         [HttpPost("login")]
         public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
@@ -34,7 +34,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Refresh access token — dùng refresh token để lấy access token mới.
+        /// Refresh access token — uses refresh token to obtain a new access token.
         /// </summary>
         [HttpPost("refresh")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
@@ -74,7 +74,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Đăng xuất — hủy refresh token, buộc user phải đăng nhập lại.
+        /// Logout — revokes refresh token, forcing user to login again.
         /// </summary>
         [HttpPost("logout")]
         [Microsoft.AspNetCore.Authorization.Authorize]
@@ -85,7 +85,7 @@ namespace Api.Controllers
             {
                 await tokenClaimService.RevokeRefreshTokenAsync(Guid.Parse(userId));
             }
-            return Ok(new { message = "Đăng xuất thành công." });
+            return Ok(new { message = "Logged out successfully." });
         }
     }
 }

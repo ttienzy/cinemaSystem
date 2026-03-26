@@ -4,13 +4,13 @@ using Shared.Models.DataModels.EquipmentDtos;
 
 namespace Application.Features.Equipment.Queries
 {
-    /// <summary>Lấy danh sách thiết bị theo cinema.</summary>
+    /// <summary>Get list of equipment by cinema.</summary>
     public record GetEquipmentListQuery(Guid? CinemaId = null, string? Status = null) : IRequest<List<EquipmentResponse>>;
 
-    /// <summary>Lấy chi tiết thiết bị.</summary>
+    /// <summary>Get equipment details.</summary>
     public record GetEquipmentByIdQuery(Guid Id) : IRequest<EquipmentResponse?>;
 
-    /// <summary>Lấy lịch sử bảo trì theo thiết bị.</summary>
+    /// <summary>Get maintenance history by equipment.</summary>
     public record GetMaintenanceLogsQuery(Guid EquipmentId) : IRequest<List<MaintenanceLogResponse>>;
 
     // === Handlers ===

@@ -1,5 +1,6 @@
 ﻿using Application.Common.Interfaces.Persistence;
 using Domain.Entities.ShowtimeAggregate;
+using Domain.Entities.ShowtimeAggregate.Enum;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data.Repositories
@@ -27,28 +28,47 @@ namespace Infrastructure.Data.Repositories
                 .ToListAsync(ct);
 
         public async Task<bool> HasOverlappingAsync(
-            Guid screenId, DateTime showDate, TimeOnly startTime, TimeOnly endTime,
-            int cleaningOffsetMinutes = 0, CancellationToken ct = default)
+        Guid screenId,
+        DateTime showDate,
+        TimeOnly startTime,
+        TimeOnly endTime,
+        int cleaningOffsetMinutes = 0,
+        CancellationToken ct = default)
         {
-            // Professional scheduling: ensure gaps between movies
+            var startDateTime = showDate.Date.Add(startTime.ToTimeSpan());
+            var endDateTime = showDate.Date.Add(endTime.ToTimeSpan());
+
             return await context.Showtimes
-                .AnyAsync(s => s.ScreenId == screenId
+                .AnyAsync(s =>
+                    s.ScreenId == screenId
                     && s.ShowDate.Date == showDate.Date
-                    && s.Status != Domain.Entities.ShowtimeAggregate.Enum.ShowtimeStatus.Cancelled
-                    && TimeOnly.FromDateTime(s.ActualStartTime).Add(TimeSpan.FromMinutes(-cleaningOffsetMinutes)) < endTime
-                    && TimeOnly.FromDateTime(s.ActualEndTime).Add(TimeSpan.FromMinutes(cleaningOffsetMinutes)) > startTime, ct);
+                    && s.Status != ShowtimeStatus.Cancelled
+                    && s.ActualStartTime.AddMinutes(-cleaningOffsetMinutes) < endDateTime
+                    && s.ActualEndTime.AddMinutes(cleaningOffsetMinutes) > startDateTime,
+                    ct);
         }
 
         public async Task<bool> HasOverlappingExcludingAsync(
-            Guid screenId, DateTime showDate, TimeOnly startTime, TimeOnly endTime, Guid excludeId,
-            CancellationToken ct = default)
-            => await context.Showtimes
-                .AnyAsync(s => s.ScreenId == screenId
+        Guid screenId,
+        DateTime showDate,
+        TimeOnly startTime,
+        TimeOnly endTime,
+        Guid excludeId,
+        CancellationToken ct = default)
+        {
+            var startDateTime = showDate.Date.Add(startTime.ToTimeSpan());
+            var endDateTime = showDate.Date.Add(endTime.ToTimeSpan());
+
+            return await context.Showtimes
+                .AnyAsync(s =>
+                    s.ScreenId == screenId
                     && s.Id != excludeId
                     && s.ShowDate.Date == showDate.Date
-                    && s.Status != Domain.Entities.ShowtimeAggregate.Enum.ShowtimeStatus.Cancelled
-                    && TimeOnly.FromDateTime(s.ActualStartTime) < endTime
-                    && TimeOnly.FromDateTime(s.ActualEndTime) > startTime, ct);
+                    && s.Status != ShowtimeStatus.Cancelled
+                    && s.ActualStartTime < endDateTime
+                    && s.ActualEndTime > startDateTime,
+                    ct);
+        }
 
         public async Task AddAsync(Showtime showtime, CancellationToken ct = default)
             => await context.Showtimes.AddAsync(showtime, ct);
@@ -73,5 +93,6 @@ namespace Infrastructure.Data.Repositories
 
         public IQueryable<Showtime> GetQueryable()
             => context.Showtimes;
+
     }
 }

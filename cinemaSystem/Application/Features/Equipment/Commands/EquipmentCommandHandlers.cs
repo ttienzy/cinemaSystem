@@ -7,7 +7,7 @@ namespace Application.Features.Equipment.Commands
 {
     // === Command Records ===
 
-    /// <summary>Tạo thiết bị mới.</summary>
+    /// <summary>Create new equipment.</summary>
     public record CreateEquipmentCommand(
         Guid CinemaId,
         Guid? ScreenId,
@@ -16,7 +16,7 @@ namespace Application.Features.Equipment.Commands
         string Status
     ) : IRequest<Guid>;
 
-    /// <summary>Cập nhật thiết bị.</summary>
+    /// <summary>Update equipment.</summary>
     public record UpdateEquipmentCommand(
         Guid Id,
         Guid CinemaId,
@@ -25,10 +25,10 @@ namespace Application.Features.Equipment.Commands
         string Status
     ) : IRequest;
 
-    /// <summary>Xóa thiết bị.</summary>
+    /// <summary>Delete equipment.</summary>
     public record DeleteEquipmentCommand(Guid Id) : IRequest;
 
-    /// <summary>Tạo log bảo trì.</summary>
+    /// <summary>Create maintenance log.</summary>
     public record CreateMaintenanceLogCommand(
         Guid EquipmentId,
         DateTime MaintenanceDate,
@@ -65,7 +65,7 @@ namespace Application.Features.Equipment.Commands
         public async Task Handle(UpdateEquipmentCommand request, CancellationToken ct)
         {
             var equipment = await repo.GetByIdAsync(request.Id, ct)
-                ?? throw new KeyNotFoundException($"Không tìm thấy thiết bị ID: {request.Id}");
+                ?? throw new KeyNotFoundException($"Equipment not found with ID: {request.Id}");
 
             equipment.Update(request.CinemaId, request.ScreenId, request.EquipmentType, request.Status);
 
@@ -81,7 +81,7 @@ namespace Application.Features.Equipment.Commands
         public async Task Handle(DeleteEquipmentCommand request, CancellationToken ct)
         {
             var equipment = await repo.GetByIdAsync(request.Id, ct)
-                ?? throw new KeyNotFoundException($"Không tìm thấy thiết bị ID: {request.Id}");
+                ?? throw new KeyNotFoundException($"Equipment not found with ID: {request.Id}");
 
             repo.Delete(equipment);
             await uow.SaveChangesAsync(ct);
@@ -97,7 +97,7 @@ namespace Application.Features.Equipment.Commands
         public async Task<Guid> Handle(CreateMaintenanceLogCommand request, CancellationToken ct)
         {
             var equipment = await equipRepo.GetByIdAsync(request.EquipmentId, ct)
-                ?? throw new KeyNotFoundException($"Không tìm thấy thiết bị ID: {request.EquipmentId}");
+                ?? throw new KeyNotFoundException($"Equipment not found with ID: {request.EquipmentId}");
 
             var log = MaintenanceLog.Create(
                 request.EquipmentId,

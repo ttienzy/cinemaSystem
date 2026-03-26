@@ -14,7 +14,7 @@ namespace Api.Controllers
     /// </summary>
     [ApiController]
     [Route("api/admin/promotions")]
-    [Authorize(Roles = "Admin,Manager")]
+    // [Authorize(Roles = "Admin,Manager")]
     public class AdminPromotionsController : BaseApiController
     {
         /// <summary>

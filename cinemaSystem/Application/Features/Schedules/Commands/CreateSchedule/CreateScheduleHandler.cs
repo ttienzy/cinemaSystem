@@ -6,8 +6,8 @@ using Shared.Models.DataModels.StaffDtos;
 namespace Application.Features.Schedules.Commands.CreateSchedule
 {
     /// <summary>
-    /// Xếp lịch cho 1 nhân viên vào 1 ca làm cụ thể.
-    /// Validate: không trùng lịch cùng ngày.
+    /// Assign a specific shift to an employee.
+    /// Validate: no duplicate schedule on the same day.
     /// </summary>
     public record CreateScheduleCommand(ScheduleCreateRequest Request) : IRequest<Guid>;
 
@@ -18,13 +18,13 @@ namespace Application.Features.Schedules.Commands.CreateSchedule
     {
         public async Task<Guid> Handle(CreateScheduleCommand request, CancellationToken ct)
         {
-            // Kiểm tra xung đột — 1 nhân viên không thể làm 2 ca cùng ngày
+            // Check for conflicts — an employee cannot work two shifts on the same day.
             var hasConflict = await scheduleRepo.HasConflictAsync(
                 request.Request.StaffId, request.Request.WorkDate, null, ct);
 
             if (hasConflict)
                 throw new InvalidOperationException(
-                    $"Nhân viên đã có lịch làm ngày {request.Request.WorkDate:dd/MM/yyyy}.");
+                    $"Employee already scheduled for {request.Request.WorkDate:dd/MM/yyyy}.");
 
             var schedule = new WorkSchedule(
                 request.Request.StaffId,

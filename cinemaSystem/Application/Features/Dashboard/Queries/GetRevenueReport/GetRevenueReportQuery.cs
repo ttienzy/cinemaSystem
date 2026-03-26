@@ -4,8 +4,8 @@ using Shared.Models.DataModels.DashboardDtos;
 namespace Application.Features.Dashboard.Queries.GetRevenueReport
 {
     /// <summary>
-    /// Truy vấn báo cáo doanh thu — hỗ trợ lọc theo khoảng thời gian, rạp, và nhóm theo ngày/tuần/tháng.
-    /// Admin: xem toàn chuỗi (cinemaId = null). Manager: xem rạp mình quản lý.
+    /// Query for revenue reports — supports filtering by time period, cinema, and grouping by day/week/month.
+    /// Admin: view entire chain (cinemaId = null). Manager: view managed cinema.
     /// </summary>
     public record GetRevenueReportQuery(
         DateTime From,

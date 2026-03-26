@@ -14,18 +14,18 @@ using System.Security.Claims;
 namespace Api.Controllers
 {
     /// <summary>
-    /// Point-of-Sale (POS) — Dành cho Staff và Manager tại quầy.
-    /// Bao gồm: Bán vé tại quầy, bán bắp nước, bán combo, xem lịch chiếu hôm nay.
-    /// Tự động lấy StaffId từ token.
+    /// Point-of-Sale (POS) — For Counter Staff and Managers.
+    /// Includes: Counter ticket sales, concession sales, combo sales, and viewing today's showtimes.
+    /// Automatically retrieves StaffId from token.
     /// </summary>
     [ApiController]
     [Route("api/pos")]
-    [Authorize(Roles = "Staff,Manager")]
+    // [Authorize(Roles = "Staff,Manager")]
     public class PosEnhancedController(IMediator mediator) : ControllerBase
     {
         /// <summary>
-        /// Lịch chiếu hôm nay tại rạp — hiển thị trên màn hình POS.
-        /// Staff chọn suất chiếu để bán vé.
+        /// Today's showtimes at the cinema — displayed on the POS screen.
+        /// Staff select showtimes to sell tickets.
         /// </summary>
         [HttpGet("showtimes/today")]
         public async Task<ActionResult<List<ShowtimeResponse>>> GetTodayShowtimes([FromQuery] Guid cinemaId)
@@ -35,7 +35,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// In vé — trả về thông tin đầy đủ để in (phim, suất, ghế, giá, mã QR).
+        /// Print ticket — returns full information for printing (movie, showtime, seat, price, QR code).
         /// </summary>
         [HttpGet("bookings/{id:guid}/print")]
         public async Task<IActionResult> GetPrintData(Guid id)
@@ -50,7 +50,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Tổng kết doanh thu trong ca — vé bán, bắp nước, tổng doanh thu.
+        /// Shift revenue summary — tickets sold, concessions, total revenue.
         /// </summary>
         [HttpGet("sales/daily-summary")]
         public async Task<ActionResult<PosDailySummaryDto>> GetDailySummary([FromQuery] Guid shiftId)

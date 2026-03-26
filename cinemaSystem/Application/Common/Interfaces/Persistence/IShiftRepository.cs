@@ -3,8 +3,8 @@ using Domain.Entities.StaffAggregate;
 namespace Application.Common.Interfaces.Persistence
 {
     /// <summary>
-    /// Repository quản lý Ca làm (Shift) — CRUD ca làm tại rạp.
-    /// Mỗi rạp có thể có nhiều ca: Sáng, Chiều, Tối.
+    /// Shift Repository — CRUD operations for cinema shifts.
+    /// Each cinema can have multiple shifts: Morning, Afternoon, Evening.
     /// </summary>
     public interface IShiftRepository
     {

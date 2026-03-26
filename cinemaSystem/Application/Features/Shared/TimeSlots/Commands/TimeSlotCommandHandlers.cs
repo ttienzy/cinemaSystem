@@ -6,18 +6,18 @@ namespace Application.Features.Shared.TimeSlots.Commands
 {
     // === Command Records ===
 
-    /// <summary>Tạo khung giờ mới.</summary>
+    /// <summary>Create a new time slot.</summary>
     public record CreateTimeSlotCommand(TimeSpan StartTime, TimeSpan EndTime, string dateType) : IRequest<Guid>;
 
-    /// <summary>Cập nhật khung giờ.</summary>
+    /// <summary>Update time slot.</summary>
     public record UpdateTimeSlotCommand(Guid Id, string Name, TimeSpan StartTime, TimeSpan EndTime, string dateType, bool isActive) : IRequest;
 
-    /// <summary>Xóa khung giờ.</summary>
+    /// <summary>Delete time slot.</summary>
     public record DeleteTimeSlotCommand(Guid Id) : IRequest;
 
     // === Handlers ===
 
-    /// <summary>Handler tạo khung giờ.</summary>
+    /// <summary>Handler for creating time slots.</summary>
     public class CreateTimeSlotHandler(
         ITimeSlotRepository repo, IUnitOfWork uow)
         : IRequestHandler<CreateTimeSlotCommand, Guid>
@@ -31,7 +31,7 @@ namespace Application.Features.Shared.TimeSlots.Commands
         }
     }
 
-    /// <summary>Handler cập nhật khung giờ.</summary>
+    /// <summary>Handler for updating time slots.</summary>
     public class UpdateTimeSlotHandler(
         ITimeSlotRepository repo, IUnitOfWork uow)
         : IRequestHandler<UpdateTimeSlotCommand>
@@ -39,14 +39,14 @@ namespace Application.Features.Shared.TimeSlots.Commands
         public async Task Handle(UpdateTimeSlotCommand request, CancellationToken ct)
         {
             var slot = await repo.GetByIdAsync(request.Id, ct)
-                ?? throw new KeyNotFoundException($"Không tìm thấy khung giờ ID: {request.Id}");
+                ?? throw new KeyNotFoundException($"Time slot not found with ID: {request.Id}");
             slot.UpdateTimeSlot(request.StartTime, request.EndTime, request.dateType, request.isActive);
             repo.Update(slot);
             await uow.SaveChangesAsync(ct);
         }
     }
 
-    /// <summary>Handler xóa khung giờ.</summary>
+    /// <summary>Handler for deleting time slots.</summary>
     public class DeleteTimeSlotHandler(
         ITimeSlotRepository repo, IUnitOfWork uow)
         : IRequestHandler<DeleteTimeSlotCommand>
@@ -54,7 +54,7 @@ namespace Application.Features.Shared.TimeSlots.Commands
         public async Task Handle(DeleteTimeSlotCommand request, CancellationToken ct)
         {
             var slot = await repo.GetByIdAsync(request.Id, ct)
-                ?? throw new KeyNotFoundException($"Không tìm thấy khung giờ ID: {request.Id}");
+                ?? throw new KeyNotFoundException($"Time slot not found with ID: {request.Id}");
             repo.Delete(slot);
             await uow.SaveChangesAsync(ct);
         }

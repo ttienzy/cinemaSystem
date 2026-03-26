@@ -5,7 +5,7 @@ using Shared.Models.DataModels.StaffDtos;
 namespace Application.Features.Schedules.Queries.GetWeeklySchedule
 {
     /// <summary>
-    /// Lấy lịch làm theo tuần — hiển thị bảng: nhân viên x ngày x ca.
+    /// Get weekly schedule — displayed in table: staff x day x shift.
     /// </summary>
     public record GetWeeklyScheduleQuery(Guid CinemaId, DateTime WeekOf) : IRequest<List<WorkScheduleDto>>;
 
@@ -14,7 +14,7 @@ namespace Application.Features.Schedules.Queries.GetWeeklySchedule
     {
         public async Task<List<WorkScheduleDto>> Handle(GetWeeklyScheduleQuery request, CancellationToken ct)
         {
-            // Tính ngày đầu tuần (Thứ Hai)
+            // Calculate the start of the week (Monday)
             var weekStart = request.WeekOf.Date;
             var dayOfWeek = (int)weekStart.DayOfWeek;
             weekStart = weekStart.AddDays(-(dayOfWeek == 0 ? 6 : dayOfWeek - 1));

@@ -6,7 +6,7 @@ using Shared.Models.DataModels.StaffDtos;
 namespace Application.Features.Shifts.Commands.CreateShift
 {
     /// <summary>
-    /// Tạo ca làm mới cho rạp — Manager tạo ca: "Ca Sáng", "Ca Chiều", "Ca Tối".
+    /// Create a new cinema shift — Manager creates shifts: "Morning Shift", "Afternoon Shift", "Evening Shift".
     /// </summary>
     public record CreateShiftCommand(ShiftUpsertRequest Request) : IRequest<Guid>;
 

@@ -7,8 +7,8 @@ using Shared.Models.DataModels.DashboardDtos;
 namespace Application.Features.Dashboard.Queries.GetRevenueReport
 {
     /// <summary>
-    /// Handler báo cáo doanh thu — tổng hợp doanh thu vé + bắp nước theo khoảng thời gian.
-    /// Hỗ trợ nhóm theo ngày/tuần/tháng để hiển thị biểu đồ trên dashboard.
+    /// Revenue report handler — aggregates ticket + concession revenue over a time period.
+    /// Supports grouping by day/week/month for dashboard charts.
     /// </summary>
     public class GetRevenueReportHandler(
         IBookingRepository bookingRepo,
@@ -20,12 +20,12 @@ namespace Application.Features.Dashboard.Queries.GetRevenueReport
             var from = request.From.Date;
             var to = request.To.Date.AddDays(1); // Bao gồm cả ngày cuối
 
-            // === Lấy doanh thu vé (chỉ booking đã hoàn thành) ===
+            // === Get ticket revenue (completed bookings only) ===
             var bookingsQuery = bookingRepo.GetQueryable()
                 .Where(b => b.Status == BookingStatus.Completed
                     && b.BookingTime >= from && b.BookingTime < to);
 
-            // Lọc theo rạp nếu có (dành cho Manager)
+            // Filter by cinema if applicable (for Managers)
             if (request.CinemaId.HasValue)
             {
                 bookingsQuery = bookingsQuery.Where(b => b.CinemaId == request.CinemaId.Value);
@@ -35,7 +35,7 @@ namespace Application.Features.Dashboard.Queries.GetRevenueReport
                 .Select(b => new { b.BookingTime, b.TotalAmount })
                 .ToListAsync(ct);
 
-            // === Lấy doanh thu bắp nước ===
+            // === Get concession revenue ===
             var concessionQuery = concessionRepo.GetQueryable()
                 .Where(c => c.SaleDate >= from && c.SaleDate < to);
 
@@ -48,7 +48,7 @@ namespace Application.Features.Dashboard.Queries.GetRevenueReport
                 .Select(c => new { c.SaleDate, c.TotalAmount })
                 .ToListAsync(ct);
 
-            // === Nhóm theo ngày/tuần/tháng ===
+            // === Group by day/week/month ===
             var items = new List<RevenueItemDto>();
             var current = from;
 
@@ -61,7 +61,7 @@ namespace Application.Features.Dashboard.Queries.GetRevenueReport
                 {
                     case "week":
                         periodEnd = current.AddDays(7);
-                        label = $"Tuần {current:dd/MM} - {periodEnd.AddDays(-1):dd/MM}";
+                        label = $"Week {current:dd/MM} - {periodEnd.AddDays(-1):dd/MM}";
                         break;
                     case "month":
                         periodEnd = current.AddMonths(1);

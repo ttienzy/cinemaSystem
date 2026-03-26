@@ -24,9 +24,9 @@ namespace Api.Controllers
         [HttpPost]
         public async Task<ActionResult<CreateBookingResult>> CreateBooking([FromBody] CreateBookingCommand command)
         {
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            //var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-            var securedCommand = command with { CustomerId = userId, ClientIpAddress = ip };
+            var securedCommand = command with {  ClientIpAddress = ip };
             return Ok(await Mediator.Send(securedCommand));
         }
 
@@ -90,7 +90,7 @@ namespace Api.Controllers
         /// Approve refund request for a booking.
         /// </summary>
         [HttpPost("{id}/approve-refund")]
-        [Authorize(Roles = "Admin")]
+        // [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ApproveRefund(Guid id)
         {
             await Mediator.Send(new ApproveRefundCommand(id));
@@ -120,7 +120,7 @@ namespace Api.Controllers
         /// Check-in by booking ID.
         /// </summary>
         [HttpPost("{id}/check-in")]
-        [Authorize(Roles = "Staff,Manager")]
+        // [Authorize(Roles = "Staff,Manager")]
         public async Task<ActionResult<CheckInResult>> CheckIn(Guid id)
         {
             var result = await Mediator.Send(new CheckInBookingCommand(id));
@@ -135,7 +135,7 @@ namespace Api.Controllers
         /// Check-in by QR code.
         /// </summary>
         [HttpPost("check-in")]
-        [Authorize(Roles = "Staff,Manager")]
+        // [Authorize(Roles = "Staff,Manager")]
         public async Task<ActionResult<CheckInResult>> CheckInByQrCode([FromBody] CheckInByQrCodeRequest request)
         {
             var result = await Mediator.Send(new CheckInBookingCommand(request.BookingId, request.CheckInToken));

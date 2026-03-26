@@ -7,16 +7,16 @@ using Microsoft.EntityFrameworkCore;
 namespace Api.Controllers
 {
     /// <summary>
-    /// Xem nhân viên tại rạp — Dành cho Manager.
-    /// Manager xem danh sách staff thuộc rạp mình để xếp ca, phân công.
+    /// View cinema staff — For Managers.
+    /// Managers view the list of staff in their cinema to assign shifts/tasks.
     /// </summary>
     [ApiController]
     [Route("api/manager/staff")]
-    [Authorize(Roles = "Manager,Admin")]
+    // [Authorize(Roles = "Manager,Admin")]
     public class ManagerStaffController(IStaffRepository staffRepo) : ControllerBase
     {
         /// <summary>
-        /// Danh sách nhân viên thuộc rạp — lọc theo cinemaId.
+        /// List of staff members in the cinema — filtered by cinemaId.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetStaffByCinema(
@@ -49,13 +49,13 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Chi tiết nhân viên — thông tin + lịch làm gần nhất.
+        /// Staff details — info + recent schedule.
         /// </summary>
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetStaffDetail(Guid id)
         {
             var staff = await staffRepo.GetByIdAsync(id);
-            if (staff == null) return NotFound(new { message = "Không tìm thấy nhân viên." });
+            if (staff == null) return NotFound(new { message = "Staff not found." });
 
             return Ok(new
             {

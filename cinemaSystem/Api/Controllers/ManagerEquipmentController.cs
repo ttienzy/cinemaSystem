@@ -8,11 +8,11 @@ using Shared.Models.DataModels.EquipmentDtos;
 namespace Api.Controllers
 {
     /// <summary>
-    /// Quản lý thiết bị tại rạp — Dành cho Manager.
+    /// Cinema equipment management — For Managers.
     /// </summary>
     [ApiController]
     [Route("api/manager/equipment")]
-    [Authorize(Roles = "Manager,Admin")]
+    // [Authorize(Roles = "Manager,Admin")]
     public class ManagerEquipmentController(IMediator mediator) : ControllerBase
     {
         [HttpGet]

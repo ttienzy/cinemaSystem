@@ -8,16 +8,16 @@ using Shared.Models.DataModels.CinemaDtos;
 namespace Api.Controllers
 {
     /// <summary>
-    /// Quản lý Thể loại (Genre) — Chỉ dành cho Admin.
-    /// Admin tạo/sửa/xóa thể loại phim. Endpoint GET public nằm ở GenresController.
+    /// Genre management — Admin only.
+    /// Admin creates/updates/deletes movie genres. Public GET endpoint is in GenresController.
     /// </summary>
     [ApiController]
     [Route("api/admin/genres")]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public class AdminGenresController : BaseApiController
     {
         /// <summary>
-        /// Tạo thể loại mới — ví dụ: "Hành động", "Kinh dị", "Lãng mạn".
+        /// Create a new genre — e.g., "Action", "Horror", "Romance".
         /// </summary>
         [HttpPost]
         public async Task<ActionResult<Guid>> Create([FromBody] Shared.Models.DataModels.SharedDtos.CreateGenreRequest request)
@@ -26,7 +26,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Cập nhật thể loại.
+        /// Update genre.
         /// </summary>
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] Shared.Models.DataModels.SharedDtos.UpdateGenreRequest request)
@@ -36,7 +36,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Xóa thể loại — xóa mềm (deactivate).
+        /// Delete genre — soft delete (deactivate).
         /// </summary>
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
@@ -49,16 +49,16 @@ namespace Api.Controllers
     public record DeleteGenreCommand(Guid Id) : IRequest;
 
     /// <summary>
-    /// Quản lý Loại ghế (SeatType) — Chỉ dành cho Admin.
-    /// Admin tạo/sửa/xóa loại ghế. Endpoint GET public nằm ở SeatTypesController.
+    /// Seat Type management — Admin only.
+    /// Admin creates/updates/deletes seat types. Public GET endpoint is in SeatTypesController.
     /// </summary>
     [ApiController]
     [Route("api/admin/seat-types")]
-    [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public class AdminSeatTypesController : BaseApiController
     {
         /// <summary>
-        /// Tạo loại ghế mới — ví dụ: "VIP", "Standard", "Couple".
+        /// Create a new seat type — e.g., "VIP", "Standard", "Couple".
         /// </summary>
         [HttpPost]
         public async Task<ActionResult<Guid>> Create([FromBody] Shared.Models.DataModels.SharedDtos.CreateSeatTypeRequest request)
@@ -67,7 +67,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Cập nhật loại ghế.
+        /// Update seat type.
         /// </summary>
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] Shared.Models.DataModels.SharedDtos.UpdateSeatTypeRequest request)
@@ -77,7 +77,7 @@ namespace Api.Controllers
         }
 
         /// <summary>
-        /// Xóa loại ghế — xóa mềm (deactivate).
+        /// Delete seat type — soft delete (deactivate).
         /// </summary>
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)

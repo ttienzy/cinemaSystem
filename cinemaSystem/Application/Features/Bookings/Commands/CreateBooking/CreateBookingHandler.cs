@@ -31,6 +31,8 @@ namespace Application.Features.Bookings.Commands.CreateBooking
             BookingRules.ValidateBookingTime(showtime.ActualStartTime);
             BookingRules.ValidateTicketCount(cmd.Seats.Count);
 
+            
+
             // 3. Check seat lock availability (Redis)
             var seatStatuses = await seatLock.GetSeatStatusesAsync(cmd.ShowtimeId, seatIds, ct);
             var unavailable = seatStatuses.Where(kv => kv.Value != SeatLockStatus.Available).ToList();

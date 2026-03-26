@@ -7,8 +7,8 @@ using Shared.Models.DataModels.DashboardDtos;
 namespace Application.Features.Dashboard.Queries.GetTopMovies
 {
     /// <summary>
-    /// Handler lấy top phim ăn khách — join Booking → Showtime → Movie
-    /// để tổng hợp doanh thu và lượng vé theo từng phim.
+    /// Top-grossing movies handler — join Booking → Showtime → Movie
+    /// to aggregate revenue and ticket count by movie.
     /// </summary>
     public class GetTopMoviesHandler(
         IBookingRepository bookingRepo,
@@ -21,7 +21,7 @@ namespace Application.Features.Dashboard.Queries.GetTopMovies
             var from = request.From?.Date ?? DateTime.UtcNow.AddMonths(-1);
             var to = (request.To?.Date ?? DateTime.UtcNow).AddDays(1);
 
-            // Lấy bookings đã hoàn thành trong khoảng thời gian
+            // Get completed bookings within the time range
             var bookingsQuery = bookingRepo.GetQueryable()
                 .Where(b => b.Status == BookingStatus.Completed
                     && b.BookingTime >= from && b.BookingTime < to);
@@ -31,7 +31,7 @@ namespace Application.Features.Dashboard.Queries.GetTopMovies
                 bookingsQuery = bookingsQuery.Where(b => b.CinemaId == request.CinemaId.Value);
             }
 
-            // Join với Showtime để lấy MovieId, MovieTitle
+            // Join with Showtime to get MovieId, MovieTitle
             var topMovies = await bookingsQuery
                 .Join(
                     showtimeRepo.GetQueryable(),

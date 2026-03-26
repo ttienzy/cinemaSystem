@@ -6,8 +6,8 @@ using Shared.Models.DataModels.StaffDtos;
 namespace Application.Features.Schedules.Commands.BulkCreateSchedule
 {
     /// <summary>
-    /// Xếp lịch hàng loạt — Manager xếp cả tuần 1 lần cho nhiều nhân viên.
-    /// Validate từng entry, bỏ qua entry trùng lịch.
+    /// Bulk scheduling — Manager assigns shifts for the whole week for multiple staff.
+    /// Validate each entry, skip if schedule conflict exists.
     /// </summary>
     public record BulkCreateScheduleCommand(BulkScheduleRequest Request) : IRequest<BulkScheduleResult>;
 
@@ -27,14 +27,14 @@ namespace Application.Features.Schedules.Commands.BulkCreateSchedule
 
             foreach (var entry in request.Request.Schedules)
             {
-                // Kiểm tra xung đột cho từng entry
+                // Check for conflicts for each entry
                 var hasConflict = await scheduleRepo.HasConflictAsync(
                     entry.StaffId, entry.WorkDate, null, ct);
 
                 if (hasConflict)
                 {
                     skipped++;
-                    errors.Add($"Nhân viên {entry.StaffId} đã có lịch ngày {entry.WorkDate:dd/MM/yyyy}.");
+                    errors.Add($"Staff {entry.StaffId} already scheduled for {entry.WorkDate:dd/MM/yyyy}.");
                     continue;
                 }
 

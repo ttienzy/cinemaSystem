@@ -12,7 +12,7 @@ namespace Application.Features.Cinemas.Queries.GetScreens
     {
         public async Task<List<ScreenResponse>> Handle(GetScreensQuery request, CancellationToken ct)
         {
-            var cinema = await cinemaRepo.GetByIdAsync(request.CinemaId, ct)
+            var cinema = await cinemaRepo.GetByIdWithScreensAsync(request.CinemaId, ct)
                 ?? throw new KeyNotFoundException("Cinema not found");
 
             return cinema.Screens.Select(s => new ScreenResponse

@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Integrations;
+using Application.Interfaces.Integrations;
 using Application.Interfaces.Persistences;
 using Application.Interfaces.Persistences.Repo;
 using Application.Specifications.CinemaSpec;
@@ -120,7 +120,7 @@ namespace Infrastructure.Data.Services
             try
             {
                 List<MovieCastCrew> castCrewList = requests.Select(request => new MovieCastCrew(movieId, request.PersonName, request.RoleType)).ToList();
-                var movieCastCrewSpec = new MovieWithCastCrewSpeccification(movieId);
+                var movieCastCrewSpec = new MovieWithCastCrewSpecification(movieId);
                 var movieWithCastCrew = await _movieRepository.FirstOrDefaultAsync(movieCastCrewSpec);
                 if (movieWithCastCrew == null)
                 {
@@ -269,7 +269,7 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                var movieCastCrewSpec = new MovieWithCastCrewSpeccification(movieId, castCrewIds.ToList());
+                var movieCastCrewSpec = new MovieWithCastCrewSpecification(movieId, castCrewIds.ToList());
                 var movieWithCastCrew = await _movieRepository.FirstOrDefaultAsync(movieCastCrewSpec);
                 if (movieWithCastCrew == null)
                 {
@@ -367,7 +367,7 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                var movieCastCrewSpec = new MovieWithCastCrewSpeccification(movieId, castCrewId);
+                var movieCastCrewSpec = new MovieWithCastCrewSpecification(movieId, castCrewId);
                 var movieWithCastCrew = await _movieRepository.FirstOrDefaultAsync(movieCastCrewSpec);
                 if (movieWithCastCrew == null)
                 {
@@ -576,7 +576,7 @@ namespace Infrastructure.Data.Services
                 {
                     CinemaBaseResponse = cinemas,
                     MovieBaseResponse = movies,
-                    StatisticItemResponse = new StatisticItemRessponse
+                    StatisticItemResponse = new StatisticItemResponse
                     {
                         TotalCinemas = cinemas.Count,
                         TotalMovies = movies.Count,

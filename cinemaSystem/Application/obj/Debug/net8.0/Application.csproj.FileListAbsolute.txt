@@ -34,3 +34,4 @@ D:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\Application.dll
 D:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\refint\Application.dll
 D:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\Application.pdb
 D:\DACS4\cinemaSystem\Application\obj\Debug\net8.0\ref\Application.dll
+D:\DACS4\cinemaSystem\Application\bin\Debug\net8.0\Domain.xml

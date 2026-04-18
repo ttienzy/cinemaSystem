@@ -42,3 +42,5 @@ D:\DACS4\cinemaSystem\Infrastructure\obj\Debug\net8.0\refint\Infrastructure.dll
 D:\DACS4\cinemaSystem\Infrastructure\obj\Debug\net8.0\Infrastructure.pdb
 D:\DACS4\cinemaSystem\Infrastructure\obj\Debug\net8.0\Infrastructure.genruntimeconfig.cache
 D:\DACS4\cinemaSystem\Infrastructure\obj\Debug\net8.0\ref\Infrastructure.dll
+D:\DACS4\cinemaSystem\Infrastructure\bin\Debug\net8.0\Application.xml
+D:\DACS4\cinemaSystem\Infrastructure\bin\Debug\net8.0\Domain.xml

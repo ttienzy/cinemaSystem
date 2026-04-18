@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Persistences.Repo;
+using Application.Interfaces.Persistences.Repo;
 using Domain.Entities.BookingAggregate;
 using Domain.Entities.MovieAggregate;
 using Domain.Entities.SharedAggregates;
@@ -16,19 +16,25 @@ namespace Infrastructure.Data.Repositories
     public class UnitOfWork : IUnitOfWork
     {
         private readonly BookingContext _context;
+
+        private IRepository<Booking>? _bookings;
+        private IRepository<Movie>? _movies;
+        private IRepository<SeatType>? _seatTypes;
+        private IRepository<InventoryItem>? _inventoryItems;
+        private IRepository<ConcessionSale>? _concessionSales;
+
         public UnitOfWork(BookingContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public IRepository<Booking> Bookings => new EfRepository<Booking>(_context);
-        public IRepository<Movie> Movies => new EfRepository<Movie>(_context);
+        public IRepository<Booking> Bookings => _bookings ??= new EfRepository<Booking>(_context);
+        public IRepository<Movie> Movies => _movies ??= new EfRepository<Movie>(_context);
+        public IRepository<SeatType> SeatTypes => _seatTypes ??= new EfRepository<SeatType>(_context);
+        public IRepository<InventoryItem> InventoryItems => _inventoryItems ??= new EfRepository<InventoryItem>(_context);
+        public IRepository<ConcessionSale> ConcessionSales => _concessionSales ??= new EfRepository<ConcessionSale>(_context);
 
-        public IRepository<SeatType> SeatTypes => new EfRepository<SeatType>(_context);
-        public IRepository<InventoryItem> InventoryItems => new EfRepository<InventoryItem>(_context);
-        public IRepository<ConcessionSale> ConcessionSales => new EfRepository<ConcessionSale>(_context);
-
-        public async Task BeginTractionAsync() => await _context.Database.BeginTransactionAsync();
+        public async Task BeginTransactionAsync() => await _context.Database.BeginTransactionAsync();
 
         public async Task CommitTransactionAsync() => await _context.Database.CommitTransactionAsync();
 

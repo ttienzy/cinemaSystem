@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "E:\\DACS4\\cinemaSystem\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\staffscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\staffscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|e:\\dacs4\\cinemasystem\\infrastructure\\data\\services\\staffmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{5CC04AC1-3DEF-46B7-8804-D52785914978}|Infrastructure\\Infrastructure.csproj|solutionrelative:infrastructure\\data\\services\\staffmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|e:\\dacs4\\cinemasystem\\api\\controllers\\staffscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C8ADCC4D-3987-4136-BC5E-A95FA896C388}|Api\\Api.csproj|solutionrelative:api\\controllers\\staffscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{C2B1F537-9449-4C9A-9C36-D05CFD4DF53D}|Domain\\Domain.csproj|e:\\dacs4\\cinemasystem\\domain\\entities\\staffaggregate\\shift.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -38,7 +38,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 382,
-          "SelectedChildIndex": 7,
+          "SelectedChildIndex": 9,
           "Children": [
             {
               "$type": "Bookmark",
@@ -70,13 +70,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "StaffsController.cs",
               "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\StaffsController.cs",
               "RelativeDocumentMoniker": "Api\\Controllers\\StaffsController.cs",
               "ToolTip": "E:\\DACS4\\cinemaSystem\\Api\\Controllers\\StaffsController.cs",
               "RelativeToolTip": "Api\\Controllers\\StaffsController.cs",
-              "ViewState": "AgIAABYAAAAAAAAAAAAQwGAAAAAtAAAAAAAAAA==",
+              "ViewState": "AgIAADQAAAAAAAAAAAAiwEoAAAA1AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-11-12T15:16:13.074Z",
               "EditorCaption": ""
@@ -95,15 +95,16 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "StaffManager.cs",
               "DocumentMoniker": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Services\\StaffManager.cs",
               "RelativeDocumentMoniker": "Infrastructure\\Data\\Services\\StaffManager.cs",
               "ToolTip": "E:\\DACS4\\cinemaSystem\\Infrastructure\\Data\\Services\\StaffManager.cs",
               "RelativeToolTip": "Infrastructure\\Data\\Services\\StaffManager.cs",
-              "ViewState": "AgIAACIAAAAAAAAAAAAQwO0AAABsAAAAAAAAAA==",
+              "ViewState": "AgIAABgAAAAAAAAAAAAUwCIAAABWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-12T15:08:59.095Z"
+              "WhenOpened": "2025-11-12T15:08:59.095Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",

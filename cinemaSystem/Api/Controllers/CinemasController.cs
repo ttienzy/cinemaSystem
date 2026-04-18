@@ -1,4 +1,6 @@
-﻿using Application.Interfaces.Persistences;
+using Application.Interfaces.Persistences;
+using Infrastructure.Identity.Constants;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Common.Base;
@@ -17,6 +19,7 @@ namespace Api.Controllers
             _cinemaService = cinemaService ?? throw new ArgumentNullException(nameof(cinemaService), "Cinema service cannot be null");
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetCinemasAsync()
         {
@@ -27,6 +30,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<IEnumerable<CinemaPublicResponse>>.WithError(serviceResponse);
         }
+
+        [AllowAnonymous]
         [HttpGet("{cinemaId:guid}")]
         public async Task<IActionResult> GetCinemaByIdAsync(Guid cinemaId)
         {
@@ -35,6 +40,8 @@ namespace Api.Controllers
                 return Ok(result.Value);
             return ErrorResponse<CinemaPublicDetailsResponse>.WithError(result);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager},{RoleConstant.Employee}")]
         [HttpGet("{cinemaId:guid}/screens/{screenId:guid}/seats")]
         public async Task<IActionResult> GetSeatsForScreen(Guid cinemaId, Guid screenId)
         {
@@ -45,6 +52,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<IEnumerable<SeatResponse>>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPost]
         public async Task<IActionResult> CreateCinema([FromBody] CinemaRequest request)
         {
@@ -55,6 +64,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<CinemaResponse>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPost("{cinemaId:guid}/screens")]
         public async Task<IActionResult> AddScreenToCinema(Guid cinemaId, [FromBody] ScreenRequest request)
         {
@@ -65,6 +76,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<ScreenResponse>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPost("{cinemaId:guid}/screens/{screenId:guid}/seats/generate")]
         public async Task<IActionResult> GenerateSeatsForScreen(Guid cinemaId, Guid screenId, [FromBody] IEnumerable<SeatGenerateRequest> requests)
         {
@@ -75,6 +88,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<IEnumerable<SeatResponse>>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{cinemaId:guid}")]
         public async Task<IActionResult> UpdateCinema(Guid cinemaId, [FromBody] CinemaRequest request)
         {
@@ -85,6 +100,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<CinemaResponse>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{cinemaId:guid}/screens/{screenId:guid}")]
         public async Task<IActionResult> UpdateScreenForCinema(Guid cinemaId, Guid screenId, [FromBody] ScreenRequest request)
         {
@@ -95,6 +112,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<ScreenResponse>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{cinemaId:guid}/screens/{screenId:guid}/seats/{seatId:guid}")]
         public async Task<IActionResult> UpdateSeatForScreen(Guid cinemaId, Guid screenId, Guid seatId, [FromBody] SeatGenerateRequest request)
         {
@@ -105,6 +124,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<SeatResponse>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{cinemaId:guid}/screens/{screenId:guid}/seats/updatestatuses")]
         public async Task<IActionResult> UpdateSeatStatuses(Guid cinemaId, Guid screenId, [FromBody] IEnumerable<Guid> seatIds)
         {
@@ -115,6 +136,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<IEnumerable<SeatResponse>>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin}")]
         [HttpDelete("{cinemaId:guid}")]
         public async Task<IActionResult> DeleteCinema(Guid cinemaId)
         {
@@ -125,6 +148,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<object>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpDelete("{cinemaId:guid}/screens/{screenId:guid}")]
         public async Task<IActionResult> DeleteScreenFromCinema(Guid cinemaId, Guid screenId)
         {
@@ -135,6 +160,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<object>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpDelete("{cinemaId:guid}/screens/{screenId:guid}/seats")]
         public async Task<IActionResult> DeleteSeatsFromScreen(Guid cinemaId, Guid screenId, [FromBody] IEnumerable<Guid> seatIds)
         {
@@ -145,6 +172,5 @@ namespace Api.Controllers
             }
             return ErrorResponse<object>.WithError(serviceResponse);
         }
-
     }
 }

@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Integrations;
+using Application.Interfaces.Integrations;
 using Application.Interfaces.Persistences;
 using Application.Interfaces.Persistences.Repo;
 using Application.Specifications.BookingSpec;
@@ -35,6 +35,7 @@ namespace Infrastructure.Data.Services
         private readonly IHubContext<SeatHub> _hubContext;
         private readonly IEmailService _emailService;
         private readonly ILogger<BookingService> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         public BookingService(
             IUnitOfWork unitOfWork,
@@ -43,7 +44,8 @@ namespace Infrastructure.Data.Services
             IBookingRepository bookingRepository,
             IHubContext<SeatHub> hubContext,
             IEmailService emailService,
-            ILogger<BookingService> logger)
+            ILogger<BookingService> logger,
+            UserManager<ApplicationUser> userManager)
         {
             _unitOfWork = unitOfWork;
             _vnPayService = vnPayService;
@@ -52,13 +54,14 @@ namespace Infrastructure.Data.Services
             _hubContext = hubContext;
             _emailService = emailService;
             _logger = logger;
+            _userManager = userManager;
         }
 
         public async Task<BaseResponse<string>> CancelPaymentAsync(PaymentResponse response)
         {
             try
             {
-                await _unitOfWork.BeginTractionAsync();
+                await _unitOfWork.BeginTransactionAsync();
 
                 var bookingSpec = new BookingWithPaymentSpec(Guid.Parse(response.OrderDescription));
                 var booking = await _unitOfWork.Bookings.FirstOrDefaultAsync(bookingSpec);
@@ -103,7 +106,7 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                _logger.LogInformation("aaaaaaaaaa");
+                _logger.LogInformation("Processing check-in for booking {BookingId}", bookingId);
 
                 var chekedInInfo = await _bookingCustomeRepository.CheckInBookingAsync(bookingId);
                 if (chekedInInfo == null || chekedInInfo.BookingTime == default)
@@ -142,7 +145,7 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                await _unitOfWork.BeginTractionAsync();
+                await _unitOfWork.BeginTransactionAsync();
 
                 var bookingSpec = new BookingWithPaymentSpec(Guid.Parse(response.OrderDescription.ToString()));
                 var booking = await _unitOfWork.Bookings.FirstOrDefaultAsync(bookingSpec);
@@ -192,9 +195,15 @@ namespace Infrastructure.Data.Services
                 await _hubContext.Clients.Group(booking.ShowtimeId.ToString()).SendAsync(SignalMethodConstants.OnSeatsBooked, booking.BookingTickets.Select(e => e.SeatId).ToList());
                 await _hubContext.Clients.User(booking.CustomerId.ToString() ?? "#").SendAsync(SignalMethodConstants.OnPaymentSuccessful, booking.BookingTickets.Select(e => e.SeatId).ToList());
                 if (booking.CustomerId != null)
-                    await _emailService.SendBookingConfirmationEmailAsync(
-                        toEmail: "nguyendientien01062005@gmail.com",
-                        bookingInfo: emailResponse);
+                {
+                    var customerEmail = await GetCustomerEmailAsync(booking.CustomerId.Value);
+                    if (!string.IsNullOrEmpty(customerEmail))
+                    {
+                        await _emailService.SendBookingConfirmationEmailAsync(
+                            toEmail: customerEmail,
+                            bookingInfo: emailResponse);
+                    }
+                }
                 return BaseResponse<string>.Success(booking.ShowtimeId.ToString());
             }
             catch (Exception ex)
@@ -212,7 +221,7 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                await _unitOfWork.BeginTractionAsync();
+                await _unitOfWork.BeginTransactionAsync();
 
                 var cachedSeatingPlan = await _cacheService.GetAsync<ShowtimeSeatingPlanResponse>(CacheKey.SeatingPlan(request.ShowtimeId));
                 if (cachedSeatingPlan == null)
@@ -275,6 +284,12 @@ namespace Infrastructure.Data.Services
             {
                 return BaseResponse<IEnumerable<PurchaseResponse>>.Failure(Error.InternalServerError(ex.Message));
             }
+        }
+
+        private async Task<string?> GetCustomerEmailAsync(Guid customerId)
+        {
+            var user = await _userManager.FindByIdAsync(customerId.ToString());
+            return user?.Email;
         }
     }
 }

@@ -1,5 +1,7 @@
-﻿using Application.Interfaces.Persistences;
+using Application.Interfaces.Persistences;
 using FluentValidation;
+using Infrastructure.Identity.Constants;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -22,6 +24,8 @@ namespace Api.Controllers
             _movieService = movieService;
             _validator = validator;
         }
+
+        [AllowAnonymous]
         [HttpGet("section")]
         public async Task<IActionResult> GetMoviesSectionAsync()
         {
@@ -31,6 +35,7 @@ namespace Api.Controllers
             return ErrorResponse<IEnumerable<MovieSectionResponse>>.WithError(result);
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetMovies([FromQuery] MovieQueryParameters parameters)
         {
@@ -55,6 +60,8 @@ namespace Api.Controllers
 
             return ErrorResponse<PaginatedList<MovieResponse>>.WithError(serviceResponse);
         }
+
+        [AllowAnonymous]
         [HttpGet("coming-soon")]
         public async Task<IActionResult> GetMovieComingSoonAsync()
         {
@@ -65,6 +72,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<IEnumerable<MovieComingSoonResponse>>.WithError(serviceResponse);
         }
+
+        [AllowAnonymous]
         [HttpGet("feature")]
         public async Task<IActionResult> GetMovieListAsync()
         {
@@ -75,6 +84,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<IEnumerable<MovieResponse>>.WithError(serviceResponse);
         }
+
+        [AllowAnonymous]
         [HttpGet("movie-and-cinema-info")]
         public async Task<IActionResult> GetHighlightStatAsync()
         {
@@ -86,6 +97,7 @@ namespace Api.Controllers
             return ErrorResponse<HighlightStat>.WithError(serviceResponse);
         }
 
+        [AllowAnonymous]
         [HttpGet("{movieId:guid}")]
         public async Task<IActionResult> GetMovieById(Guid movieId)
         {
@@ -96,6 +108,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<MovieDetailsResponse>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPost]
         public async Task<IActionResult> CreateMovie([FromBody] MovieRequest request)
         {
@@ -115,6 +129,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<MovieDetailsResponse>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPost("{movieId:guid}/castcrew")]
         public async Task<IActionResult> AddCastCrewToMovie(Guid movieId, [FromBody] IEnumerable<MovieCastCrewRequest> requests)
         {
@@ -125,6 +141,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<IEnumerable<MovieCastCrewResponse>>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPost("{movieId:guid}/certifications")]
         public async Task<IActionResult> AddCertificationsToMovie(Guid movieId, [FromBody] IEnumerable<MovieCertificationRequest> requests)
         {
@@ -135,6 +153,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<IEnumerable<MovieCertificationResponse>>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPost("{movieId:guid}/copyrights")]
         public async Task<IActionResult> AddCopyrightsToMovie(Guid movieId, [FromBody] IEnumerable<MovieCopyrightRequest> requests)
         {
@@ -145,6 +165,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<IEnumerable<MovieCopyrightResponse>>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPost("{movieId:guid}/genres")]
         public async Task<IActionResult> AddGenreToMovie(Guid movieId, [FromBody] IEnumerable<MovieGenreRequest> requests)
         {
@@ -155,6 +177,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<IEnumerable<MovieGenreResponse>>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{movieId:guid}")]
         public async Task<IActionResult> UpdateMovie(Guid movieId, [FromBody] MovieRequest request)
         {
@@ -165,6 +189,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<MovieDetailsResponse>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{movieId:guid}/castcrew/{castCrewId:guid}")]
         public async Task<IActionResult> UpdateCastCrewForMovie(Guid movieId, Guid castCrewId, [FromBody] MovieCastCrewRequest request)
         {
@@ -175,6 +201,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<MovieCastCrewResponse>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{movieId:guid}/certifications/{certId:guid}")]
         public async Task<IActionResult> UpdateCertificationsForMovie(Guid movieId, Guid certId, [FromBody] MovieCertificationRequest request)
         {
@@ -185,6 +213,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<MovieCertificationResponse>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{movieId:guid}/copyrights/{copyrightId:guid}")]
         public async Task<IActionResult> UpdateCopyrightsForMovie(Guid movieId, Guid copyrightId, [FromBody] MovieCopyrightRequest request)
         {
@@ -195,6 +225,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<MovieCopyrightResponse>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{movieId:guid}/genres/{mGenreId:guid}")]
         public async Task<IActionResult> UpdateGenreForMovie(Guid movieId, Guid mGenreId, [FromBody] MovieGenreRequest request)
         {
@@ -205,6 +237,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<MovieGenreResponse>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpDelete("{movieId:guid}")]
         public async Task<IActionResult> DeleteMovie(Guid movieId)
         {
@@ -215,6 +249,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<object>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpDelete("{movieId:guid}/castcrew")]
         public async Task<IActionResult> DeleteCastCrewForMovie(Guid movieId, [FromBody] IEnumerable<Guid> castCrewIds)
         {
@@ -225,6 +261,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<object>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpDelete("{movieId:guid}/certifications")]
         public async Task<IActionResult> DeleteCertificationsForMovie(Guid movieId, [FromBody] IEnumerable<Guid> certificationIds)
         {
@@ -235,6 +273,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<object>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpDelete("{movieId:guid}/copyrights")]
         public async Task<IActionResult> DeleteCopyrightsForMovie(Guid movieId, [FromBody] IEnumerable<Guid> copyrightIds)
         {
@@ -245,6 +285,8 @@ namespace Api.Controllers
             }
             return ErrorResponse<object>.WithError(serviceResponse);
         }
+
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpDelete("{movieId:guid}/genres")]
         public async Task<IActionResult> DeleteGenreForMovie(Guid movieId, [FromBody] IEnumerable<Guid> genreIds)
         {

@@ -1,0 +1,488 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Application</name>
+    </assembly>
+    <members>
+        <member name="T:Application.Common.Behaviors.LoggingBehavior`2">
+            <summary>
+            MediatR pipeline behavior that logs each request name, elapsed time,
+            and warns on slow requests (> 500ms).
+            </summary>
+        </member>
+        <member name="M:Application.Common.Behaviors.LoggingBehavior`2.#ctor(Microsoft.Extensions.Logging.ILogger{Application.Common.Behaviors.LoggingBehavior{`0,`1}})">
+            <summary>
+            MediatR pipeline behavior that logs each request name, elapsed time,
+            and warns on slow requests (> 500ms).
+            </summary>
+        </member>
+        <member name="T:Application.Common.Behaviors.ValidationBehavior`2">
+            <summary>
+            MediatR pipeline behavior that auto-validates commands/queries
+            using registered FluentValidation validators before the handler runs.
+            Throws ValidationException with all errors if invalid.
+            </summary>
+        </member>
+        <member name="M:Application.Common.Behaviors.ValidationBehavior`2.#ctor(System.Collections.Generic.IEnumerable{FluentValidation.IValidator{`0}})">
+            <summary>
+            MediatR pipeline behavior that auto-validates commands/queries
+            using registered FluentValidation validators before the handler runs.
+            Throws ValidationException with all errors if invalid.
+            </summary>
+        </member>
+        <member name="T:Application.Common.Exceptions.ConcurrencyException">
+            <summary>
+            Thrown when a database concurrency conflict occurs.
+            Maps to 409 Conflict.
+            </summary>
+        </member>
+        <member name="T:Application.Common.Exceptions.ConflictException">
+            <summary>Thrown when a conflict exists with current state. Maps to 409.</summary>
+        </member>
+        <member name="T:Application.Common.Exceptions.ForbiddenException">
+            <summary>Thrown when the caller lacks permission. Maps to 403.</summary>
+        </member>
+        <member name="T:Application.Common.Exceptions.NotFoundException">
+            <summary>Thrown when a requested resource is not found. Maps to 404.</summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Persistence.IShiftRepository">
+            <summary>
+            Repository quản lý Ca làm (Shift) — CRUD ca làm tại rạp.
+            Mỗi rạp có thể có nhiều ca: Sáng, Chiều, Tối.
+            </summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Persistence.IUnitOfWork">
+            <summary>
+            Simplified Unit of Work — manages transaction boundaries only.
+            Does NOT contain repository properties (repositories are injected separately).
+            </summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Persistence.IWorkScheduleRepository">
+            <summary>
+            Repository lịch làm nhân viên (WorkSchedule).
+            Quản lý phân công nhân viên vào ca làm theo ngày.
+            </summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Security.IIdentityUserService">
+            <summary>
+            Identity user management — registration, login, profile, password reset.
+            </summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Security.IOtpService">
+            <summary>
+            OTP generation and validation for password reset flow.
+            </summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Security.IRoleService">
+            <summary>
+            Role management — CRUD operations for Identity roles.
+            </summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Security.ITokenClaimService">
+            <summary>
+            JWT token generation and validation.
+            </summary>
+        </member>
+        <member name="M:Application.Common.Interfaces.Security.ITokenClaimService.RevokeRefreshTokenAsync(System.Guid)">
+            <summary>
+            Hủy refresh token — dùng cho chức năng đăng xuất.
+            </summary>
+        </member>
+        <member name="M:Application.Common.Interfaces.Security.ITokenClaimService.StoreRefreshTokenAsync(System.Guid,System.String,System.DateTime)">
+            <summary>
+            Lưu refresh token vào cache.
+            </summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Security.IUserManagementService">
+            <summary>
+            Quản lý users nâng cao — danh sách, khóa/mở khóa tài khoản.
+            Tách khỏi IIdentityUserService để giữ Single Responsibility.
+            </summary>
+        </member>
+        <member name="M:Application.Common.Interfaces.Security.IUserManagementService.GetAllUsersAsync(System.String,System.String,System.Nullable{System.Boolean},System.Int32,System.Int32)">
+            <summary>
+            Lấy danh sách users phân trang, hỗ trợ lọc theo role/trạng thái/từ khóa tìm kiếm.
+            </summary>
+        </member>
+        <member name="M:Application.Common.Interfaces.Security.IUserManagementService.LockUserAsync(System.Guid)">
+            <summary>
+            Khóa tài khoản — user không thể đăng nhập cho đến khi mở khóa.
+            </summary>
+        </member>
+        <member name="M:Application.Common.Interfaces.Security.IUserManagementService.UnlockUserAsync(System.Guid)">
+            <summary>
+            Mở khóa tài khoản — cho phép đăng nhập trở lại.
+            </summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Security.PagedUserResult">
+            <summary>
+            Kết quả phân trang danh sách users.
+            </summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Security.UserListItem">
+            <summary>
+            Thông tin user trong danh sách (tóm tắt, không chứa thông tin nhạy cảm).
+            </summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Services.ICacheService">
+            <summary>
+            Redis distributed cache abstraction.
+            </summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Services.IEmailService">
+            <summary>
+            Email sending service — booking confirmations and general emails.
+            </summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Services.IPaymentGateway">
+            <summary>
+            Abstraction over payment gateways (VnPay, Momo, ZaloPay, etc.).
+            The Application layer uses this interface; Infrastructure implements it.
+            </summary>
+        </member>
+        <member name="M:Application.Common.Interfaces.Services.IPaymentGateway.CreatePaymentUrl(Application.Common.Interfaces.Services.PaymentRequest,System.String,System.String)">
+            <summary>Generate a payment URL to redirect the user to.</summary>
+        </member>
+        <member name="M:Application.Common.Interfaces.Services.IPaymentGateway.ProcessCallback(System.Collections.Generic.IDictionary{System.String,System.String})">
+            <summary>Process the callback query string from the payment gateway.</summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Services.ISeatLockService">
+            <summary>
+            Redis-backed seat locking service.
+            Locks are set when a booking is created (15-min TTL) and
+            released when booking is completed, cancelled, or expired.
+            </summary>
+        </member>
+        <member name="M:Application.Common.Interfaces.Services.ISeatLockService.LockSeatsAsync(System.Guid,System.Collections.Generic.List{System.Guid},System.Guid,System.TimeSpan,System.Threading.CancellationToken)">
+            <summary>Lock seats for a specific booking with TTL.</summary>
+        </member>
+        <member name="M:Application.Common.Interfaces.Services.ISeatLockService.ReleaseSeatsAsync(System.Guid,System.Collections.Generic.List{System.Guid},System.Threading.CancellationToken)">
+            <summary>Release locked seats (called on cancel/complete/expire).</summary>
+        </member>
+        <member name="M:Application.Common.Interfaces.Services.ISeatLockService.GetSeatStatusesAsync(System.Guid,System.Collections.Generic.List{System.Guid},System.Threading.CancellationToken)">
+            <summary>Get the current lock status for each seat in a showtime.</summary>
+        </member>
+        <member name="T:Application.Common.Interfaces.Services.ISeatNotificationService">
+            <summary>
+            Abstraction for real-time seat status notifications (e.g., via SignalR).
+            Infrastructure layer provides the concrete implementation.
+            </summary>
+        </member>
+        <member name="T:Application.DependencyInjection">
+            <summary>
+            Registers all Application layer services.
+            Called from Api/Program.cs: builder.Services.AddApplication()
+            </summary>
+        </member>
+        <member name="T:Application.Features.Bookings.EventHandlers.BookingCancelledEventHandler">
+            <summary>
+            Handles BookingCancelledEvent:
+            - Logs the cancellation
+            - Future: Send SignalR update to release seats on seat map
+            - Future: Send cancellation email to customer
+            </summary>
+        </member>
+        <member name="M:Application.Features.Bookings.EventHandlers.BookingCancelledEventHandler.#ctor(Microsoft.Extensions.Logging.ILogger{Application.Features.Bookings.EventHandlers.BookingCancelledEventHandler},Application.Common.Interfaces.Services.ISeatNotificationService)">
+            <summary>
+            Handles BookingCancelledEvent:
+            - Logs the cancellation
+            - Future: Send SignalR update to release seats on seat map
+            - Future: Send cancellation email to customer
+            </summary>
+        </member>
+        <member name="T:Application.Features.Bookings.EventHandlers.BookingCompletedEventHandler">
+            <summary>
+            Handles BookingCompletedEvent:
+            - Sends confirmation email
+            - Logs the completed booking
+            - Future: Send SignalR update, generate QR code
+            </summary>
+        </member>
+        <member name="M:Application.Features.Bookings.EventHandlers.BookingCompletedEventHandler.#ctor(Microsoft.Extensions.Logging.ILogger{Application.Features.Bookings.EventHandlers.BookingCompletedEventHandler},Application.Common.Interfaces.Services.ISeatNotificationService)">
+            <summary>
+            Handles BookingCompletedEvent:
+            - Sends confirmation email
+            - Logs the completed booking
+            - Future: Send SignalR update, generate QR code
+            </summary>
+        </member>
+        <member name="T:Application.Features.Bookings.EventHandlers.BookingCreatedEventHandler">
+            <summary>
+            Handles BookingCreatedEvent:
+            - Logs the booking creation
+            - Future: Send real-time notification via SignalR
+            </summary>
+        </member>
+        <member name="M:Application.Features.Bookings.EventHandlers.BookingCreatedEventHandler.#ctor(Microsoft.Extensions.Logging.ILogger{Application.Features.Bookings.EventHandlers.BookingCreatedEventHandler},Application.Common.Interfaces.Services.ISeatNotificationService)">
+            <summary>
+            Handles BookingCreatedEvent:
+            - Logs the booking creation
+            - Future: Send real-time notification via SignalR
+            </summary>
+        </member>
+        <member name="T:Application.Features.Dashboard.Queries.GetRevenueReport.GetRevenueReportHandler">
+            <summary>
+            Handler báo cáo doanh thu — tổng hợp doanh thu vé + bắp nước theo khoảng thời gian.
+            Hỗ trợ nhóm theo ngày/tuần/tháng để hiển thị biểu đồ trên dashboard.
+            </summary>
+        </member>
+        <member name="M:Application.Features.Dashboard.Queries.GetRevenueReport.GetRevenueReportHandler.#ctor(Application.Common.Interfaces.Persistence.IBookingRepository,Application.Common.Interfaces.Persistence.IConcessionSaleRepository)">
+            <summary>
+            Handler báo cáo doanh thu — tổng hợp doanh thu vé + bắp nước theo khoảng thời gian.
+            Hỗ trợ nhóm theo ngày/tuần/tháng để hiển thị biểu đồ trên dashboard.
+            </summary>
+        </member>
+        <member name="T:Application.Features.Dashboard.Queries.GetRevenueReport.GetRevenueReportQuery">
+            <summary>
+            Truy vấn báo cáo doanh thu — hỗ trợ lọc theo khoảng thời gian, rạp, và nhóm theo ngày/tuần/tháng.
+            Admin: xem toàn chuỗi (cinemaId = null). Manager: xem rạp mình quản lý.
+            </summary>
+        </member>
+        <member name="M:Application.Features.Dashboard.Queries.GetRevenueReport.GetRevenueReportQuery.#ctor(System.DateTime,System.DateTime,System.Nullable{System.Guid},System.String)">
+            <summary>
+            Truy vấn báo cáo doanh thu — hỗ trợ lọc theo khoảng thời gian, rạp, và nhóm theo ngày/tuần/tháng.
+            Admin: xem toàn chuỗi (cinemaId = null). Manager: xem rạp mình quản lý.
+            </summary>
+        </member>
+        <member name="T:Application.Features.Dashboard.Queries.GetTopMovies.GetTopMoviesHandler">
+            <summary>
+            Handler lấy top phim ăn khách — join Booking → Showtime → Movie
+            để tổng hợp doanh thu và lượng vé theo từng phim.
+            </summary>
+        </member>
+        <member name="M:Application.Features.Dashboard.Queries.GetTopMovies.GetTopMoviesHandler.#ctor(Application.Common.Interfaces.Persistence.IBookingRepository,Application.Common.Interfaces.Persistence.IShowtimeRepository,Application.Common.Interfaces.Persistence.IMovieRepository)">
+            <summary>
+            Handler lấy top phim ăn khách — join Booking → Showtime → Movie
+            để tổng hợp doanh thu và lượng vé theo từng phim.
+            </summary>
+        </member>
+        <member name="T:Application.Features.Dashboard.Queries.GetTopMovies.GetTopMoviesQuery">
+            <summary>
+            Truy vấn top phim ăn khách — sắp xếp theo doanh thu hoặc lượng vé bán.
+            </summary>
+        </member>
+        <member name="M:Application.Features.Dashboard.Queries.GetTopMovies.GetTopMoviesQuery.#ctor(System.Int32,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.Nullable{System.Guid})">
+            <summary>
+            Truy vấn top phim ăn khách — sắp xếp theo doanh thu hoặc lượng vé bán.
+            </summary>
+        </member>
+        <member name="T:Application.Features.Equipment.Commands.CreateEquipmentCommand">
+            <summary>Tạo thiết bị mới.</summary>
+        </member>
+        <member name="M:Application.Features.Equipment.Commands.CreateEquipmentCommand.#ctor(System.Guid,System.Nullable{System.Guid},System.String,System.DateTime,System.String)">
+            <summary>Tạo thiết bị mới.</summary>
+        </member>
+        <member name="T:Application.Features.Equipment.Commands.UpdateEquipmentCommand">
+            <summary>Cập nhật thiết bị.</summary>
+        </member>
+        <member name="M:Application.Features.Equipment.Commands.UpdateEquipmentCommand.#ctor(System.Guid,System.Guid,System.Nullable{System.Guid},System.String,System.String)">
+            <summary>Cập nhật thiết bị.</summary>
+        </member>
+        <member name="T:Application.Features.Equipment.Commands.DeleteEquipmentCommand">
+            <summary>Xóa thiết bị.</summary>
+        </member>
+        <member name="M:Application.Features.Equipment.Commands.DeleteEquipmentCommand.#ctor(System.Guid)">
+            <summary>Xóa thiết bị.</summary>
+        </member>
+        <member name="T:Application.Features.Equipment.Commands.CreateMaintenanceLogCommand">
+            <summary>Tạo log bảo trì.</summary>
+        </member>
+        <member name="M:Application.Features.Equipment.Commands.CreateMaintenanceLogCommand.#ctor(System.Guid,System.DateTime,System.Nullable{System.Decimal},System.String,System.Boolean)">
+            <summary>Tạo log bảo trì.</summary>
+        </member>
+        <member name="T:Application.Features.Equipment.Queries.GetEquipmentListQuery">
+            <summary>Lấy danh sách thiết bị theo cinema.</summary>
+        </member>
+        <member name="M:Application.Features.Equipment.Queries.GetEquipmentListQuery.#ctor(System.Nullable{System.Guid},System.String)">
+            <summary>Lấy danh sách thiết bị theo cinema.</summary>
+        </member>
+        <member name="T:Application.Features.Equipment.Queries.GetEquipmentByIdQuery">
+            <summary>Lấy chi tiết thiết bị.</summary>
+        </member>
+        <member name="M:Application.Features.Equipment.Queries.GetEquipmentByIdQuery.#ctor(System.Guid)">
+            <summary>Lấy chi tiết thiết bị.</summary>
+        </member>
+        <member name="T:Application.Features.Equipment.Queries.GetMaintenanceLogsQuery">
+            <summary>Lấy lịch sử bảo trì theo thiết bị.</summary>
+        </member>
+        <member name="M:Application.Features.Equipment.Queries.GetMaintenanceLogsQuery.#ctor(System.Guid)">
+            <summary>Lấy lịch sử bảo trì theo thiết bị.</summary>
+        </member>
+        <member name="T:Application.Features.Inventory.EventHandlers.LowStockAlertEventHandler">
+            <summary>
+            Handles LowStockAlertEvent:
+            - Logs critical warning
+            - Future: Send email/SMS alert to inventory manager
+            - Future: Auto-create restock order
+            </summary>
+        </member>
+        <member name="M:Application.Features.Inventory.EventHandlers.LowStockAlertEventHandler.#ctor(Microsoft.Extensions.Logging.ILogger{Application.Features.Inventory.EventHandlers.LowStockAlertEventHandler})">
+            <summary>
+            Handles LowStockAlertEvent:
+            - Logs critical warning
+            - Future: Send email/SMS alert to inventory manager
+            - Future: Auto-create restock order
+            </summary>
+        </member>
+        <member name="T:Application.Features.Schedules.Commands.BulkCreateSchedule.BulkCreateScheduleCommand">
+            <summary>
+            Xếp lịch hàng loạt — Manager xếp cả tuần 1 lần cho nhiều nhân viên.
+            Validate từng entry, bỏ qua entry trùng lịch.
+            </summary>
+        </member>
+        <member name="M:Application.Features.Schedules.Commands.BulkCreateSchedule.BulkCreateScheduleCommand.#ctor(Shared.Models.DataModels.StaffDtos.BulkScheduleRequest)">
+            <summary>
+            Xếp lịch hàng loạt — Manager xếp cả tuần 1 lần cho nhiều nhân viên.
+            Validate từng entry, bỏ qua entry trùng lịch.
+            </summary>
+        </member>
+        <member name="T:Application.Features.Schedules.Commands.CreateSchedule.CreateScheduleCommand">
+            <summary>
+            Xếp lịch cho 1 nhân viên vào 1 ca làm cụ thể.
+            Validate: không trùng lịch cùng ngày.
+            </summary>
+        </member>
+        <member name="M:Application.Features.Schedules.Commands.CreateSchedule.CreateScheduleCommand.#ctor(Shared.Models.DataModels.StaffDtos.ScheduleCreateRequest)">
+            <summary>
+            Xếp lịch cho 1 nhân viên vào 1 ca làm cụ thể.
+            Validate: không trùng lịch cùng ngày.
+            </summary>
+        </member>
+        <member name="T:Application.Features.Schedules.Queries.GetWeeklySchedule.GetWeeklyScheduleQuery">
+            <summary>
+            Lấy lịch làm theo tuần — hiển thị bảng: nhân viên x ngày x ca.
+            </summary>
+        </member>
+        <member name="M:Application.Features.Schedules.Queries.GetWeeklySchedule.GetWeeklyScheduleQuery.#ctor(System.Guid,System.DateTime)">
+            <summary>
+            Lấy lịch làm theo tuần — hiển thị bảng: nhân viên x ngày x ca.
+            </summary>
+        </member>
+        <member name="T:Application.Features.Shared.PricingTiers.Commands.CreatePricingTierCommand">
+            <summary>Tạo bảng giá mới.</summary>
+        </member>
+        <member name="M:Application.Features.Shared.PricingTiers.Commands.CreatePricingTierCommand.#ctor(System.String,System.Decimal,System.String)">
+            <summary>Tạo bảng giá mới.</summary>
+        </member>
+        <member name="T:Application.Features.Shared.PricingTiers.Commands.UpdatePricingTierCommand">
+            <summary>Cập nhật bảng giá.</summary>
+        </member>
+        <member name="M:Application.Features.Shared.PricingTiers.Commands.UpdatePricingTierCommand.#ctor(System.Guid,System.String,System.Decimal,System.String)">
+            <summary>Cập nhật bảng giá.</summary>
+        </member>
+        <member name="T:Application.Features.Shared.PricingTiers.Commands.DeletePricingTierCommand">
+            <summary>Xóa bảng giá.</summary>
+        </member>
+        <member name="M:Application.Features.Shared.PricingTiers.Commands.DeletePricingTierCommand.#ctor(System.Guid)">
+            <summary>Xóa bảng giá.</summary>
+        </member>
+        <member name="T:Application.Features.Shared.PricingTiers.Commands.CreatePricingTierHandler">
+            <summary>Handler tạo bảng giá.</summary>
+        </member>
+        <member name="M:Application.Features.Shared.PricingTiers.Commands.CreatePricingTierHandler.#ctor(Application.Common.Interfaces.Persistence.IPricingTierRepository,Application.Common.Interfaces.Persistence.IUnitOfWork)">
+            <summary>Handler tạo bảng giá.</summary>
+        </member>
+        <member name="T:Application.Features.Shared.PricingTiers.Commands.UpdatePricingTierHandler">
+            <summary>Handler cập nhật bảng giá.</summary>
+        </member>
+        <member name="M:Application.Features.Shared.PricingTiers.Commands.UpdatePricingTierHandler.#ctor(Application.Common.Interfaces.Persistence.IPricingTierRepository,Application.Common.Interfaces.Persistence.IUnitOfWork)">
+            <summary>Handler cập nhật bảng giá.</summary>
+        </member>
+        <member name="T:Application.Features.Shared.PricingTiers.Commands.DeletePricingTierHandler">
+            <summary>Handler xóa bảng giá.</summary>
+        </member>
+        <member name="M:Application.Features.Shared.PricingTiers.Commands.DeletePricingTierHandler.#ctor(Application.Common.Interfaces.Persistence.IPricingTierRepository,Application.Common.Interfaces.Persistence.IUnitOfWork)">
+            <summary>Handler xóa bảng giá.</summary>
+        </member>
+        <member name="T:Application.Features.Shared.TimeSlots.Commands.CreateTimeSlotCommand">
+            <summary>Tạo khung giờ mới.</summary>
+        </member>
+        <member name="M:Application.Features.Shared.TimeSlots.Commands.CreateTimeSlotCommand.#ctor(System.TimeSpan,System.TimeSpan,System.String)">
+            <summary>Tạo khung giờ mới.</summary>
+        </member>
+        <member name="T:Application.Features.Shared.TimeSlots.Commands.UpdateTimeSlotCommand">
+            <summary>Cập nhật khung giờ.</summary>
+        </member>
+        <member name="M:Application.Features.Shared.TimeSlots.Commands.UpdateTimeSlotCommand.#ctor(System.Guid,System.String,System.TimeSpan,System.TimeSpan,System.String,System.Boolean)">
+            <summary>Cập nhật khung giờ.</summary>
+        </member>
+        <member name="T:Application.Features.Shared.TimeSlots.Commands.DeleteTimeSlotCommand">
+            <summary>Xóa khung giờ.</summary>
+        </member>
+        <member name="M:Application.Features.Shared.TimeSlots.Commands.DeleteTimeSlotCommand.#ctor(System.Guid)">
+            <summary>Xóa khung giờ.</summary>
+        </member>
+        <member name="T:Application.Features.Shared.TimeSlots.Commands.CreateTimeSlotHandler">
+            <summary>Handler tạo khung giờ.</summary>
+        </member>
+        <member name="M:Application.Features.Shared.TimeSlots.Commands.CreateTimeSlotHandler.#ctor(Application.Common.Interfaces.Persistence.ITimeSlotRepository,Application.Common.Interfaces.Persistence.IUnitOfWork)">
+            <summary>Handler tạo khung giờ.</summary>
+        </member>
+        <member name="T:Application.Features.Shared.TimeSlots.Commands.UpdateTimeSlotHandler">
+            <summary>Handler cập nhật khung giờ.</summary>
+        </member>
+        <member name="M:Application.Features.Shared.TimeSlots.Commands.UpdateTimeSlotHandler.#ctor(Application.Common.Interfaces.Persistence.ITimeSlotRepository,Application.Common.Interfaces.Persistence.IUnitOfWork)">
+            <summary>Handler cập nhật khung giờ.</summary>
+        </member>
+        <member name="T:Application.Features.Shared.TimeSlots.Commands.DeleteTimeSlotHandler">
+            <summary>Handler xóa khung giờ.</summary>
+        </member>
+        <member name="M:Application.Features.Shared.TimeSlots.Commands.DeleteTimeSlotHandler.#ctor(Application.Common.Interfaces.Persistence.ITimeSlotRepository,Application.Common.Interfaces.Persistence.IUnitOfWork)">
+            <summary>Handler xóa khung giờ.</summary>
+        </member>
+        <member name="T:Application.Features.Shifts.Commands.CreateShift.CreateShiftCommand">
+            <summary>
+            Tạo ca làm mới cho rạp — Manager tạo ca: "Ca Sáng", "Ca Chiều", "Ca Tối".
+            </summary>
+        </member>
+        <member name="M:Application.Features.Shifts.Commands.CreateShift.CreateShiftCommand.#ctor(Shared.Models.DataModels.StaffDtos.ShiftUpsertRequest)">
+            <summary>
+            Tạo ca làm mới cho rạp — Manager tạo ca: "Ca Sáng", "Ca Chiều", "Ca Tối".
+            </summary>
+        </member>
+        <member name="T:Application.Features.Shifts.Commands.DeleteShift.DeleteShiftCommand">
+            <summary>
+            Xóa ca làm — kiểm tra không có lịch làm đang active trước khi xóa.
+            </summary>
+        </member>
+        <member name="M:Application.Features.Shifts.Commands.DeleteShift.DeleteShiftCommand.#ctor(System.Guid)">
+            <summary>
+            Xóa ca làm — kiểm tra không có lịch làm đang active trước khi xóa.
+            </summary>
+        </member>
+        <member name="T:Application.Features.Shifts.Commands.UpdateShift.UpdateShiftCommand">
+            <summary>
+            Cập nhật ca làm — thay đổi tên, giờ bắt đầu/kết thúc.
+            </summary>
+        </member>
+        <member name="M:Application.Features.Shifts.Commands.UpdateShift.UpdateShiftCommand.#ctor(System.Guid,Shared.Models.DataModels.StaffDtos.ShiftUpsertRequest)">
+            <summary>
+            Cập nhật ca làm — thay đổi tên, giờ bắt đầu/kết thúc.
+            </summary>
+        </member>
+        <member name="T:Application.Features.Shifts.Queries.GetShiftsByCinema.GetShiftsByCinemaQuery">
+            <summary>
+            Lấy danh sách ca làm theo rạp — dùng cho dropdown xếp lịch.
+            </summary>
+        </member>
+        <member name="M:Application.Features.Shifts.Queries.GetShiftsByCinema.GetShiftsByCinemaQuery.#ctor(System.Guid)">
+            <summary>
+            Lấy danh sách ca làm theo rạp — dùng cho dropdown xếp lịch.
+            </summary>
+        </member>
+        <member name="T:Application.Features.Showtimes.EventHandlers.ShowtimeCancelledEventHandler">
+            <summary>
+            Handles ShowtimeCancelledEvent:
+            - Logs the cancellation
+            - Future: notify affected customers, auto-cancel bookings
+            </summary>
+        </member>
+        <member name="M:Application.Features.Showtimes.EventHandlers.ShowtimeCancelledEventHandler.#ctor(Microsoft.Extensions.Logging.ILogger{Application.Features.Showtimes.EventHandlers.ShowtimeCancelledEventHandler})">
+            <summary>
+            Handles ShowtimeCancelledEvent:
+            - Logs the cancellation
+            - Future: notify affected customers, auto-cancel bookings
+            </summary>
+        </member>
+    </members>
+</doc>

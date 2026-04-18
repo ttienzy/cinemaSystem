@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Integrations;
+using Application.Interfaces.Integrations;
 using Application.Interfaces.Persistences;
 using Application.Interfaces.Persistences.Repo;
 using Application.Specifications.InventorySpec;
@@ -71,7 +71,7 @@ namespace Infrastructure.Data.Services
         {
             try
             {
-                await _unitOfWork.BeginTractionAsync();
+                await _unitOfWork.BeginTransactionAsync();
 
                 var concessionSales = request.Concessions.ToList();
                 var ticketSales = request.Tickets?.SelectedSeats.ToList();

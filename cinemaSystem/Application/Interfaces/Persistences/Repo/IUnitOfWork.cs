@@ -1,4 +1,4 @@
-﻿using Domain.Entities.BookingAggregate;
+using Domain.Entities.BookingAggregate;
 using Domain.Entities.ConcessionAggregate;
 using Domain.Entities.InventoryAggregate;
 using Domain.Entities.MovieAggregate;
@@ -20,7 +20,7 @@ namespace Application.Interfaces.Persistences.Repo
         IRepository<InventoryItem> InventoryItems { get; }
         IRepository<ConcessionSale> ConcessionSales { get; }
         Task<int> SaveChangesAsync();
-        Task BeginTractionAsync();
+        Task BeginTransactionAsync();
         Task CommitTransactionAsync();
         Task RollbackTransactionAsync();
     }

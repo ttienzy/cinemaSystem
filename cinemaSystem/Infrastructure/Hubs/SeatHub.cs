@@ -1,31 +1,33 @@
-﻿using Application.Interfaces.Integrations;
+using Application.Interfaces.Integrations;
 using Application.Interfaces.Persistences;
 using Infrastructure.Hubs.Constants;
 using Infrastructure.Redis.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
 using Shared.Models.DataModels.ShowtimeDtos;
+using System.Collections.Concurrent;
 using System.Security.Claims;
 
 namespace Infrastructure.Hubs
 {
     public class SeatHub : Hub
     {
-        private static readonly Dictionary<string, string> _connections = new Dictionary<string, string>();
+        private static readonly ConcurrentDictionary<string, string> _connections = new();
         private readonly ICacheService _cacheService;
         private readonly IShowtimeService _showtimeService;
+        private readonly ILogger<SeatHub> _logger;
 
-        public SeatHub(ICacheService cacheService, IShowtimeService showtimeService)
+        public SeatHub(ICacheService cacheService, IShowtimeService showtimeService, ILogger<SeatHub> logger)
         {
             _cacheService = cacheService;
             _showtimeService = showtimeService;
+            _logger = logger;
         }
 
         public async Task JoinShowtimeGroup(Guid showtimeId)
         {
             var connectionId = Context.ConnectionId;
-
-            // Debug user info
             LogUserInfo("JoinShowtimeGroup");
 
             await Groups.AddToGroupAsync(connectionId, showtimeId.ToString());
@@ -35,35 +37,17 @@ namespace Infrastructure.Hubs
         public async Task LeaveShowtimeGroup(Guid showtimeId)
         {
             var connectionId = Context.ConnectionId;
-
-            // Debug user info
             LogUserInfo("LeaveShowtimeGroup");
 
             await Groups.RemoveFromGroupAsync(connectionId, showtimeId.ToString());
             await Clients.Group(showtimeId.ToString()).SendAsync(SignalMethodConstants.LeaveShowtimeGroup, $"A client left room: {showtimeId}");
         }
 
-        //[Authorize] // Bật authorization cho method này
         public async Task SeatsReserved(Guid showtimeId, List<Guid> seatIds)
         {
             try
             {
-                // Debug user info
                 LogUserInfo("SeatsReserved");
-
-                // Check if user is authenticated
-                //if (!Context.User?.Identity?.IsAuthenticated ?? true)
-                //{
-                //    await Clients.Caller.SendAsync("AuthenticationRequired", "You must be logged in to reserve seats.");
-                //    return;
-                //}
-
-                //var userId = GetUserId();
-                //if (string.IsNullOrEmpty(userId))
-                //{
-                //    await Clients.Caller.SendAsync("AuthenticationError", "Unable to identify user.");
-                //    return;
-                //}
 
                 var results = await _cacheService.GetAsync<ShowtimeSeatingPlanResponse>(CacheKey.SeatingPlan(showtimeId));
                 if (results == null)
@@ -86,12 +70,10 @@ namespace Infrastructure.Hubs
                 await Clients
                     .Group(showtimeId.ToString())
                     .SendAsync(SignalMethodConstants.OnSeatsReserved, seatIds);
-
-                //Console.WriteLine($"User {userId} reserved seats: {string.Join(", ", seatIds)}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[SeatsReserved] Error: {ex.Message} | StackTrace: {ex.StackTrace}");
+                _logger.LogError(ex, "[SeatsReserved] Error reserving seats for showtime {ShowtimeId}", showtimeId);
                 await Clients.Caller.SendAsync("SeatsReservedError", "An error occurred while reserving seats.");
             }
         }
@@ -100,9 +82,6 @@ namespace Infrastructure.Hubs
         {
             try
             {
-                // Debug user info
-                //LogUserInfo("SeatsReleased");
-
                 var results = await _cacheService.GetAsync<ShowtimeSeatingPlanResponse>(CacheKey.SeatingPlan(showtimeId));
                 if (results == null)
                     return;
@@ -120,11 +99,11 @@ namespace Infrastructure.Hubs
                 await Clients.Group(showtimeId.ToString()).SendAsync(SignalMethodConstants.OnSeatsReleased, seatIds);
 
                 var userId = GetUserId();
-                Console.WriteLine($"User {userId ?? "Anonymous"} released seats: {string.Join(", ", seatIds)}");
+                _logger.LogInformation("User {UserId} released seats: {SeatIds}", userId ?? "Anonymous", string.Join(", ", seatIds));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[SeatsReleased] Error: {ex.Message} | StackTrace: {ex.StackTrace}");
+                _logger.LogError(ex, "[SeatsReleased] Error releasing seats for showtime {ShowtimeId}", showtimeId);
                 await Clients.Caller.SendAsync("SeatsReleasedError", "An error occurred while releasing seats.");
             }
         }
@@ -136,21 +115,12 @@ namespace Infrastructure.Hubs
             var userId = GetUserId();
             if (!string.IsNullOrEmpty(userId))
             {
-                Console.WriteLine($"Authenticated user connected: {userId} with ConnectionId: {Context.ConnectionId}");
-
-                // Store user connection mapping
-                if (!_connections.ContainsKey(userId))
-                {
-                    _connections.Add(userId, Context.ConnectionId);
-                }
-                else
-                {
-                    _connections[userId] = Context.ConnectionId; // Update if user reconnects
-                }
+                _logger.LogInformation("Authenticated user connected: {UserId} with ConnectionId: {ConnectionId}", userId, Context.ConnectionId);
+                _connections.AddOrUpdate(userId, Context.ConnectionId, (_, _) => Context.ConnectionId);
             }
             else
             {
-                Console.WriteLine($"Anonymous user connected: {Context.ConnectionId}");
+                _logger.LogInformation("Anonymous user connected: {ConnectionId}", Context.ConnectionId);
             }
 
             await base.OnConnectedAsync();
@@ -160,19 +130,18 @@ namespace Infrastructure.Hubs
         {
             var userId = GetUserId();
 
-            if (!string.IsNullOrEmpty(userId) && _connections.ContainsKey(userId))
+            if (!string.IsNullOrEmpty(userId) && _connections.TryRemove(userId, out _))
             {
-                _connections.Remove(userId);
-                Console.WriteLine($"Authenticated user disconnected: {userId}");
+                _logger.LogInformation("Authenticated user disconnected: {UserId}", userId);
             }
             else
             {
-                Console.WriteLine($"Anonymous user disconnected: {Context.ConnectionId}");
+                _logger.LogInformation("Anonymous user disconnected: {ConnectionId}", Context.ConnectionId);
             }
 
             if (exception != null)
             {
-                Console.WriteLine($"Disconnection exception: {exception.Message}");
+                _logger.LogWarning(exception, "Disconnection exception for ConnectionId: {ConnectionId}", Context.ConnectionId);
             }
 
             await base.OnDisconnectedAsync(exception);
@@ -182,9 +151,8 @@ namespace Infrastructure.Hubs
 
         private string? GetUserId()
         {
-            // Dựa trên token của bạn, userId nằm trong "nameid" claim
             return Context.UserIdentifier ??
-                   Context.User?.FindFirst("nameid")?.Value ??           // Từ token của bạn
+                   Context.User?.FindFirst("nameid")?.Value ??
                    Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
                    Context.User?.FindFirst("sub")?.Value ??
                    Context.User?.FindFirst("userId")?.Value;
@@ -192,8 +160,7 @@ namespace Infrastructure.Hubs
 
         private string? GetUserName()
         {
-            // Dựa trên token của bạn, username nằm trong "unique_name" claim
-            return Context.User?.FindFirst("unique_name")?.Value ??      // Từ token của bạn
+            return Context.User?.FindFirst("unique_name")?.Value ??
                    Context.User?.FindFirst(ClaimTypes.Name)?.Value ??
                    Context.User?.FindFirst("name")?.Value ??
                    Context.User?.FindFirst("username")?.Value;
@@ -201,39 +168,35 @@ namespace Infrastructure.Hubs
 
         private string? GetUserEmail()
         {
-            return Context.User?.FindFirst("email")?.Value ??            // Từ token của bạn
+            return Context.User?.FindFirst("email")?.Value ??
                    Context.User?.FindFirst(ClaimTypes.Email)?.Value;
         }
 
         private string? GetUserRole()
         {
-            return Context.User?.FindFirst("role")?.Value ??             // Từ token của bạn
+            return Context.User?.FindFirst("role")?.Value ??
                    Context.User?.FindFirst(ClaimTypes.Role)?.Value;
         }
 
         private void LogUserInfo(string methodName)
         {
-            Console.WriteLine($"\n=== {methodName} Debug Info ===");
-            Console.WriteLine($"ConnectionId: {Context.ConnectionId}");
-            Console.WriteLine($"UserIdentifier: {Context.UserIdentifier}");
-            Console.WriteLine($"IsAuthenticated: {Context.User?.Identity?.IsAuthenticated}");
-            Console.WriteLine($"AuthenticationType: {Context.User?.Identity?.AuthenticationType}");
-            Console.WriteLine($"User Claims Count: {Context.User?.Claims?.Count() ?? 0}");
+            _logger.LogDebug("=== {MethodName} Debug Info === ConnectionId: {ConnectionId}, UserIdentifier: {UserIdentifier}, IsAuthenticated: {IsAuth}",
+                methodName,
+                Context.ConnectionId,
+                Context.UserIdentifier,
+                Context.User?.Identity?.IsAuthenticated);
 
             if (Context.User?.Claims?.Any() == true)
             {
-                Console.WriteLine("Claims:");
                 foreach (var claim in Context.User.Claims)
                 {
-                    Console.WriteLine($"  {claim.Type}: {claim.Value}");
+                    _logger.LogDebug("  Claim {Type}: {Value}", claim.Type, claim.Value);
                 }
             }
 
             var userId = GetUserId();
             var userName = GetUserName();
-            Console.WriteLine($"Extracted UserId: {userId ?? "NULL"}");
-            Console.WriteLine($"Extracted UserName: {userName ?? "NULL"}");
-            Console.WriteLine("==============================\n");
+            _logger.LogDebug("Extracted UserId: {UserId}, UserName: {UserName}", userId ?? "NULL", userName ?? "NULL");
         }
 
         #endregion

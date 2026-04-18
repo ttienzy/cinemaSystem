@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Persistences;
+using Application.Interfaces.Persistences;
 using Infrastructure.Identity.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -19,6 +19,7 @@ namespace Api.Controllers
         }
 
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetShowtimes([FromQuery] ShowtimeQueryParameters parameters)
         {
@@ -40,6 +41,7 @@ namespace Api.Controllers
             }
             return ErrorResponse<ShowtimeSeatingPlanResponse>.WithError(result);
         }
+        [AllowAnonymous]
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetShowtimeByIdAsync(Guid id)
         {
@@ -50,6 +52,7 @@ namespace Api.Controllers
             }
             return ErrorResponse<ShowtimeResponse>.WithError(result);
         }
+        [AllowAnonymous]
         [HttpGet("detail")]
         public async Task<IActionResult> GetShowtimeFeaturedAsync([FromQuery] ShowtimeQueryParameters parameters)
         {
@@ -60,6 +63,7 @@ namespace Api.Controllers
             }
             return ErrorResponse<ShowtimeFeaturedResponse>.WithError(result);
         }
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpGet("performance/{cinemaId}")]
         public async Task<IActionResult> GetShowtimePerformanceAsync(Guid cinemaId)
         {
@@ -70,6 +74,7 @@ namespace Api.Controllers
             }
             return ErrorResponse<IEnumerable<ShowtimePerformanceDto>>.WithError(result);
         }
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpGet("setup-data/{cinemaId}")]
         public async Task<IActionResult> GetShowtimeSetupDataAsync(Guid cinemaId)
         {
@@ -93,6 +98,7 @@ namespace Api.Controllers
             }
             return ErrorResponse<ShowtimeResponse>.WithError(result);
         }
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPost("{showtimeId}/pricings")]
         public async Task<IActionResult> AddPricingToShowtime(Guid showtimeId, [FromBody] ShowtimePricingRequest request)
         {
@@ -103,6 +109,7 @@ namespace Api.Controllers
             }
             return ErrorResponse<ShowtimePricingResponse>.WithError(result);
         }
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateShowtime(Guid id, [FromBody] ShowtimeRequest request)
         {
@@ -113,6 +120,7 @@ namespace Api.Controllers
             }
             return ErrorResponse<ShowtimeResponse>.WithError(result);
         }
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{showtimeId}/pricings/{pricingId}")]
         public async Task<IActionResult> UpdatePricingToShowtime(Guid showtimeId, Guid pricingId, [FromBody] ShowtimePricingRequest request)
         {
@@ -123,6 +131,7 @@ namespace Api.Controllers
             }
             return ErrorResponse<ShowtimePricingResponse>.WithError(result);
         }
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{id}/status/confirm")]
         public async Task<IActionResult> ConfirmedShowtime(Guid id)
         {
@@ -133,6 +142,7 @@ namespace Api.Controllers
             }
             return ErrorResponse<object>.WithError(result);
         }
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpPut("{id}/status/cancel")]
         public async Task<IActionResult> CancelledShowtime(Guid id)
         {
@@ -143,6 +153,7 @@ namespace Api.Controllers
             }
             return ErrorResponse<object>.WithError(result);
         }
+        [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager}")]
         [HttpDelete("{showtimeId}/pricings/{pricingId}")]
         public async Task<IActionResult> DeletePricingFromShowtime(Guid showtimeId, Guid pricingId)
         {

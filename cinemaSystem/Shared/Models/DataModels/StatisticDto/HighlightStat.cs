@@ -1,4 +1,4 @@
-﻿using Shared.Models.DataModels.CinemaDtos;
+using Shared.Models.DataModels.CinemaDtos;
 using Shared.Models.DataModels.MovieDtos;
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ namespace Shared.Models.DataModels.StatisticDto
     {
         public IEnumerable<CinemaBaseResponse> CinemaBaseResponse { get; set; } 
         public IEnumerable<MovieBaseResponse> MovieBaseResponse { get; set; }
-        public StatisticItemRessponse StatisticItemResponse { get; set; }
+        public StatisticItemResponse StatisticItemResponse { get; set; }
 
     }
 }

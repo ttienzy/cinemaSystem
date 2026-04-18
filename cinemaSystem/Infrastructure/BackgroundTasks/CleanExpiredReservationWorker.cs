@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Integrations;
+using Application.Interfaces.Integrations;
 using Application.Interfaces.Persistences.Repo;
 using Application.Specifications.BookingSpec;
 using Infrastructure.Data.Repositories;
@@ -47,7 +47,10 @@ namespace Infrastructure.BackgroundTasks
                         var bookingSpec = new BookingByShowtimeIdSpecification();
                         var bookings = await unitOfWork.Bookings.ListAsync(bookingSpec);
                         if (bookings.Count == 0)
-                            return;
+                        {
+                            _logger.LogInformation("No pending bookings found. Skipping cleanup cycle.");
+                            continue;
+                        }
 
                         var grouped = bookings.GroupBy(b => b.ShowtimeId)
                             .Select(g => new CleanBookingModel

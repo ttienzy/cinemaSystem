@@ -1,10 +1,11 @@
-﻿using Application.Interfaces.Integrations;
+using Application.Interfaces.Integrations;
 using Application.Interfaces.Persistences;
+using Application.Settings;
 using Infrastructure.Identity.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Org.BouncyCastle.Bcpg;
+using Microsoft.Extensions.Options;
 using Shared.Common.Base;
 using Shared.Models.DataModels.BookingDtos;
 using Shared.Models.PaymentModels;
@@ -17,12 +18,15 @@ namespace Api.Controllers
     {
         private readonly IBookingService _bookingService;
         private readonly IVnPayService _vnPayService;
+        private readonly FrontendSettings _frontendSettings;
         public BookingsController(
             IBookingService bookingService,
-            IVnPayService vnPayService)
+            IVnPayService vnPayService,
+            IOptions<FrontendSettings> frontendSettings)
         {
             _bookingService = bookingService;
             _vnPayService = vnPayService;
+            _frontendSettings = frontendSettings.Value;
         }
 
         [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager},{RoleConstant.Employee},{RoleConstant.User}")]
@@ -73,7 +77,7 @@ namespace Api.Controllers
                 var result = await _bookingService.ConfirmPaymentAsync(response);
                 if (result.IsSuccess)
                 {
-                    return Redirect($"http://localhost:5173/payment/success?showtimeId={result.Value}");
+                    return Redirect($"{_frontendSettings.BaseUrl}/payment/success?showtimeId={result.Value}");
                 }
                 return ErrorResponse<string>.WithError(result);
             }
@@ -82,14 +86,10 @@ namespace Api.Controllers
                 var result = await _bookingService.CancelPaymentAsync(response);
                 if (result.IsSuccess)
                 {
-                    return Redirect($"http://localhost:5173/{result.Value}");
+                    return Redirect($"{_frontendSettings.BaseUrl}/{result.Value}");
                 }
                 return ErrorResponse<string>.WithError(result);
-
-
             }
         }
-
-        
     }
 }

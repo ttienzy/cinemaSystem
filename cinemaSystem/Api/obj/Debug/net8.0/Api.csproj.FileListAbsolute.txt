@@ -339,10 +339,12 @@ D:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\staticwebassets.build.json.cache
 D:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\staticwebassets.development.json
 D:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\staticwebassets.build.endpoints.json
 D:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\swae.build.ex.cache
-D:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\Api.csproj.Up2Date
 D:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\Api.dll
 D:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\refint\Api.dll
 D:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\Api.pdb
 D:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\Api.genruntimeconfig.cache
 D:\DACS4\cinemaSystem\Api\obj\Debug\net8.0\ref\Api.dll
+D:\DACS4\cinemaSystem\Api\bin\Debug\net8.0\appsettings.credentials.json
+D:\DACS4\cinemaSystem\Api\bin\Debug\net8.0\Application.xml
+D:\DACS4\cinemaSystem\Api\bin\Debug\net8.0\Domain.xml

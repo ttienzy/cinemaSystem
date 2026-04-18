@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.Persistences;
+using Application.Interfaces.Persistences;
 using Domain.Entities.InventoryAggregate;
 using Infrastructure.Identity.Constants;
 using Microsoft.AspNetCore.Authorization;
@@ -11,7 +11,7 @@ using Shared.Models.DataModels.StaffDtos;
 
 namespace Api.Controllers
 {
-    //[Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager},{RoleConstant.Employee}")]
+    [Authorize(Roles = $"{RoleConstant.Admin},{RoleConstant.Manager},{RoleConstant.Employee}")]
     [Route("api/[controller]")]
     [ApiController]
     public class InventoryItemsController : ControllerBase

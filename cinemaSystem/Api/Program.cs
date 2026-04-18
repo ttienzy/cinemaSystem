@@ -1,4 +1,5 @@
-﻿using Api.Convertors;
+using Api.Convertors;
+using Api.Middleware;
 using Application.Settings;
 using Infrastructure.Hubs;
 using Infrastructure.Identity;
@@ -17,6 +18,8 @@ var jwtSettings = builder.Services.Configure<JwtSettings>(builder.Configuration.
 var smtpSettings = builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
 var vnPaySettings = builder.Services.Configure<VnPaySettings>(builder.Configuration.GetSection("VnPay"));
 var paymentCallbackSettings = builder.Services.Configure<PaymentCallBackSettings>(builder.Configuration.GetSection("PaymentCallback"));
+var frontendSettings = builder.Services.Configure<FrontendSettings>(builder.Configuration.GetSection("Frontend"));
+builder.Services.AddSingleton(frontendSettings);
 var timeZoneSettings = builder.Services.Configure<TimeZoneSettings>(builder.Configuration.GetSection("TimeZone"));
 builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddSingleton(smtpSettings);
@@ -131,6 +134,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseGlobalExceptionHandling();
 app.UseCors("AllowSpecificOrigins");
 app.UseHttpsRedirection();
 app.UseAuthentication();

@@ -30,3 +30,4 @@ D:\DACS4\cinemaSystem\Shared\obj\Debug\net8.0\Shared.dll
 D:\DACS4\cinemaSystem\Shared\obj\Debug\net8.0\refint\Shared.dll
 D:\DACS4\cinemaSystem\Shared\obj\Debug\net8.0\Shared.pdb
 D:\DACS4\cinemaSystem\Shared\obj\Debug\net8.0\ref\Shared.dll
+D:\DACS4\cinemaSystem\Shared\bin\Debug\net8.0\Domain.xml

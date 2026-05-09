@@ -1,0 +1,211 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # INFRASTRUCTURE SERVICES
+  # ==========================================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-dev
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123}
+      - MSSQL_PID=Developer
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - cinema-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123}", "-Q", "SELECT 1", "-C"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - cinema-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS:-guest}
+      - RABBITMQ_DEFAULT_VHOST=/
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - cinema-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ==========================================
+  # BACKEND MICROSERVICES
+  # ==========================================
+  identity-api:
+    build:
+      context: .
+      dockerfile: Identity.API/Dockerfile
+    container_name: identity-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__identity-db=Server=sqlserver,1433;Database=CinemaIdentityDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123};TrustServerCertificate=true;
+      - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
+      - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+      - JwtSettings__ExpiryMinutes=60
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - cinema-network
+    restart: unless-stopped
+
+  cinema-api:
+    build:
+      context: .
+      dockerfile: Cinema.API/Dockerfile
+    container_name: cinema-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__cinema-db=Server=sqlserver,1433;Database=CinemaDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123};TrustServerCertificate=true;
+      - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
+      - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - cinema-network
+    restart: unless-stopped
+
+  movie-api:
+    build:
+      context: .
+      dockerfile: Movie.API/Dockerfile
+    container_name: movie-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__movie-db=Server=sqlserver,1433;Database=MovieDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123};TrustServerCertificate=true;
+      - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
+      - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - cinema-network
+    restart: unless-stopped
+
+  booking-api:
+    build:
+      context: .
+      dockerfile: Booking.API/Dockerfile
+    container_name: booking-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__booking-db=Server=sqlserver,1433;Database=BookingDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123};TrustServerCertificate=true;
+      - ConnectionStrings__Redis=redis:6379
+      - EventBusConnection=rabbitmq
+      - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
+      - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+      - ExternalServices__CinemaApiUrl=http://cinema-api:8080
+      - ExternalServices__MovieApiUrl=http://movie-api:8080
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      cinema-api:
+        condition: service_started
+      movie-api:
+        condition: service_started
+    networks:
+      - cinema-network
+    restart: unless-stopped
+
+  payment-api:
+    build:
+      context: .
+      dockerfile: Payment.API/Dockerfile
+    container_name: payment-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__payment-db=Server=sqlserver,1433;Database=PaymentDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123};TrustServerCertificate=true;
+      - EventBusConnection=rabbitmq
+      - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
+      - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cinema-network
+    restart: unless-stopped
+
+  # ==========================================
+  # API GATEWAY (ENTRY POINT)
+  # ==========================================
+  gateway-api:
+    build:
+      context: .
+      dockerfile: Gateway.API/Dockerfile
+    container_name: gateway-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
+      - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+      - Gateway__OcelotProfile=Docker
+      - Gateway__Cache__Redis__Enabled=true
+      - Gateway__Cache__Redis__ConnectionString=redis:6379
+    ports:
+      - "5200:8080"
+    depends_on:
+      identity-api:
+        condition: service_started
+      cinema-api:
+        condition: service_started
+      movie-api:
+        condition: service_started
+      booking-api:
+        condition: service_started
+      payment-api:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks:
+      - cinema-network
+    restart: unless-stopped
+
+networks:
+  cinema-network:
+    driver: bridge
+
+volumes:
+  sqlserver_data:
+  redis_data:
+  rabbitmq_data:

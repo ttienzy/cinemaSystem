@@ -1,0 +1,175 @@
+### Booking API Test Requests
+### Base URL
+@baseUrl = http://localhost:5003
+@showtimeId = 3fa85f64-5717-4562-b3fc-2c963f66afa6
+@seatId1 = 3fa85f64-5717-4562-b3fc-2c963f66afa7
+@seatId2 = 3fa85f64-5717-4562-b3fc-2c963f66afa8
+@userId = user123
+@bookingId = 3fa85f64-5717-4562-b3fc-2c963f66afa9
+
+###############################################
+# 1. GET SEAT AVAILABILITY
+###############################################
+
+### Get seat availability for a showtime
+GET {{baseUrl}}/api/showtimes/{{showtimeId}}/seats
+Accept: application/json
+
+###############################################
+# 2. LOCK SEATS
+###############################################
+
+### Lock seats temporarily (10 minutes)
+POST {{baseUrl}}/api/showtimes/{{showtimeId}}/seats/lock
+Content-Type: application/json
+
+{
+  "showtimeId": "{{showtimeId}}",
+  "seatIds": [
+    "{{seatId1}}",
+    "{{seatId2}}"
+  ],
+  "userId": "{{userId}}"
+}
+
+###############################################
+# 3. UNLOCK SEATS
+###############################################
+
+### Unlock previously locked seats
+POST {{baseUrl}}/api/showtimes/{{showtimeId}}/seats/unlock
+Content-Type: application/json
+
+{
+  "showtimeId": "{{showtimeId}}",
+  "seatIds": [
+    "{{seatId1}}",
+    "{{seatId2}}"
+  ],
+  "userId": "{{userId}}"
+}
+
+###############################################
+# 4. CREATE BOOKING
+###############################################
+
+### Create a new booking
+POST {{baseUrl}}/api/bookings
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "showtimeId": "{{showtimeId}}",
+  "seatIds": [
+    "{{seatId1}}",
+    "{{seatId2}}"
+  ]
+}
+
+###############################################
+# 5. GET BOOKING BY ID
+###############################################
+
+### Get booking details by ID
+GET {{baseUrl}}/api/bookings/{{bookingId}}
+Accept: application/json
+
+###############################################
+# 6. GET USER BOOKINGS
+###############################################
+
+### Get all bookings for a user
+GET {{baseUrl}}/api/bookings/user/{{userId}}
+Accept: application/json
+
+###############################################
+# 7. CANCEL BOOKING
+###############################################
+
+### Cancel a booking
+PUT {{baseUrl}}/api/bookings/{{bookingId}}/cancel
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "cancellationReason": "Changed plans"
+}
+
+###############################################
+# TEST SCENARIOS
+###############################################
+
+### Scenario 1: Complete Booking Flow
+### Step 1: Get seat availability
+GET {{baseUrl}}/api/showtimes/{{showtimeId}}/seats
+
+### Step 2: Lock seats
+POST {{baseUrl}}/api/showtimes/{{showtimeId}}/seats/lock
+Content-Type: application/json
+
+{
+  "showtimeId": "{{showtimeId}}",
+  "seatIds": ["{{seatId1}}"],
+  "userId": "{{userId}}"
+}
+
+### Step 3: Create booking
+POST {{baseUrl}}/api/bookings
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "showtimeId": "{{showtimeId}}",
+  "seatIds": ["{{seatId1}}"]
+}
+
+### Step 4: Verify seat status (should be Booked)
+GET {{baseUrl}}/api/showtimes/{{showtimeId}}/seats
+
+###############################################
+# ERROR SCENARIOS
+###############################################
+
+### Test: Invalid showtime ID
+GET {{baseUrl}}/api/showtimes/00000000-0000-0000-0000-000000000000/seats
+
+### Test: Lock without seats
+POST {{baseUrl}}/api/showtimes/{{showtimeId}}/seats/lock
+Content-Type: application/json
+
+{
+  "showtimeId": "{{showtimeId}}",
+  "seatIds": [],
+  "userId": "{{userId}}"
+}
+
+### Test: Create booking with too many seats (>10)
+POST {{baseUrl}}/api/bookings
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "showtimeId": "{{showtimeId}}",
+  "seatIds": [
+    "seat1", "seat2", "seat3", "seat4", "seat5",
+    "seat6", "seat7", "seat8", "seat9", "seat10", "seat11"
+  ]
+}
+
+### Test: Cancel non-existent booking
+PUT {{baseUrl}}/api/bookings/00000000-0000-0000-0000-000000000000/cancel
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "cancellationReason": "Test"
+}
+
+### Test: Cancel booking with wrong user
+PUT {{baseUrl}}/api/bookings/{{bookingId}}/cancel
+Content-Type: application/json
+
+{
+  "userId": "wrong-user",
+  "cancellationReason": "Test"
+}

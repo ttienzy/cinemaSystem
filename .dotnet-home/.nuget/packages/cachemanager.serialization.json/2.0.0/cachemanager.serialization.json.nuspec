@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>CacheManager.Serialization.Json</id>
+    <version>2.0.0</version>
+    <authors>MichaConrad</authors>
+    <license type="expression">Apache-2.0</license>
+    <licenseUrl>https://licenses.nuget.org/Apache-2.0</licenseUrl>
+    <icon>icon.png</icon>
+    <readme>README.md</readme>
+    <projectUrl>https://cachemanager.michaco.net/</projectUrl>
+    <description>CacheManager extension package providing JSON serialization for distributed caches. CacheManager is an open source caching abstraction layer for .NET written in C#. It supports various cache providers and implements many advanced features. The Core library contains a Newtonsoft.Json based serializer implementation which can be used instead of the default binary serializer.</description>
+    <copyright>Copyright (c) 2025 Michael Conrad</copyright>
+    <tags>Caching Cache CacheManager Distributed Cache JSON Serialization</tags>
+    <repository type="git" url="https://github.com/MichaCo/CacheManager" commit="6dc701eb53576ba1905892371b602db1971cf5b3" />
+    <dependencies>
+      <group targetFramework="net8.0">
+        <dependency id="CacheManager.Core" version="2.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.ObjectPool" version="8.0.0" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="13.0.3" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="CacheManager.Core" version="2.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.ObjectPool" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="13.0.3" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

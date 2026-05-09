@@ -1,0 +1,60 @@
+{
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/api/payments/sepay/ipn",
+      "UpstreamHttpMethod": [
+        "POST"
+      ],
+      "DownstreamPathTemplate": "/api/payments/sepay/ipn",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "payment-api",
+          "Port": 8080
+        }
+      ],
+      "Key": "payments-sepay-ipn",
+      "RateLimitOptions": {
+        "EnableRateLimiting": false
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 15000,
+        "TimeoutValue": 5000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/payments/{everything}",
+      "UpstreamHttpMethod": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ],
+      "DownstreamPathTemplate": "/api/payments/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "payment-api",
+          "Port": 8080
+        }
+      ],
+      "Key": "payments",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 15000,
+        "TimeoutValue": 5000
+      }
+    }
+  ]
+}

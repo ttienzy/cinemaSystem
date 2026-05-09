@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>Ocelot.Provider.Polly</id>
+    <version>24.1.0</version>
+    <authors>Tom Pallister, Raman Maksimchuk, Raynald Messié</authors>
+    <license type="file">LICENSE.md</license>
+    <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
+    <icon>ocelot_icon.png</icon>
+    <projectUrl>https://github.com/ThreeMammals/Ocelot/tree/main/src/Ocelot.Provider.Polly</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/ThreeMammals/Ocelot/assets/images/ocelot_icon_128x128.png</iconUrl>
+    <description>Provides Ocelot extensions to use Polly.NET</description>
+    <copyright>© 2025 Three Mammals. MIT licensed OSS</copyright>
+    <tags>API Gateway .NET Polly</tags>
+    <repository type="git" url="https://github.com/ThreeMammals/Ocelot.git" commit="9fc4e78d314ad97d836b35c9b9bb188dba49d556" />
+    <dependencies>
+      <group targetFramework="net8.0">
+        <dependency id="Ocelot" version="24.1.0" exclude="Build,Analyzers" />
+        <dependency id="Polly" version="8.6.5" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net9.0">
+        <dependency id="Ocelot" version="24.1.0" exclude="Build,Analyzers" />
+        <dependency id="Polly" version="8.6.5" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

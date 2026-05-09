@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Ocelot.Provider.Consul</name>
+    </assembly>
+    <members>
+        <member name="T:Ocelot.Provider.Consul.ConsulProviderFactory">
+            <summary>
+            TODO It must be refactored converting to real factory-class and add to DI.
+            </summary>
+            <remarks>
+            Must inherit from <see cref="T:Ocelot.ServiceDiscovery.IServiceDiscoveryProviderFactory"/> interface.
+            Also the <see cref="T:Ocelot.ServiceDiscovery.ServiceDiscoveryFinderDelegate"/> must be removed from the design.
+            </remarks>
+        </member>
+        <member name="F:Ocelot.Provider.Consul.ConsulProviderFactory.PollConsul">
+            <summary>String constant used for provider type definition.</summary>
+        </member>
+        <member name="F:Ocelot.Provider.Consul.ConsulRegistryConfiguration.DefaultHttpPort">
+            <summary>
+            Consul HTTP client default port.
+            <para>
+            HashiCorp Developer docs: <see href="https://developer.hashicorp.com/consul">Consul</see> | <see href="https://developer.hashicorp.com/consul/docs/install/ports">Required Ports</see>.
+            </para>
+            </summary>
+        </member>
+        <member name="M:Ocelot.Provider.Consul.OcelotBuilderExtensions.AddConsul(Ocelot.DependencyInjection.IOcelotBuilder)">
+            <summary>
+            Integrates Consul service discovery into the DI, atop the existing Ocelot services.
+            </summary>
+            <remarks>
+            Default services:
+            <list type="bullet">
+            <item>The <see cref="T:Ocelot.Provider.Consul.Interfaces.IConsulClientFactory"/> service is an instance of <see cref="T:Ocelot.Provider.Consul.ConsulClientFactory"/>.</item>
+            <item>The <see cref="T:Ocelot.Provider.Consul.Interfaces.IConsulServiceBuilder"/> service is an instance of <see cref="T:Ocelot.Provider.Consul.DefaultConsulServiceBuilder"/>.</item>
+            </list>
+            </remarks>
+            <param name="builder">The Ocelot Builder instance, default.</param>
+            <returns>The reference to the same extended <see cref="T:Ocelot.DependencyInjection.IOcelotBuilder"/> object.</returns>
+        </member>
+        <member name="M:Ocelot.Provider.Consul.OcelotBuilderExtensions.AddConsul``1(Ocelot.DependencyInjection.IOcelotBuilder)">
+            <summary>
+            Integrates Consul service discovery into the DI, atop the existing Ocelot services, with service builder overriding.
+            </summary>
+            <remarks>
+            Services to override:
+            <list type="bullet">
+            <item>The <see cref="T:Ocelot.Provider.Consul.Interfaces.IConsulServiceBuilder"/> service has been substituted with a <typeparamref name="TServiceBuilder"/> instance.</item>
+            </list>
+            </remarks>
+            <typeparam name="TServiceBuilder">The service builder type.</typeparam>
+            <param name="builder">The Ocelot Builder instance, default.</param>
+            <returns>The reference to the same extended <see cref="T:Ocelot.DependencyInjection.IOcelotBuilder"/> object.</returns>
+        </member>
+        <member name="M:Ocelot.Provider.Consul.PollConsul.GetAsync">
+            <summary>
+            Gets the services.
+            <para>If the first call, retrieves the services and then starts the timer.</para>
+            </summary>
+            <returns>A <see cref="T:System.Threading.Tasks.Task`1" /> with a <see cref="T:System.Collections.Generic.List`1" /> result of <see cref="T:Ocelot.Values.Service" />.</returns>
+        </member>
+    </members>
+</doc>

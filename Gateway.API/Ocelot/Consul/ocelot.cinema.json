@@ -1,0 +1,81 @@
+{
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/api/cinemas/admin/{everything}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/api/cinemas/admin/{everything}",
+      "DownstreamScheme": "http",
+      "ServiceName": "cinema-api",
+      "Key": "cinemas-admin",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "RouteClaimsRequirement": {
+        "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "Admin"
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/cinemas/{everything}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/api/cinemas/{everything}",
+      "DownstreamScheme": "http",
+      "ServiceName": "cinema-api",
+      "Key": "cinemas-read",
+      "FileCacheOptions": {
+        "TtlSeconds": 300,
+        "Region": "cinemas"
+      },
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/cinemas/{everything}",
+      "UpstreamHttpMethod": [ "POST", "PUT", "DELETE" ],
+      "DownstreamPathTemplate": "/api/cinemas/{everything}",
+      "DownstreamScheme": "http",
+      "ServiceName": "cinema-api",
+      "Key": "cinemas-write",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "RouteClaimsRequirement": {
+        "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "Admin"
+      },
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/cinema-halls/{everything}",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/api/cinema-halls/{everything}",
+      "DownstreamScheme": "http",
+      "ServiceName": "cinema-api",
+      "Key": "cinema-halls-read",
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/cinema-halls/{everything}",
+      "UpstreamHttpMethod": [ "POST", "PUT", "DELETE" ],
+      "DownstreamPathTemplate": "/api/cinema-halls/{everything}",
+      "DownstreamScheme": "http",
+      "ServiceName": "cinema-api",
+      "Key": "cinema-halls-write",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      },
+      "RouteClaimsRequirement": {
+        "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "Admin"
+      },
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      }
+    }
+  ]
+}

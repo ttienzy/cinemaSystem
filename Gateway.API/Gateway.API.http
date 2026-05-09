@@ -1,0 +1,33 @@
+@gateway_url = https://localhost:7100
+@jwt_token = your-jwt-token-here
+
+### Test Gateway Health Check
+GET {{gateway_url}}/health
+
+### Test Identity Service through Gateway (No Auth Required)
+GET {{gateway_url}}/gateway/identity/auth/test
+
+### Test Cinema Service through Gateway (No Auth Required)
+GET {{gateway_url}}/gateway/cinemas
+
+### Test Movie Service through Gateway (No Auth Required)
+GET {{gateway_url}}/gateway/movies
+
+### Test Booking Service through Gateway (Auth Required)
+GET {{gateway_url}}/gateway/bookings
+Authorization: Bearer {{jwt_token}}
+
+### Test Payment Service through Gateway (Auth Required)
+GET {{gateway_url}}/gateway/payments
+Authorization: Bearer {{jwt_token}}
+
+### Test Seat Availability through Gateway (Auth Required)
+GET {{gateway_url}}/gateway/seat-availability/showtime/1
+Authorization: Bearer {{jwt_token}}
+
+### Test Rate Limiting - Send multiple requests quickly
+GET {{gateway_url}}/gateway/movies
+
+### Test Circuit Breaker - This will fail if downstream service is down
+GET {{gateway_url}}/gateway/bookings
+Authorization: Bearer {{jwt_token}}

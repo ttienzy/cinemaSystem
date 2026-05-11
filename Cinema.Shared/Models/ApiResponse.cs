@@ -53,6 +53,14 @@ public class ApiResponse<T>
     {
         return FailureResponse(message, 422, errors);
     }
+    public static ApiResponse<T> InternalServerErrorResponse(string message = "Internal server error")
+    {
+        return FailureResponse(message, 500);
+    }
+    public static ApiResponse<T> ConflictResponse(string message = "Conflict")
+    {
+        return FailureResponse(message, 409);
+    }
 }
 
 public class ApiResponse
@@ -97,6 +105,14 @@ public class ApiResponse
     public static ApiResponse ForbiddenResponse(string message = "Forbidden")
     {
         return FailureResponse(message, 403);
+    }
+    public static ApiResponse InternalServerErrorResponse(string message = "Internal server error")
+    {
+        return FailureResponse(message, 500);
+    }
+    public static ApiResponse ConflictResponse(string message = "Conflict")
+    {
+        return FailureResponse(message, 409);
     }
 }
 

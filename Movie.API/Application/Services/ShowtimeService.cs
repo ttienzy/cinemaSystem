@@ -2,6 +2,7 @@ using Cinema.Shared.Models;
 using Microsoft.Extensions.Options;
 using Movie.API.Application.DTOs;
 using Movie.API.Domain.Entities;
+using Movie.API.Domain.Exceptions;
 using Movie.API.Infrastructure.Persistence.Repositories;
 
 namespace Movie.API.Application.Services;
@@ -36,7 +37,7 @@ public class ShowtimeService : IShowtimeService
         var showtime = await _showtimeRepository.GetByIdAsync(id);
         if (showtime == null)
         {
-            return ApiResponse<ShowtimeDetailDto>.NotFoundResponse("Showtime not found");
+            return ApiResponse<ShowtimeDetailDto>.NotFoundResponse(ShowtimeException.SHOWTIME_NOT_FOUND);
         }
 
         var cinemaHallInfo = await _cinemaApiClient.GetCinemaHallInfoAsync(showtime.CinemaHallId);
@@ -50,7 +51,7 @@ public class ShowtimeService : IShowtimeService
         var movie = await _movieRepository.GetByIdAsync(movieId);
         if (movie == null)
         {
-            return ApiResponse<List<ShowtimeDto>>.NotFoundResponse("Movie not found");
+            return ApiResponse<List<ShowtimeDto>>.NotFoundResponse(MovieException.MOVIE_NOT_FOUND);
         }
 
         var showtimes = await _showtimeRepository.GetByMovieIdAsync(movieId);
@@ -70,7 +71,7 @@ public class ShowtimeService : IShowtimeService
         var cinemaHallExists = await _cinemaApiClient.ValidateCinemaHallExistsAsync(cinemaHallId);
         if (!cinemaHallExists)
         {
-            return ApiResponse<List<ShowtimeDto>>.NotFoundResponse("Cinema hall not found");
+            return ApiResponse<List<ShowtimeDto>>.NotFoundResponse(ShowtimeException.CINEMA_HALL_NOT_FOUND);
         }
 
         var showtimes = await _showtimeRepository.GetByCinemaHallIdAsync(cinemaHallId);
@@ -95,7 +96,7 @@ public class ShowtimeService : IShowtimeService
         var movie = await _movieRepository.GetByIdAsync(request.MovieId);
         if (movie == null)
         {
-            return ApiResponse<ShowtimeDto>.NotFoundResponse("Movie not found");
+            return ApiResponse<ShowtimeDto>.NotFoundResponse(MovieException.MOVIE_NOT_FOUND);
         }
 
         var endTime = request.StartTime.AddMinutes(movie.Duration);
@@ -109,17 +110,11 @@ public class ShowtimeService : IShowtimeService
 
         if (hasOverlap)
         {
+            var value = ShowtimeException.SHOWTIME_OVERLAP;
             return ApiResponse<ShowtimeDto>.FailureResponse(
-                "Showtime overlaps with existing showtime in this cinema hall",
+                ShowtimeException.SHOWTIME_OVERLAP_MESSAGE,
                 400,
-                new List<ErrorDetail>
-                {
-                    new ErrorDetail(
-                        "SHOWTIME_OVERLAP",
-                        "The selected time slot conflicts with another showtime",
-                        "StartTime"
-                    )
-                }
+                [new ErrorDetail(value.Item1, value.Item2, value.Item3)]
             );
         }
 
@@ -141,7 +136,7 @@ public class ShowtimeService : IShowtimeService
             created.Id, request.MovieId, request.CinemaHallId
         );
 
-        return ApiResponse<ShowtimeDto>.SuccessResponse(dto, "Showtime created successfully", 201);
+        return ApiResponse<ShowtimeDto>.SuccessResponse(dto, ShowtimeException.SHOWTIME_CREATED_SUCCESSFULLY, 201);
     }
 
     public async Task<ApiResponse<ShowtimeDto>> UpdateAsync(Guid id, UpdateShowtimeRequest request)
@@ -149,7 +144,7 @@ public class ShowtimeService : IShowtimeService
         var existing = await _showtimeRepository.GetByIdAsync(id);
         if (existing == null)
         {
-            return ApiResponse<ShowtimeDto>.NotFoundResponse("Showtime not found");
+            return ApiResponse<ShowtimeDto>.NotFoundResponse(ShowtimeException.SHOWTIME_NOT_FOUND);
         }
 
         var bookedSeats = await GetBookedSeatsAsync(existing.Id);
@@ -207,7 +202,7 @@ public class ShowtimeService : IShowtimeService
         var cinemaHallInfo = await _cinemaApiClient.GetCinemaHallInfoAsync(existing.CinemaHallId);
         var dto = MapToDto(updated!, cinemaHallInfo);
 
-        return ApiResponse<ShowtimeDto>.SuccessResponse(dto, "Showtime updated successfully");
+        return ApiResponse<ShowtimeDto>.SuccessResponse(dto, ShowtimeException.SHOWTIME_UPDATED_SUCCESSFULLY);
     }
 
     public async Task<ApiResponse<bool>> DeleteAsync(Guid id)
@@ -215,32 +210,31 @@ public class ShowtimeService : IShowtimeService
         var showtime = await _showtimeRepository.GetByIdAsync(id);
         if (showtime == null)
         {
-            return ApiResponse<bool>.NotFoundResponse("Showtime not found");
+            return ApiResponse<bool>.NotFoundResponse(ShowtimeException.SHOWTIME_NOT_FOUND);
         }
 
         var bookedSeats = await GetBookedSeatsAsync(showtime.Id);
         if (bookedSeats > 0)
         {
+            var value = ShowtimeException.SHOWTIME_HAS_BOOKINGS;
             return ApiResponse<bool>.FailureResponse(
-                "Cannot delete a showtime that already has sold tickets",
+                ShowtimeException.CANNOT_DELETE_HAS_TICKETS,
                 400,
-                [new ErrorDetail("SHOWTIME_HAS_BOOKINGS", "This showtime already has sold tickets", "Id")]);
+                [new ErrorDetail(value.Item1, value.Item2, value.Item3)]);
         }
 
         if (showtime.StartTime < DateTime.UtcNow)
         {
+            var value = ShowtimeException.PAST_SHOWTIME;
             return ApiResponse<bool>.FailureResponse(
-                "Cannot delete past showtimes",
+                ShowtimeException.CANNOT_DELETE_PAST_SHOWTIME,
                 400,
-                new List<ErrorDetail>
-                {
-                    new ErrorDetail("PAST_SHOWTIME", "This showtime has already started or passed", "Id")
-                }
+                [new ErrorDetail(value.Item1, value.Item2, value.Item3)]
             );
         }
 
         var deleted = await _showtimeRepository.DeleteAsync(id);
-        return ApiResponse<bool>.SuccessResponse(deleted, "Showtime deleted successfully");
+        return ApiResponse<bool>.SuccessResponse(deleted, ShowtimeException.SHOWTIME_DELETED_SUCCESSFULLY);
     }
 
     public async Task<ApiResponse<List<ShowtimeDto>>> GetUpcomingShowtimesAsync(int count = 20)
@@ -301,7 +295,7 @@ public class ShowtimeService : IShowtimeService
         var cinema = await _cinemaApiClient.GetCinemaInfoAsync(cinemaId);
         if (cinema == null)
         {
-            return ApiResponse<ShowtimeTimelineDto>.NotFoundResponse("Cinema not found");
+            return ApiResponse<ShowtimeTimelineDto>.NotFoundResponse(ShowtimeException.CINEMA_NOT_FOUND);
         }
 
         var halls = await _cinemaApiClient.GetCinemaHallsByCinemaIdAsync(cinemaId);
@@ -386,7 +380,7 @@ public class ShowtimeService : IShowtimeService
         var movie = await _movieRepository.GetByIdAsync(request.MovieId);
         if (movie == null)
         {
-            return ApiResponse<ShowtimeConflictValidationResponse>.NotFoundResponse("Movie not found");
+            return ApiResponse<ShowtimeConflictValidationResponse>.NotFoundResponse(MovieException.MOVIE_NOT_FOUND);
         }
 
         var proposedEnd = request.StartTime.AddMinutes(movie.Duration);
@@ -447,7 +441,7 @@ public class ShowtimeService : IShowtimeService
 
         if (errors.Any())
         {
-            return ApiResponse<bool>.ValidationErrorResponse("Validation failed", errors);
+            return ApiResponse<bool>.ValidationErrorResponse(ShowtimeException.VALIDATION_FAILED, errors);
         }
 
         return ApiResponse<bool>.SuccessResponse(true);

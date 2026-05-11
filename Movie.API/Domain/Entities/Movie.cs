@@ -13,6 +13,28 @@ public class Movie : BaseEntity
 
     public ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();
     public ICollection<Showtime> Showtimes { get; set; } = new List<Showtime>();
+
+    public static bool TryNormalizeMovieStatus(string? status, out string? normalizedStatus)
+    {
+        normalizedStatus = null;
+
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return true;
+        }
+
+        normalizedStatus = status.Trim().ToLowerInvariant() switch
+        {
+            "showing" => MovieStatuses.Showing,
+            "comingsoon" => MovieStatuses.ComingSoon,
+            "coming-soon" => MovieStatuses.ComingSoon,
+            "coming_soon" => MovieStatuses.ComingSoon,
+            "archived" => MovieStatuses.Archived,
+            _ => null
+        };
+
+        return normalizedStatus is not null;
+    }
 }
 
 

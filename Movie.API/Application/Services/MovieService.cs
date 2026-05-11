@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Movie.API.Application.DTOs;
 using Movie.API.Domain.Entities;
+using Movie.API.Domain.Exceptions;
 using Movie.API.Infrastructure.Persistence.Repositories;
 using MovieEntity = Movie.API.Domain.Entities.Movie;
 
@@ -30,6 +31,7 @@ public class MovieService : IMovieService
     public async Task<ApiResponse<PaginatedResponse<MovieDto>>> GetAllAsync(int pageNumber, int pageSize)
     {
         var allMovies = await _movieRepository.GetAllAsync();
+
         var totalCount = allMovies.Count;
 
         var movies = allMovies
@@ -53,16 +55,12 @@ public class MovieService : IMovieService
         var allMovies = await _movieRepository.GetAllAsync();
         var now = DateTime.UtcNow;
 
-        if (!TryNormalizeMovieStatus(status, out var normalizedStatus))
+        if (!MovieEntity.TryNormalizeMovieStatus(status, out var normalizedStatus))
         {
+            var value = MovieException.MOVIE_INVALID_STATUS(string.Join(",", MovieStatuses.All));
             return ApiResponse<PaginatedResponse<MovieAdminListItemDto>>.ValidationErrorResponse(
-                "Validation failed",
-                [
-                    new ErrorDetail(
-                        "INVALID_MOVIE_STATUS",
-                        $"Status must be one of: {string.Join(", ", MovieStatuses.All)}",
-                        "status")
-                ]);
+                MovieException.VALIDATION_FAILED,
+                [new ErrorDetail(value.Item1, value.Item2, value.Item3)]);
         }
 
         var query = allMovies.AsEnumerable();
@@ -120,7 +118,7 @@ public class MovieService : IMovieService
         var movie = await _movieRepository.GetByIdAsync(id);
         if (movie == null)
         {
-            return ApiResponse<MovieDetailDto>.NotFoundResponse("Movie not found");
+            return ApiResponse<MovieDetailDto>.NotFoundResponse(MovieException.MOVIE_NOT_FOUND);
         }
 
         var dto = MapToDetailDto(movie);
@@ -170,7 +168,7 @@ public class MovieService : IMovieService
         var created = await _movieRepository.CreateAsync(movie);
         var dto = MapToDto(created);
 
-        return ApiResponse<MovieDto>.SuccessResponse(dto, "Movie created successfully", 201);
+        return ApiResponse<MovieDto>.SuccessResponse(dto, MovieException.MOVIE_CREATED_SUCCESSFULLY, 201);
     }
 
     public async Task<ApiResponse<MovieDto>> UpdateAsync(Guid id, UpdateMovieRequest request)
@@ -178,7 +176,7 @@ public class MovieService : IMovieService
         var existing = await _movieRepository.GetByIdAsync(id);
         if (existing == null)
         {
-            return ApiResponse<MovieDto>.NotFoundResponse("Movie not found");
+            return ApiResponse<MovieDto>.NotFoundResponse(MovieException.MOVIE_NOT_FOUND);
         }
 
         var normalizedGenreIds = (request.GenreIds ?? new List<Guid>())
@@ -229,7 +227,7 @@ public class MovieService : IMovieService
         var updated = await _movieRepository.UpdateAsync(id, movie, normalizedGenreIds);
         var dto = MapToDto(updated!);
 
-        return ApiResponse<MovieDto>.SuccessResponse(dto, "Movie updated successfully");
+        return ApiResponse<MovieDto>.SuccessResponse(dto, MovieException.MOVIE_UPDATED_SUCCESSFULLY);
     }
 
     public async Task<ApiResponse<bool>> DeleteAsync(Guid id)
@@ -237,23 +235,20 @@ public class MovieService : IMovieService
         var movie = await _movieRepository.GetByIdAsync(id);
         if (movie == null)
         {
-            return ApiResponse<bool>.NotFoundResponse("Movie not found");
+            return ApiResponse<bool>.NotFoundResponse(MovieException.MOVIE_NOT_FOUND);
         }
 
         if (movie.Showtimes.Any())
         {
+            var value = MovieException.MOVIE_HAS_SHOWTIMES;
             return ApiResponse<bool>.FailureResponse(
-                "Cannot delete movie with existing showtimes",
+                value.Item1,
                 400,
-                new List<ErrorDetail>
-                {
-                    new ErrorDetail("MOVIE_HAS_SHOWTIMES", "This movie has scheduled showtimes", "MovieId")
-                }
-            );
+                [new ErrorDetail(value.Item1, value.Item2, value.Item3)]);
         }
 
         var deleted = await _movieRepository.DeleteAsync(id);
-        return ApiResponse<bool>.SuccessResponse(deleted, "Movie deleted successfully");
+        return ApiResponse<bool>.SuccessResponse(deleted, MovieException.MOVIE_DELETED_SUCCESSFULLY);
     }
 
     public async Task<ApiResponse<List<MovieDto>>> GetByGenreAsync(Guid genreId)
@@ -261,7 +256,7 @@ public class MovieService : IMovieService
         var genre = await _genreRepository.GetByIdAsync(genreId);
         if (genre == null)
         {
-            return ApiResponse<List<MovieDto>>.NotFoundResponse("Genre not found");
+            return ApiResponse<List<MovieDto>>.NotFoundResponse(GenreException.GENRE_NOT_FOUND);
         }
 
         var movies = await _movieRepository.GetByGenreAsync(genreId);
@@ -279,26 +274,20 @@ public class MovieService : IMovieService
             var genre = await _genreRepository.GetByIdAsync(genreId);
             if (genre == null)
             {
-                errors.Add(new ErrorDetail(
-                    "INVALID_GENRE",
-                    $"Genre with ID {genreId} does not exist",
-                    "GenreIds"
-                ));
+                var value = GenreException.GENRE_INVALID_ID(genreId.ToString());
+                errors.Add(new ErrorDetail(value.Item1, value.Item2, value.Item3));
             }
         }
 
         if (releaseDate > DateTime.UtcNow.AddYears(2))
         {
-            errors.Add(new ErrorDetail(
-                "INVALID_RELEASE_DATE",
-                "Release date cannot be more than 2 years in the future",
-                "ReleaseDate"
-            ));
+            var value = GenreException.GENRE_INVALID_RELEASE_DATE();
+            errors.Add(new ErrorDetail(value.Item1, value.Item2, value.Item3));
         }
 
         if (errors.Any())
         {
-            return ApiResponse<bool>.ValidationErrorResponse("Validation failed", errors);
+            return ApiResponse<bool>.ValidationErrorResponse(MovieException.VALIDATION_FAILED, errors);
         }
 
         return ApiResponse<bool>.SuccessResponse(true);
@@ -318,26 +307,22 @@ public class MovieService : IMovieService
         }
         catch (ArgumentException exception)
         {
+            var value = MovieException.INVALID_POSTER_FILE(exception.Message);
             return ApiResponse<string?>.FailureResponse(
-                exception.Message,
+                value.Item1,
                 400,
-                new List<ErrorDetail>
-                {
-                    new("INVALID_POSTER_FILE", exception.Message, nameof(CreateMovieRequest.PosterFile))
-                }
+                [new ErrorDetail(value.Item1, value.Item2, value.Item3)]
             );
         }
         catch (Exception exception)
         {
             _logger.LogError(exception, "Poster upload failed for file {FileName}", posterFile.FileName);
 
+            var value = MovieException.POSTER_UPLOAD_FAILED;
             return ApiResponse<string?>.FailureResponse(
-                "Poster upload failed.",
+                value.Item1,
                 502,
-                new List<ErrorDetail>
-                {
-                    new("POSTER_UPLOAD_FAILED", "Poster upload failed.", nameof(CreateMovieRequest.PosterFile))
-                }
+                [new ErrorDetail(value.Item1, value.Item2, value.Item3)]
             );
         }
     }
@@ -470,27 +455,7 @@ public class MovieService : IMovieService
         };
     }
 
-    private static bool TryNormalizeMovieStatus(string? status, out string? normalizedStatus)
-    {
-        normalizedStatus = null;
-
-        if (string.IsNullOrWhiteSpace(status))
-        {
-            return true;
-        }
-
-        normalizedStatus = status.Trim().ToLowerInvariant() switch
-        {
-            "showing" => MovieStatuses.Showing,
-            "comingsoon" => MovieStatuses.ComingSoon,
-            "coming-soon" => MovieStatuses.ComingSoon,
-            "coming_soon" => MovieStatuses.ComingSoon,
-            "archived" => MovieStatuses.Archived,
-            _ => null
-        };
-
-        return normalizedStatus is not null;
-    }
+    
 }
 
 

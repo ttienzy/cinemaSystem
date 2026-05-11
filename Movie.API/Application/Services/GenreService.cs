@@ -1,7 +1,7 @@
 using Cinema.Shared.Models;
-using Movie.API.Application.DTOs;
-using Movie.API.Domain.Entities;
-using Movie.API.Infrastructure.Persistence.Repositories;
+using Movie.API.Application.Mappers;
+using Movie.API.Domain.Exceptions;
+
 
 namespace Movie.API.Application.Services;
 
@@ -17,7 +17,7 @@ public class GenreService : IGenreService
     public async Task<ApiResponse<List<GenreDto>>> GetAllAsync()
     {
         var genres = await _genreRepository.GetAllAsync();
-        var dtos = genres.Select(MapToDto).ToList();
+        var dtos = genres.Select(x => x.MapToDto()).ToList();
 
         return ApiResponse<List<GenreDto>>.SuccessResponse(dtos);
     }
@@ -27,10 +27,10 @@ public class GenreService : IGenreService
         var genre = await _genreRepository.GetByIdAsync(id);
         if (genre == null)
         {
-            return ApiResponse<GenreDto>.NotFoundResponse("Genre not found");
+            return ApiResponse<GenreDto>.NotFoundResponse(GenreException.GENRE_NOT_FOUND);
         }
 
-        var dto = MapToDto(genre);
+        var dto = genre.MapToDto();
         return ApiResponse<GenreDto>.SuccessResponse(dto);
     }
 
@@ -42,9 +42,9 @@ public class GenreService : IGenreService
         };
 
         var created = await _genreRepository.CreateAsync(genre);
-        var dto = MapToDto(created);
+        var dto = created.MapToDto();
 
-        return ApiResponse<GenreDto>.SuccessResponse(dto, "Genre created successfully", 201);
+        return ApiResponse<GenreDto>.SuccessResponse(dto, GenreException.GENRE_CREATED_SUCCESSFULLY, 201);
     }
 
     public async Task<ApiResponse<GenreDto>> UpdateAsync(Guid id, CreateGenreRequest request)
@@ -52,7 +52,7 @@ public class GenreService : IGenreService
         var existing = await _genreRepository.GetByIdAsync(id);
         if (existing == null)
         {
-            return ApiResponse<GenreDto>.NotFoundResponse("Genre not found");
+            return ApiResponse<GenreDto>.NotFoundResponse(GenreException.GENRE_NOT_FOUND);
         }
 
         var genre = new Genre
@@ -61,9 +61,9 @@ public class GenreService : IGenreService
         };
 
         var updated = await _genreRepository.UpdateAsync(id, genre);
-        var dto = MapToDto(updated!);
+        var dto = updated.MapToDto();
 
-        return ApiResponse<GenreDto>.SuccessResponse(dto, "Genre updated successfully");
+        return ApiResponse<GenreDto>.SuccessResponse(dto, GenreException.GENRE_UPDATED_SUCCESSFULLY);
     }
 
     public async Task<ApiResponse<bool>> DeleteAsync(Guid id)
@@ -71,33 +71,25 @@ public class GenreService : IGenreService
         var genre = await _genreRepository.GetByIdAsync(id);
         if (genre == null)
         {
-            return ApiResponse<bool>.NotFoundResponse("Genre not found");
+            return ApiResponse<bool>.NotFoundResponse(GenreException.GENRE_NOT_FOUND);
         }
 
         if (genre.MovieGenres.Any())
         {
             return ApiResponse<bool>.FailureResponse(
-                "Cannot delete genre with associated movies",
+                GenreException.GENRE_CANNOT_DELETE_HAS_MOVIES,
                 400,
                 new List<ErrorDetail>
                 {
-                    new ErrorDetail("GENRE_HAS_MOVIES", "This genre is associated with movies", "GenreId")
+                    new ErrorDetail(GenreException.GENRE_HAS_MOVIES.Item1, GenreException.GENRE_HAS_MOVIES.Item2, GenreException.GENRE_HAS_MOVIES.Item3)
                 }
             );
         }
 
         var deleted = await _genreRepository.DeleteAsync(id);
-        return ApiResponse<bool>.SuccessResponse(deleted, "Genre deleted successfully");
+        return ApiResponse<bool>.SuccessResponse(deleted, GenreException.GENRE_DELETED_SUCCESSFULLY);
     }
 
-    private GenreDto MapToDto(Genre genre)
-    {
-        return new GenreDto
-        {
-            Id = genre.Id,
-            Name = genre.Name
-        };
-    }
 }
 
 

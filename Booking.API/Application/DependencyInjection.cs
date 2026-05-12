@@ -9,6 +9,7 @@ public static class DependencyInjection
         services.AddScoped<IBookingService, BookingService>();
         services.AddScoped<IBookingAnalyticsService, BookingAnalyticsService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IDashboardInsightFactory, DashboardInsightFactory>();
         services.AddScoped<ITicketOperationsService, TicketOperationsService>();
         services.AddScoped<ITicketOperationResponseFactory, TicketOperationResponseFactory>();
 

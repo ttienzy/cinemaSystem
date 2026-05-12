@@ -3,6 +3,7 @@ global using Booking.API.Application.DTOs.External;
 global using Booking.API.Application.DTOs.Requests;
 global using Booking.API.Application.DTOs.Responses;
 global using Booking.API.Application.Mappers;
+global using Booking.API.Application.Models;
 global using Booking.API.Application.Services;
 global using Booking.API.Domain.Exceptions;
 global using Booking.API.Domain.Entities;

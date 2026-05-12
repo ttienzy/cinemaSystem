@@ -218,13 +218,13 @@ docker compose up -d sqlserver redis rabbitmq
 #### Step 2. Run Migrations
 
 ```powershell
-.\run-migrations.ps1
+.\scripts\run-migrations.ps1
 ```
 
 #### Step 3. Run Backend Locally
 
 ```powershell
-.\run-all-services.ps1
+.\scripts\run-all-services.ps1
 ```
 
 This script currently starts:
@@ -326,16 +326,18 @@ The frontend admin dashboard listens to the `/hubs/admin-dashboard` hub through 
 
 ## Useful Scripts
 
+All scripts are located in the `scripts/` folder.
+
 | Script | Purpose |
 |---|---|
-| `run-all-services.ps1` | Quickly run main backend services locally |
-| `run-migrations.ps1` | Create or apply database migrations |
-| `start-ngrok-payment.ps1` | Open tunnel for testing SePay IPN |
-| `check-ngrok-status.ps1` | Check ngrok tunnel status |
-| `test-auth-flow.ps1` | Test authentication flow |
-| `test-email.ps1` | Test email sending from Booking |
-| `test-ipn-endpoint.ps1` | Test Payment IPN endpoint |
-| `verify-ngrok-urls.ps1` | Verify ngrok callback URLs |
+| `scripts/run-all-services.ps1` | Quickly run main backend services locally |
+| `scripts/run-migrations.ps1` | Create or apply database migrations |
+| `scripts/start-ngrok-payment.ps1` | Open tunnel for testing SePay IPN |
+| `scripts/check-ngrok-status.ps1` | Check ngrok tunnel status |
+| `scripts/test-auth-flow.ps1` | Test authentication flow |
+| `scripts/test-email.ps1` | Test email sending from Booking |
+| `scripts/test-ipn-endpoint.ps1` | Test Payment IPN endpoint |
+| `scripts/verify-ngrok-urls.ps1` | Verify ngrok callback URLs |
 
 ## API Collection
 

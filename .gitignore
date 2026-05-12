@@ -22,6 +22,9 @@ bld/
 # Visual Studio cache/options directory
 .vs/
 
+# .NET and NuGet cache
+.dotnet-home/
+
 # Environment variables
 .env
 .env.local

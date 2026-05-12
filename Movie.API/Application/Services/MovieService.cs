@@ -2,10 +2,12 @@ using Cinema.Shared.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Movie.API.Application.DTOs;
+using Movie.API.Application.Mappers;
 using Movie.API.Domain.Entities;
 using Movie.API.Domain.Exceptions;
 using Movie.API.Infrastructure.Persistence.Repositories;
 using MovieEntity = Movie.API.Domain.Entities.Movie;
+
 
 namespace Movie.API.Application.Services;
 
@@ -31,13 +33,14 @@ public class MovieService : IMovieService
     public async Task<ApiResponse<PaginatedResponse<MovieDto>>> GetAllAsync(int pageNumber, int pageSize)
     {
         var allMovies = await _movieRepository.GetAllAsync();
+        var now = DateTime.UtcNow;
 
         var totalCount = allMovies.Count;
 
         var movies = allMovies
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .Select(MapToDto)
+            .Select(movie => movie.MovieMapToDto(now))
             .ToList();
 
         var paginatedResult = PaginatedResponse<MovieDto>.Create(movies, totalCount, pageNumber, pageSize);
@@ -73,16 +76,16 @@ public class MovieService : IMovieService
 
         if (normalizedStatus is not null)
         {
-            query = query.Where(movie => DetermineMovieStatus(movie, now) == normalizedStatus);
+            query = query.Where(movie => movie.MatchesStatus(normalizedStatus, now));
         }
 
         if (genreId.HasValue)
         {
-            query = query.Where(movie => movie.MovieGenres.Any(movieGenre => movieGenre.GenreId == genreId.Value));
+            query = query.Where(movie => movie.HasGenre(genreId.Value));
         }
 
         var filteredMovies = query
-            .OrderBy(movie => GetMovieStatusRank(DetermineMovieStatus(movie, now)))
+            .OrderBy(movie => movie.GetStatusRank(now))
             .ThenByDescending(movie => movie.ReleaseDate)
             .ToList();
 
@@ -90,7 +93,7 @@ public class MovieService : IMovieService
         var movies = filteredMovies
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .Select(movie => MapToAdminListItemDto(movie, now))
+            .Select(movie => movie.MovieMapToAdminListItemDto(now))
             .ToList();
 
         var paginatedResult = PaginatedResponse<MovieAdminListItemDto>.Create(movies, totalCount, pageNumber, pageSize);
@@ -105,9 +108,9 @@ public class MovieService : IMovieService
         var summary = new MovieAdminSummaryDto
         {
             TotalMovies = allMovies.Count,
-            ShowingMovies = allMovies.Count(movie => DetermineMovieStatus(movie, now) == MovieStatuses.Showing),
-            ComingSoonMovies = allMovies.Count(movie => DetermineMovieStatus(movie, now) == MovieStatuses.ComingSoon),
-            ArchivedMovies = allMovies.Count(movie => DetermineMovieStatus(movie, now) == MovieStatuses.Archived)
+            ShowingMovies = allMovies.Count(movie => movie.MatchesStatus(MovieStatuses.Showing, now)),
+            ComingSoonMovies = allMovies.Count(movie => movie.MatchesStatus(MovieStatuses.ComingSoon, now)),
+            ArchivedMovies = allMovies.Count(movie => movie.MatchesStatus(MovieStatuses.Archived, now))
         };
 
         return ApiResponse<MovieAdminSummaryDto>.SuccessResponse(summary);
@@ -121,8 +124,23 @@ public class MovieService : IMovieService
             return ApiResponse<MovieDetailDto>.NotFoundResponse(MovieException.MOVIE_NOT_FOUND);
         }
 
-        var dto = MapToDetailDto(movie);
+        var dto = movie.MovieMapToDetailDto(DateTime.UtcNow);
         return ApiResponse<MovieDetailDto>.SuccessResponse(dto);
+    }
+
+    public async Task<ApiResponse<List<MovieDto>>> GetByGenreAsync(Guid genreId)
+    {
+        var genre = await _genreRepository.GetByIdAsync(genreId);
+        if (genre == null)
+        {
+            return ApiResponse<List<MovieDto>>.NotFoundResponse(GenreException.GENRE_NOT_FOUND);
+        }
+
+        var movies = await _movieRepository.GetByGenreAsync(genreId);
+        var now = DateTime.UtcNow;
+        var dtos = movies.Select(movie => movie.MovieMapToDto(now)).ToList();
+
+        return ApiResponse<List<MovieDto>>.SuccessResponse(dtos);
     }
 
     public async Task<ApiResponse<MovieDto>> CreateAsync(CreateMovieRequest request)
@@ -151,22 +169,17 @@ public class MovieService : IMovieService
             );
         }
 
-        var movie = new MovieEntity
-        {
-            Title = request.Title,
-            Description = request.Description,
-            Duration = request.Duration,
-            Language = request.Language,
-            ReleaseDate = request.ReleaseDate,
-            PosterUrl = posterUrlResult.Data,
-            MovieGenres = normalizedGenreIds.Select(gId => new MovieGenre
-            {
-                GenreId = gId
-            }).ToList()
-        };
+        var movie = MovieEntity.Create(
+            request.Title,
+            request.Description,
+            request.Duration,
+            request.Language,
+            request.ReleaseDate,
+            posterUrlResult.Data,
+            normalizedGenreIds);
 
         var created = await _movieRepository.CreateAsync(movie);
-        var dto = MapToDto(created);
+        var dto = created.MovieMapToDto(DateTime.UtcNow);
 
         return ApiResponse<MovieDto>.SuccessResponse(dto, MovieException.MOVIE_CREATED_SUCCESSFULLY, 201);
     }
@@ -214,18 +227,17 @@ public class MovieService : IMovieService
             posterUrl = posterUrlResult.Data;
         }
 
-        var movie = new MovieEntity
-        {
-            Title = request.Title,
-            Description = request.Description,
-            Duration = request.Duration,
-            Language = request.Language,
-            ReleaseDate = request.ReleaseDate,
-            PosterUrl = posterUrl
-        };
+        var movie = new MovieEntity();
+        movie.UpdateDetails(
+            request.Title,
+            request.Description,
+            request.Duration,
+            request.Language,
+            request.ReleaseDate,
+            posterUrl);
 
         var updated = await _movieRepository.UpdateAsync(id, movie, normalizedGenreIds);
-        var dto = MapToDto(updated!);
+        var dto = updated!.MovieMapToDto(DateTime.UtcNow);
 
         return ApiResponse<MovieDto>.SuccessResponse(dto, MovieException.MOVIE_UPDATED_SUCCESSFULLY);
     }
@@ -238,7 +250,7 @@ public class MovieService : IMovieService
             return ApiResponse<bool>.NotFoundResponse(MovieException.MOVIE_NOT_FOUND);
         }
 
-        if (movie.Showtimes.Any())
+        if (movie.HasShowtimes())
         {
             var value = MovieException.MOVIE_HAS_SHOWTIMES;
             return ApiResponse<bool>.FailureResponse(
@@ -249,20 +261,6 @@ public class MovieService : IMovieService
 
         var deleted = await _movieRepository.DeleteAsync(id);
         return ApiResponse<bool>.SuccessResponse(deleted, MovieException.MOVIE_DELETED_SUCCESSFULLY);
-    }
-
-    public async Task<ApiResponse<List<MovieDto>>> GetByGenreAsync(Guid genreId)
-    {
-        var genre = await _genreRepository.GetByIdAsync(genreId);
-        if (genre == null)
-        {
-            return ApiResponse<List<MovieDto>>.NotFoundResponse(GenreException.GENRE_NOT_FOUND);
-        }
-
-        var movies = await _movieRepository.GetByGenreAsync(genreId);
-        var dtos = movies.Select(MapToDto).ToList();
-
-        return ApiResponse<List<MovieDto>>.SuccessResponse(dtos);
     }
 
     private async Task<ApiResponse<bool>> ValidateUpsertRequest(IEnumerable<Guid> genreIds, DateTime releaseDate)
@@ -326,137 +324,5 @@ public class MovieService : IMovieService
             );
         }
     }
-
-    private MovieDto MapToDto(MovieEntity movie)
-    {
-        var now = DateTime.UtcNow;
-
-        return new MovieDto
-        {
-            Id = movie.Id,
-            Title = movie.Title,
-            Description = movie.Description,
-            Duration = movie.Duration,
-            Language = movie.Language,
-            ReleaseDate = movie.ReleaseDate,
-            PosterUrl = movie.PosterUrl,
-            Status = DetermineMovieStatus(movie, now),
-            CreatedAt = movie.CreatedAt,
-            Genres = movie.MovieGenres
-                .Where(mg => mg.Genre is not null)
-                .Select(mg => new GenreDto
-                {
-                    Id = mg.Genre!.Id,
-                    Name = mg.Genre.Name
-                })
-                .ToList()
-        };
-    }
-
-    private MovieDetailDto MapToDetailDto(MovieEntity movie)
-    {
-        var now = DateTime.UtcNow;
-
-        return new MovieDetailDto
-        {
-            Id = movie.Id,
-            Title = movie.Title,
-            Description = movie.Description,
-            Duration = movie.Duration,
-            Language = movie.Language,
-            ReleaseDate = movie.ReleaseDate,
-            PosterUrl = movie.PosterUrl,
-            Status = DetermineMovieStatus(movie, now),
-            CreatedAt = movie.CreatedAt,
-            Genres = movie.MovieGenres
-                .Where(mg => mg.Genre is not null)
-                .Select(mg => new GenreDto
-                {
-                    Id = mg.Genre!.Id,
-                    Name = mg.Genre.Name
-                })
-                .ToList(),
-            Showtimes = movie.Showtimes.Select(s => new ShowtimeDto
-            {
-                Id = s.Id,
-                MovieId = s.MovieId,
-                StartTime = s.StartTime,
-                EndTime = s.EndTime,
-                Price = s.Price,
-                CinemaHallId = s.CinemaHallId,
-                CreatedAt = s.CreatedAt,
-                MovieTitle = movie.Title,
-                DurationMinutes = movie.Duration,
-                
-            }).ToList()
-        };
-    }
-
-    private MovieAdminListItemDto MapToAdminListItemDto(MovieEntity movie, DateTime now)
-    {
-        var upcomingShowtimes = movie.Showtimes
-            .Where(showtime => showtime.EndTime >= now)
-            .OrderBy(showtime => showtime.StartTime)
-            .ToList();
-
-        var lastShowtime = movie.Showtimes
-            .OrderByDescending(showtime => showtime.EndTime)
-            .FirstOrDefault();
-
-        return new MovieAdminListItemDto
-        {
-            Id = movie.Id,
-            Title = movie.Title,
-            Description = movie.Description,
-            Duration = movie.Duration,
-            Language = movie.Language,
-            ReleaseDate = movie.ReleaseDate,
-            PosterUrl = movie.PosterUrl,
-            Status = DetermineMovieStatus(movie, now),
-            CreatedAt = movie.CreatedAt,
-            Genres = movie.MovieGenres
-                .Where(mg => mg.Genre is not null)
-                .Select(mg => new GenreDto
-                {
-                    Id = mg.Genre!.Id,
-                    Name = mg.Genre.Name
-                })
-                .ToList(),
-            TotalShowtimes = movie.Showtimes.Count,
-            UpcomingShowtimesCount = upcomingShowtimes.Count,
-            NextShowtimeAt = upcomingShowtimes.FirstOrDefault()?.StartTime,
-            LastShowtimeAt = lastShowtime?.EndTime
-        };
-    }
-
-    private static string DetermineMovieStatus(MovieEntity movie, DateTime now)
-    {
-        if (movie.ReleaseDate.Date > now.Date)
-        {
-            return MovieStatuses.ComingSoon;
-        }
-
-        if (movie.Showtimes.Any(showtime => showtime.EndTime >= now))
-        {
-            return MovieStatuses.Showing;
-        }
-
-        return MovieStatuses.Archived;
-    }
-
-    private static int GetMovieStatusRank(string status)
-    {
-        return status switch
-        {
-            MovieStatuses.Showing => 0,
-            MovieStatuses.ComingSoon => 1,
-            MovieStatuses.Archived => 2,
-            _ => 3
-        };
-    }
-
-    
 }
-
-
 

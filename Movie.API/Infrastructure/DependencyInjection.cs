@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.Configure<SchedulingOptions>(configuration.GetSection(SchedulingOptions.SectionName));
         services.Configure<CloudinaryOptions>(configuration.GetSection(CloudinaryOptions.SectionName));
 
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IMovieRepository, MovieRepository>();
         services.AddScoped<IGenreRepository, GenreRepository>();
         services.AddScoped<IShowtimeRepository, ShowtimeRepository>();

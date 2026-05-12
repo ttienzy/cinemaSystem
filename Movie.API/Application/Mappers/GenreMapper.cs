@@ -2,7 +2,7 @@ namespace Movie.API.Application.Mappers
 {
     public static class GenreMapper
     {
-        public static GenreDto MapToDto(this Genre genre)
+        public static GenreDto GenreMapToDto(this Genre genre)
         {
             return new GenreDto
             {

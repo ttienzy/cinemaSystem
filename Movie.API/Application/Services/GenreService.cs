@@ -17,7 +17,7 @@ public class GenreService : IGenreService
     public async Task<ApiResponse<List<GenreDto>>> GetAllAsync()
     {
         var genres = await _genreRepository.GetAllAsync();
-        var dtos = genres.Select(x => x.MapToDto()).ToList();
+        var dtos = genres.Select(x => x.GenreMapToDto()).ToList();
 
         return ApiResponse<List<GenreDto>>.SuccessResponse(dtos);
     }
@@ -30,7 +30,7 @@ public class GenreService : IGenreService
             return ApiResponse<GenreDto>.NotFoundResponse(GenreException.GENRE_NOT_FOUND);
         }
 
-        var dto = genre.MapToDto();
+        var dto = genre.GenreMapToDto();
         return ApiResponse<GenreDto>.SuccessResponse(dto);
     }
 
@@ -42,7 +42,7 @@ public class GenreService : IGenreService
         };
 
         var created = await _genreRepository.CreateAsync(genre);
-        var dto = created.MapToDto();
+        var dto = created.GenreMapToDto();
 
         return ApiResponse<GenreDto>.SuccessResponse(dto, GenreException.GENRE_CREATED_SUCCESSFULLY, 201);
     }
@@ -61,7 +61,7 @@ public class GenreService : IGenreService
         };
 
         var updated = await _genreRepository.UpdateAsync(id, genre);
-        var dto = updated.MapToDto();
+        var dto = updated.GenreMapToDto();
 
         return ApiResponse<GenreDto>.SuccessResponse(dto, GenreException.GENRE_UPDATED_SUCCESSFULLY);
     }

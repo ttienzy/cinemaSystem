@@ -85,12 +85,10 @@ public class ShowtimeRepository : IShowtimeRepository
             .ToListAsync();
     }
 
-    public async Task<Showtime> CreateAsync(Showtime showtime)
+    public Task<Showtime> CreateAsync(Showtime showtime)
     {
         _context.Showtimes.Add(showtime);
-        await _context.SaveChangesAsync();
-
-        return await GetByIdAsync(showtime.Id) ?? showtime;
+        return Task.FromResult(showtime);
     }
 
     public async Task<Showtime?> UpdateAsync(Guid id, Showtime showtime)
@@ -98,13 +96,8 @@ public class ShowtimeRepository : IShowtimeRepository
         var existing = await _context.Showtimes.FindAsync(id);
         if (existing == null) return null;
 
-        existing.StartTime = showtime.StartTime;
-        existing.EndTime = showtime.EndTime;
-        existing.Price = showtime.Price;
-        existing.UpdatedAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
-        return await GetByIdAsync(id);
+        existing.UpdateSchedule(showtime.StartTime, showtime.GetDurationMinutes(), showtime.Price);
+        return existing;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
@@ -113,7 +106,6 @@ public class ShowtimeRepository : IShowtimeRepository
         if (showtime == null) return false;
 
         _context.Showtimes.Remove(showtime);
-        await _context.SaveChangesAsync();
         return true;
     }
 

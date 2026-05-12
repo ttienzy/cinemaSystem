@@ -50,13 +50,13 @@ public class MovieRepository : IMovieRepository
 
         if (existing == null) return null;
 
-        existing.Title = movie.Title;
-        existing.Description = movie.Description;
-        existing.Duration = movie.Duration;
-        existing.Language = movie.Language;
-        existing.ReleaseDate = movie.ReleaseDate;
-        existing.PosterUrl = movie.PosterUrl;
-        existing.UpdatedAt = DateTime.UtcNow;
+        existing.UpdateDetails(
+            movie.Title,
+            movie.Description,
+            movie.Duration,
+            movie.Language,
+            movie.ReleaseDate,
+            movie.PosterUrl);
 
         var requestedGenreIds = genreIds
             .Distinct()

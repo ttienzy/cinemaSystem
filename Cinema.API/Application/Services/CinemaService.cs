@@ -1,5 +1,7 @@
 using Cinema.API.Application.DTOs;
+using Cinema.API.Application.Mappers;
 using Cinema.API.Domain.Entities;
+using Cinema.API.Domain.Exceptions;
 using Cinema.API.Infrastructure.Persistence.Repositories;
 using Cinema.Shared.Models;
 using CinemaEntity = Cinema.API.Domain.Entities.Cinema;
@@ -23,7 +25,7 @@ public class CinemaService : ICinemaService
         var cinemas = allCinemas
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .Select(MapToDto)
+            .Select(cinema => cinema.CinemaMapToDto())
             .ToList();
 
         var paginatedResult = PaginatedResponse<CinemaDto>.Create(cinemas, totalCount, pageNumber, pageSize);
@@ -40,16 +42,12 @@ public class CinemaService : ICinemaService
     {
         var allCinemas = await _cinemaRepository.GetAllAsync();
 
-        if (!TryNormalizeCinemaStatus(status, out var normalizedStatus))
+        if (!CinemaEntity.TryNormalizeStatus(status, out var normalizedStatus))
         {
+            var value = CinemaException.INVALID_CINEMA_STATUS(string.Join(", ", CinemaStatuses.All));
             return ApiResponse<PaginatedResponse<CinemaAdminOverviewDto>>.ValidationErrorResponse(
-                "Validation failed",
-                [
-                    new ErrorDetail(
-                        "INVALID_CINEMA_STATUS",
-                        $"Status must be one of: {string.Join(", ", CinemaStatuses.All)}",
-                        "status")
-                ]);
+                CinemaException.VALIDATION_FAILED,
+                [new ErrorDetail(value.Item1, value.Item2, value.Item3)]);
         }
 
         var query = allCinemas.AsEnumerable();
@@ -70,7 +68,7 @@ public class CinemaService : ICinemaService
 
         if (normalizedStatus is not null)
         {
-            query = query.Where(cinema => DetermineCinemaStatus(cinema) == normalizedStatus);
+            query = query.Where(cinema => cinema.MatchesStatus(normalizedStatus));
         }
 
         var filteredCinemas = query
@@ -81,7 +79,7 @@ public class CinemaService : ICinemaService
         var items = filteredCinemas
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .Select(MapToAdminOverviewDto)
+            .Select(cinema => cinema.CinemaMapToAdminOverviewDto())
             .ToList();
 
         var paginatedResult = PaginatedResponse<CinemaAdminOverviewDto>.Create(items, totalCount, pageNumber, pageSize);
@@ -95,10 +93,10 @@ public class CinemaService : ICinemaService
         var summary = new CinemaAdminSummaryDto
         {
             TotalCinemas = allCinemas.Count,
-            ActiveCinemas = allCinemas.Count(cinema => DetermineCinemaStatus(cinema) == CinemaStatuses.Active),
-            InactiveCinemas = allCinemas.Count(cinema => DetermineCinemaStatus(cinema) == CinemaStatuses.Inactive),
-            TotalHalls = allCinemas.Sum(cinema => cinema.CinemaHalls.Count),
-            TotalSeats = allCinemas.Sum(cinema => cinema.CinemaHalls.Sum(hall => hall.TotalSeats))
+            ActiveCinemas = allCinemas.Count(cinema => cinema.MatchesStatus(CinemaStatuses.Active)),
+            InactiveCinemas = allCinemas.Count(cinema => cinema.MatchesStatus(CinemaStatuses.Inactive)),
+            TotalHalls = allCinemas.Sum(cinema => cinema.GetTotalHalls()),
+            TotalSeats = allCinemas.Sum(cinema => cinema.GetTotalSeats())
         };
 
         return ApiResponse<CinemaAdminSummaryDto>.SuccessResponse(summary);
@@ -109,26 +107,21 @@ public class CinemaService : ICinemaService
         var cinema = await _cinemaRepository.GetByIdAsync(id);
         if (cinema == null)
         {
-            return ApiResponse<CinemaDetailDto>.NotFoundResponse("Cinema not found");
+            return ApiResponse<CinemaDetailDto>.NotFoundResponse(CinemaException.CINEMA_NOT_FOUND);
         }
 
-        var dto = MapToDetailDto(cinema);
+        var dto = cinema.CinemaMapToDetailDto();
         return ApiResponse<CinemaDetailDto>.SuccessResponse(dto);
     }
 
     public async Task<ApiResponse<CinemaDto>> CreateAsync(CreateCinemaRequest request)
     {
-        var cinema = new CinemaEntity
-        {
-            Name = request.Name,
-            Address = request.Address,
-            City = request.City
-        };
+        var cinema = CinemaEntity.Create(request.Name, request.Address, request.City);
 
         var created = await _cinemaRepository.CreateAsync(cinema);
-        var dto = MapToDto(created);
+        var dto = created.CinemaMapToDto();
 
-        return ApiResponse<CinemaDto>.SuccessResponse(dto, "Cinema created successfully", 201);
+        return ApiResponse<CinemaDto>.SuccessResponse(dto, CinemaException.CINEMA_CREATED_SUCCESSFULLY, 201);
     }
 
     public async Task<ApiResponse<CinemaDto>> UpdateAsync(Guid id, CreateCinemaRequest request)
@@ -136,20 +129,16 @@ public class CinemaService : ICinemaService
         var existing = await _cinemaRepository.GetByIdAsync(id);
         if (existing == null)
         {
-            return ApiResponse<CinemaDto>.NotFoundResponse("Cinema not found");
+            return ApiResponse<CinemaDto>.NotFoundResponse(CinemaException.CINEMA_NOT_FOUND);
         }
 
-        var cinema = new CinemaEntity
-        {
-            Name = request.Name,
-            Address = request.Address,
-            City = request.City
-        };
+        var cinema = new CinemaEntity();
+        cinema.UpdateDetails(request.Name, request.Address, request.City);
 
         var updated = await _cinemaRepository.UpdateAsync(id, cinema);
-        var dto = MapToDto(updated!);
+        var dto = updated!.CinemaMapToDto();
 
-        return ApiResponse<CinemaDto>.SuccessResponse(dto, "Cinema updated successfully");
+        return ApiResponse<CinemaDto>.SuccessResponse(dto, CinemaException.CINEMA_UPDATED_SUCCESSFULLY);
     }
 
     public async Task<ApiResponse<bool>> DeleteAsync(Guid id)
@@ -157,113 +146,20 @@ public class CinemaService : ICinemaService
         var cinema = await _cinemaRepository.GetByIdAsync(id);
         if (cinema == null)
         {
-            return ApiResponse<bool>.NotFoundResponse("Cinema not found");
+            return ApiResponse<bool>.NotFoundResponse(CinemaException.CINEMA_NOT_FOUND);
         }
 
-        if (cinema.CinemaHalls.Any())
+        if (cinema.HasCinemaHalls())
         {
+            var value = CinemaException.CINEMA_HAS_HALLS;
             return ApiResponse<bool>.FailureResponse(
-                "Cannot delete cinema with existing halls",
+                CinemaException.CANNOT_DELETE_CINEMA_HAS_HALLS,
                 400,
-                new List<ErrorDetail>
-                {
-                    new ErrorDetail("CINEMA_HAS_HALLS", "This cinema has cinema halls", "CinemaId")
-                }
-            );
+                [new ErrorDetail(value.Item1, value.Item2, value.Item3)]);
         }
 
         var deleted = await _cinemaRepository.DeleteAsync(id);
-        return ApiResponse<bool>.SuccessResponse(deleted, "Cinema deleted successfully");
-    }
-
-    private CinemaDto MapToDto(CinemaEntity cinema)
-    {
-        return new CinemaDto
-        {
-            Id = cinema.Id,
-            Name = cinema.Name,
-            Address = cinema.Address,
-            City = cinema.City,
-            Status = DetermineCinemaStatus(cinema),
-            TotalHalls = cinema.CinemaHalls.Count,
-            TotalSeats = cinema.CinemaHalls.Sum(hall => hall.TotalSeats),
-            CreatedAt = cinema.CreatedAt
-        };
-    }
-
-    private CinemaDetailDto MapToDetailDto(CinemaEntity cinema)
-    {
-        return new CinemaDetailDto
-        {
-            Id = cinema.Id,
-            Name = cinema.Name,
-            Address = cinema.Address,
-            City = cinema.City,
-            Status = DetermineCinemaStatus(cinema),
-            TotalHalls = cinema.CinemaHalls.Count,
-            TotalSeats = cinema.CinemaHalls.Sum(hall => hall.TotalSeats),
-            CreatedAt = cinema.CreatedAt,
-            CinemaHalls = cinema.CinemaHalls.Select(MapHallToDto).ToList()
-        };
-    }
-
-    private CinemaAdminOverviewDto MapToAdminOverviewDto(CinemaEntity cinema)
-    {
-        return new CinemaAdminOverviewDto
-        {
-            Id = cinema.Id,
-            Name = cinema.Name,
-            Address = cinema.Address,
-            City = cinema.City,
-            Status = DetermineCinemaStatus(cinema),
-            TotalHalls = cinema.CinemaHalls.Count,
-            TotalSeats = cinema.CinemaHalls.Sum(hall => hall.TotalSeats),
-            CreatedAt = cinema.CreatedAt,
-            CinemaHalls = cinema.CinemaHalls
-                .OrderBy(hall => hall.Name)
-                .Select(MapHallToDto)
-                .ToList()
-        };
-    }
-
-    private static CinemaHallDto MapHallToDto(CinemaHall hall)
-    {
-        var seats = hall.Seats.ToList();
-
-        return new CinemaHallDto
-        {
-            Id = hall.Id,
-            CinemaId = hall.CinemaId,
-            Name = hall.Name,
-            TotalSeats = hall.TotalSeats,
-            CreatedAt = hall.CreatedAt
-        };
-    }
-
-    private static string DetermineCinemaStatus(CinemaEntity cinema)
-    {
-        return cinema.CinemaHalls.Any(hall => hall.Seats.Count > 0)
-            ? CinemaStatuses.Active
-            : CinemaStatuses.Inactive;
-    }
-
-    private static bool TryNormalizeCinemaStatus(string? status, out string? normalizedStatus)
-    {
-        normalizedStatus = null;
-
-        if (string.IsNullOrWhiteSpace(status))
-        {
-            return true;
-        }
-
-        normalizedStatus = status.Trim().ToLowerInvariant() switch
-        {
-            "active" => CinemaStatuses.Active,
-            "inactive" => CinemaStatuses.Inactive,
-            _ => null
-        };
-
-        return normalizedStatus is not null;
+        return ApiResponse<bool>.SuccessResponse(deleted, CinemaException.CINEMA_DELETED_SUCCESSFULLY);
     }
 }
 

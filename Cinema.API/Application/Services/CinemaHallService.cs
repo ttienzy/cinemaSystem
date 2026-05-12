@@ -1,5 +1,7 @@
 using Cinema.API.Application.DTOs;
+using Cinema.API.Application.Mappers;
 using Cinema.API.Domain.Entities;
+using Cinema.API.Domain.Exceptions;
 using Cinema.API.Infrastructure.Persistence.Repositories;
 using Cinema.Shared.Models;
 
@@ -21,11 +23,11 @@ public class CinemaHallService : ICinemaHallService
         var cinema = await _cinemaRepository.GetByIdAsync(cinemaId);
         if (cinema == null)
         {
-            return ApiResponse<List<CinemaHallDto>>.NotFoundResponse("Cinema not found");
+            return ApiResponse<List<CinemaHallDto>>.NotFoundResponse(CinemaException.CINEMA_NOT_FOUND);
         }
 
         var halls = await _hallRepository.GetByCinemaIdAsync(cinemaId);
-        var dtos = halls.Select(MapToDto).ToList();
+        var dtos = halls.Select(hall => hall.CinemaHallMapToDto()).ToList();
 
         return ApiResponse<List<CinemaHallDto>>.SuccessResponse(dtos);
     }
@@ -35,10 +37,10 @@ public class CinemaHallService : ICinemaHallService
         var hall = await _hallRepository.GetByIdAsync(id);
         if (hall == null)
         {
-            return ApiResponse<CinemaHallDetailDto>.NotFoundResponse("Cinema hall not found");
+            return ApiResponse<CinemaHallDetailDto>.NotFoundResponse(CinemaHallException.CINEMA_HALL_NOT_FOUND);
         }
 
-        var dto = MapToDetailDto(hall);
+        var dto = hall.CinemaHallMapToDetailDto();
         return ApiResponse<CinemaHallDetailDto>.SuccessResponse(dto);
     }
 
@@ -51,13 +53,14 @@ public class CinemaHallService : ICinemaHallService
 
         if (normalizedIds.Count == 0)
         {
+            var value = CinemaHallException.CINEMA_HALL_IDS_REQUIRED;
             return ApiResponse<List<CinemaHallDto>>.ValidationErrorResponse(
-                "Validation failed",
-                [new ErrorDetail("CINEMA_HALL_IDS_REQUIRED", "At least one cinema hall id is required", "CinemaHallIds")]);
+                CinemaHallException.VALIDATION_FAILED,
+                [new ErrorDetail(value.Item1, value.Item2, value.Item3)]);
         }
 
         var halls = await _hallRepository.GetByIdsAsync(normalizedIds);
-        var dtos = halls.Select(MapToDto).ToList();
+        var dtos = halls.Select(hall => hall.CinemaHallMapToDto()).ToList();
 
         return ApiResponse<List<CinemaHallDto>>.SuccessResponse(dtos);
     }
@@ -67,80 +70,30 @@ public class CinemaHallService : ICinemaHallService
         var hall = await _hallRepository.GetByIdAsync(hallId);
         if (hall == null)
         {
-            return ApiResponse<List<SeatDto>>.NotFoundResponse("Cinema hall not found");
+            return ApiResponse<List<SeatDto>>.NotFoundResponse(CinemaHallException.CINEMA_HALL_NOT_FOUND);
         }
 
         var seats = await _hallRepository.GetSeatsByHallIdAsync(hallId);
-        var dtos = seats.Select(MapSeatToDto).ToList();
+        var dtos = seats.Select(seat => seat.SeatMapToDto()).ToList();
 
         return ApiResponse<List<SeatDto>>.SuccessResponse(dtos);
     }
 
-    private CinemaHallDto MapToDto(CinemaHall hall)
-    {
-        var seats = hall.Seats.ToList();
-
-        return new CinemaHallDto
-        {
-            Id = hall.Id,
-            CinemaId = hall.CinemaId,
-            Name = hall.Name,
-            TotalSeats = hall.TotalSeats,
-            SeatMapConfigured = seats.Count > 0,
-            CreatedAt = hall.CreatedAt
-        };
-    }
-
-    private CinemaHallDetailDto MapToDetailDto(CinemaHall hall)
-    {
-        var hallDto = MapToDto(hall);
-
-        return new CinemaHallDetailDto
-        {
-            Id = hallDto.Id,
-            CinemaId = hallDto.CinemaId,
-            Name = hallDto.Name,
-            TotalSeats = hallDto.TotalSeats,
-            SeatMapConfigured = hallDto.SeatMapConfigured,
-            CreatedAt = hallDto.CreatedAt,
-            CinemaName = hall.Cinema?.Name ?? string.Empty,
-            Seats = hall.Seats.Select(MapSeatToDto).ToList()
-        };
-    }
-
-    private SeatDto MapSeatToDto(Seat seat)
-    {
-        return new SeatDto
-        {
-            Id = seat.Id,
-            CinemaHallId = seat.CinemaHallId,
-            Row = seat.Row,
-            Number = seat.Number,
-            DisplayName = $"{seat.Row}{seat.Number}",
-        };
-    }
-
     public async Task<ApiResponse<CinemaHallDto>> CreateAsync(CreateCinemaHallRequest request)
     {
-        // Validate cinema exists
         var cinema = await _cinemaRepository.GetByIdAsync(request.CinemaId);
         if (cinema == null)
         {
-            return ApiResponse<CinemaHallDto>.NotFoundResponse("Cinema not found");
+            return ApiResponse<CinemaHallDto>.NotFoundResponse(CinemaException.CINEMA_NOT_FOUND);
         }
 
-        var hall = new CinemaHall
-        {
-            CinemaId = request.CinemaId,
-            Name = request.Name,
-            TotalSeats = 0
-        };
+        var hall = CinemaHall.Create(request.CinemaId, request.Name);
 
         await _hallRepository.AddAsync(hall);
         await _hallRepository.SaveChangesAsync();
 
-        var dto = MapToDto(hall);
-        return ApiResponse<CinemaHallDto>.SuccessResponse(dto, "Cinema hall created successfully");
+        var dto = hall.CinemaHallMapToDto();
+        return ApiResponse<CinemaHallDto>.SuccessResponse(dto, CinemaHallException.CINEMA_HALL_CREATED_SUCCESSFULLY);
     }
 
     public async Task<ApiResponse<CinemaHallDto>> UpdateAsync(Guid id, UpdateCinemaHallRequest request)
@@ -148,17 +101,16 @@ public class CinemaHallService : ICinemaHallService
         var hall = await _hallRepository.GetByIdAsync(id);
         if (hall == null)
         {
-            return ApiResponse<CinemaHallDto>.NotFoundResponse("Cinema hall not found");
+            return ApiResponse<CinemaHallDto>.NotFoundResponse(CinemaHallException.CINEMA_HALL_NOT_FOUND);
         }
 
-        hall.Name = request.Name;
-        hall.UpdatedAt = DateTime.UtcNow;
+        hall.UpdateName(request.Name);
 
         _hallRepository.Update(hall);
         await _hallRepository.SaveChangesAsync();
 
-        var dto = MapToDto(hall);
-        return ApiResponse<CinemaHallDto>.SuccessResponse(dto, "Cinema hall updated successfully");
+        var dto = hall.CinemaHallMapToDto();
+        return ApiResponse<CinemaHallDto>.SuccessResponse(dto, CinemaHallException.CINEMA_HALL_UPDATED_SUCCESSFULLY);
     }
 
     public async Task<ApiResponse<bool>> DeleteAsync(Guid id)
@@ -166,24 +118,22 @@ public class CinemaHallService : ICinemaHallService
         var hall = await _hallRepository.GetByIdAsync(id);
         if (hall == null)
         {
-            return ApiResponse<bool>.NotFoundResponse("Cinema hall not found");
+            return ApiResponse<bool>.NotFoundResponse(CinemaHallException.CINEMA_HALL_NOT_FOUND);
         }
 
-        // Check if hall has seats
-        var seats = await _hallRepository.GetSeatsByHallIdAsync(id);
-        if (seats.Any())
+        if (hall.HasSeats())
         {
+            var value = CinemaHallException.HALL_HAS_SEATS;
             return ApiResponse<bool>.ValidationErrorResponse(
-                "Cannot delete cinema hall with existing seats",
-                [new ErrorDetail("HALL_HAS_SEATS", "Please delete all seats before deleting the hall", "CinemaHallId")]);
+                CinemaHallException.CANNOT_DELETE_CINEMA_HALL_WITH_SEATS,
+                [new ErrorDetail(value.Item1, value.Item2, value.Item3)]);
         }
 
         _hallRepository.Delete(hall);
         await _hallRepository.SaveChangesAsync();
 
-        return ApiResponse<bool>.SuccessResponse(true, "Cinema hall deleted successfully");
+        return ApiResponse<bool>.SuccessResponse(true, CinemaHallException.CINEMA_HALL_DELETED_SUCCESSFULLY);
     }
 
 }
-
 

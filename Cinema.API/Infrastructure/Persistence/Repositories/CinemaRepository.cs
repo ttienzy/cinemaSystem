@@ -43,10 +43,7 @@ public class CinemaRepository : ICinemaRepository
         var existing = await _context.Cinemas.FindAsync(id);
         if (existing == null) return null;
 
-        existing.Name = cinema.Name;
-        existing.Address = cinema.Address;
-        existing.City = cinema.City;
-        existing.UpdatedAt = DateTime.UtcNow;
+        existing.UpdateDetails(cinema.Name, cinema.Address, cinema.City);
 
         await _context.SaveChangesAsync();
         return existing;

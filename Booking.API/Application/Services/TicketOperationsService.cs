@@ -1,29 +1,25 @@
-using Booking.API.Application.DTOs.External;
-using Booking.API.Application.DTOs.Responses;
-using Booking.API.Domain.Entities;
 using Booking.API.Infrastructure.Integrations.Clients;
 using Booking.API.Infrastructure.Persistence.Repositories;
 using Cinema.Shared.Models;
-using BookingSeatResponseDto = Booking.API.Application.DTOs.Responses.BookingSeatDto;
 
 namespace Booking.API.Application.Services;
 
 public class TicketOperationsService : ITicketOperationsService
 {
     private readonly IBookingRepository _bookingRepository;
-    private readonly IExternalServiceClient _externalClient;
     private readonly PaymentApiClient _paymentApiClient;
+    private readonly ITicketOperationResponseFactory _ticketOperationResponseFactory;
     private readonly ILogger<TicketOperationsService> _logger;
 
     public TicketOperationsService(
         IBookingRepository bookingRepository,
-        IExternalServiceClient externalClient,
         PaymentApiClient paymentApiClient,
+        ITicketOperationResponseFactory ticketOperationResponseFactory,
         ILogger<TicketOperationsService> logger)
     {
         _bookingRepository = bookingRepository ?? throw new ArgumentNullException(nameof(bookingRepository));
-        _externalClient = externalClient ?? throw new ArgumentNullException(nameof(externalClient));
         _paymentApiClient = paymentApiClient ?? throw new ArgumentNullException(nameof(paymentApiClient));
+        _ticketOperationResponseFactory = ticketOperationResponseFactory ?? throw new ArgumentNullException(nameof(ticketOperationResponseFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -33,29 +29,21 @@ public class TicketOperationsService : ITicketOperationsService
         int pageSize)
     {
         var paymentPage = await _paymentApiClient.SearchPaymentsAsync(query, pageNumber, pageSize);
-        var bookingIds = paymentPage.Items.Select(x => x.BookingId).Distinct().ToList();
+        var bookingIds = paymentPage.Items
+            .Select(payment => payment.BookingId)
+            .Distinct()
+            .ToList();
 
         if (bookingIds.Count == 0)
         {
             return ApiResponse<PaginatedResponse<TicketOperationResponse>>.SuccessResponse(
                 PaginatedResponse<TicketOperationResponse>.Create([], 0, paymentPage.PageNumber, paymentPage.PageSize),
-                "No tickets found");
+                TicketOperationException.NO_TICKETS_FOUND);
         }
 
         var bookings = await _bookingRepository.GetByIdsWithSeatsAsync(bookingIds);
-        var bookingMap = bookings.ToDictionary(x => x.Id);
-
-        var items = new List<TicketOperationResponse>();
-        foreach (var payment in paymentPage.Items)
-        {
-            if (!bookingMap.TryGetValue(payment.BookingId, out var booking))
-            {
-                _logger.LogWarning("Payment {PaymentId} references missing booking {BookingId}", payment.PaymentId, payment.BookingId);
-                continue;
-            }
-
-            items.Add(await MapToTicketOperationResponseAsync(booking, payment));
-        }
+        var bookingMap = bookings.ToDictionary(booking => booking.Id);
+        var items = await BuildTicketResponsesAsync(paymentPage.Items, bookingMap);
 
         var response = PaginatedResponse<TicketOperationResponse>.Create(
             items,
@@ -65,7 +53,7 @@ public class TicketOperationsService : ITicketOperationsService
 
         return ApiResponse<PaginatedResponse<TicketOperationResponse>>.SuccessResponse(
             response,
-            $"Found {response.TotalCount} ticket(s)");
+            $"Found {response.TotalCount} {TicketOperationException.TICKETS_FOUND}");
     }
 
     public async Task<ApiResponse<TicketOperationResponse>> CheckInAsync(Guid bookingId, string staffUserId)
@@ -77,35 +65,10 @@ public class TicketOperationsService : ITicketOperationsService
         }
 
         var payment = await _paymentApiClient.GetPaymentByBookingIdAsync(bookingId);
-        if (payment == null)
+        var validationResult = ValidateCheckInEligibility(booking, payment);
+        if (validationResult != null)
         {
-            return ApiResponse<TicketOperationResponse>.FailureResponse(
-                "Payment information not found for this booking",
-                400);
-        }
-
-        if (booking.Status == BookingStatus.CheckedIn)
-        {
-            return ApiResponse<TicketOperationResponse>.FailureResponse(
-                "Ticket has already been checked in",
-                400,
-                [new ErrorDetail("ALREADY_CHECKED_IN", "Ticket has already been checked in")]);
-        }
-
-        if (booking.Status != BookingStatus.Confirmed)
-        {
-            return ApiResponse<TicketOperationResponse>.FailureResponse(
-                "Only paid bookings can be checked in",
-                400,
-                [new ErrorDetail("INVALID_BOOKING_STATUS", $"Current booking status is {booking.Status}")]);
-        }
-
-        if (payment.Status != PaymentLookupStatus.Completed)
-        {
-            return ApiResponse<TicketOperationResponse>.FailureResponse(
-                "Only paid tickets can be checked in",
-                400,
-                [new ErrorDetail("PAYMENT_NOT_COMPLETED", $"Current payment status is {payment.Status}")]);
+            return validationResult;
         }
 
         booking.Status = BookingStatus.CheckedIn;
@@ -115,85 +78,73 @@ public class TicketOperationsService : ITicketOperationsService
 
         _logger.LogInformation("Booking {BookingId} checked in by staff {StaffUserId}", bookingId, staffUserId);
 
-        var response = await MapToTicketOperationResponseAsync(booking, payment);
-        return ApiResponse<TicketOperationResponse>.SuccessResponse(response, "Ticket checked in successfully");
+        var response = await _ticketOperationResponseFactory.CreateAsync(booking, payment!);
+        return ApiResponse<TicketOperationResponse>.SuccessResponse(
+            response,
+            TicketOperationException.TICKET_CHECKED_IN_SUCCESSFULLY);
     }
 
-    private async Task<TicketOperationResponse> MapToTicketOperationResponseAsync(
-        Booking.API.Domain.Entities.Booking booking,
-        PaymentLookupDto payment)
+    private async Task<List<TicketOperationResponse>> BuildTicketResponsesAsync(
+        IReadOnlyCollection<PaymentLookupDto> payments,
+        IReadOnlyDictionary<Guid, Booking.API.Domain.Entities.Booking> bookingMap)
     {
-        var showtime = await _externalClient.GetShowtimeByIdAsync(booking.ShowtimeId);
-        ShowtimeDetailsDto? showtimeDetails = null;
-        var seats = new List<BookingSeatResponseDto>();
+        var items = new List<TicketOperationResponse>();
 
-        if (showtime != null)
+        foreach (var payment in payments)
         {
-            var movie = await _externalClient.GetMovieByIdAsync(showtime.MovieId);
-            var cinemaHall = await _externalClient.GetCinemaHallByIdAsync(showtime.CinemaHallId);
-            var hallSeats = await _externalClient.GetSeatsByCinemaHallIdAsync(showtime.CinemaHallId);
-
-            showtimeDetails = new ShowtimeDetailsDto
+            if (!bookingMap.TryGetValue(payment.BookingId, out var booking))
             {
-                ShowtimeId = showtime.Id,
-                MovieTitle = movie?.Title ?? "Unknown",
-                StartTime = showtime.StartTime,
-                EndTime = showtime.EndTime,
-                CinemaName = "Cinema",
-                CinemaHallName = cinemaHall?.Name ?? "Unknown"
-            };
+                _logger.LogWarning(
+                    "Payment {PaymentId} references missing booking {BookingId}",
+                    payment.PaymentId,
+                    payment.BookingId);
+                continue;
+            }
 
-            seats = booking.BookingSeats
-                .Select(bookingSeat =>
-                {
-                    var seat = hallSeats.FirstOrDefault(s => s.Id == bookingSeat.SeatId);
-                    return seat == null
-                        ? null
-                        : new BookingSeatResponseDto
-                        {
-                            SeatId = seat.Id,
-                            Row = seat.Row,
-                            Number = seat.Number,
-                            Price = bookingSeat.Price
-                        };
-                })
-                .Where(x => x != null)
-                .Cast<BookingSeatResponseDto>()
-                .ToList();
+            items.Add(await _ticketOperationResponseFactory.CreateAsync(booking, payment));
         }
 
-        return new TicketOperationResponse
-        {
-            BookingId = booking.Id,
-            TicketCode = payment.OrderInvoiceNumber,
-            CustomerName = payment.CustomerName,
-            CustomerEmail = payment.CustomerEmail,
-            CustomerPhone = payment.CustomerPhone,
-            BookingStatus = booking.Status,
-            PaymentStatus = payment.Status,
-            OperationalStatus = MapOperationalStatus(booking.Status, payment.Status),
-            CanCheckIn = booking.Status == BookingStatus.Confirmed && payment.Status == PaymentLookupStatus.Completed,
-            TotalPrice = booking.TotalPrice,
-            BookingDate = booking.BookingDate,
-            PaidAt = payment.CompletedAt,
-            CheckedInAt = booking.Status == BookingStatus.CheckedIn ? booking.UpdatedAt : null,
-            Seats = seats,
-            ShowtimeDetails = showtimeDetails
-        };
+        return items;
     }
 
-    private static string MapOperationalStatus(BookingStatus bookingStatus, PaymentLookupStatus paymentStatus)
+    private static ApiResponse<TicketOperationResponse>? ValidateCheckInEligibility(
+        Booking.API.Domain.Entities.Booking booking,
+        PaymentLookupDto? payment)
     {
-        return bookingStatus switch
+        if (payment == null)
         {
-            BookingStatus.CheckedIn => "CheckedIn",
-            BookingStatus.Cancelled => paymentStatus == PaymentLookupStatus.Refunded ? "Refunded" : "Cancelled",
-            BookingStatus.Expired => "Expired",
-            BookingStatus.Confirmed when paymentStatus == PaymentLookupStatus.Completed => "Paid",
-            BookingStatus.Pending when paymentStatus == PaymentLookupStatus.Processing => "ProcessingPayment",
-            BookingStatus.Pending when paymentStatus == PaymentLookupStatus.Failed => "PaymentFailed",
-            BookingStatus.Pending when paymentStatus == PaymentLookupStatus.Cancelled => "PaymentCancelled",
-            _ => bookingStatus.ToString()
-        };
+            return ApiResponse<TicketOperationResponse>.FailureResponse(
+                TicketOperationException.PAYMENT_NOT_FOUND_FOR_BOOKING,
+                400);
+        }
+
+        if (booking.Status == BookingStatus.CheckedIn)
+        {
+            var value = TicketOperationException.ALREADY_CHECKED_IN;
+            return ApiResponse<TicketOperationResponse>.FailureResponse(
+                TicketOperationException.ALREADY_CHECKED_IN_MESSAGE,
+                400,
+                [new ErrorDetail(value.Code, value.Message, value.Field)]);
+        }
+
+        if (booking.Status != BookingStatus.Confirmed)
+        {
+            var value = TicketOperationException.INVALID_BOOKING_STATUS(booking.Status);
+            return ApiResponse<TicketOperationResponse>.FailureResponse(
+                TicketOperationException.INVALID_BOOKING_STATUS_MESSAGE,
+                400,
+                [new ErrorDetail(value.Code, value.Message, value.Field)]);
+        }
+
+        if (payment.Status != PaymentLookupStatus.Completed)
+        {
+            var value = TicketOperationException.PAYMENT_NOT_COMPLETED(payment.Status);
+            return ApiResponse<TicketOperationResponse>.FailureResponse(
+                TicketOperationException.PAYMENT_NOT_COMPLETED_MESSAGE,
+                400,
+                [new ErrorDetail(value.Code, value.Message, value.Field)]);
+        }
+
+        return null;
     }
 }

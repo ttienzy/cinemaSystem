@@ -10,6 +10,7 @@ public static class DependencyInjection
         services.AddScoped<IBookingAnalyticsService, BookingAnalyticsService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<ITicketOperationsService, TicketOperationsService>();
+        services.AddScoped<ITicketOperationResponseFactory, TicketOperationResponseFactory>();
 
         return services;
     }

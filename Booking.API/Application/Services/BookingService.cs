@@ -1,232 +1,119 @@
 using Booking.API.Application.DTOs.Requests;
 using Booking.API.Application.DTOs.Responses;
-using Booking.API.Domain.Entities;
 using Booking.API.Infrastructure.Persistence.Repositories;
-using BookingSeatResponseDto = Booking.API.Application.DTOs.Responses.BookingSeatDto;
 using Cinema.EventBus.Abstractions;
 using Cinema.EventBus.Events;
 using Cinema.Shared.Models;
+using BookingEntity = Booking.API.Domain.Entities.Booking;
 
 namespace Booking.API.Application.Services;
 
 /// <summary>
-/// Orchestration service that coordinates booking operations
+/// Orchestration service for booking operations
+/// Coordinates domain state transitions, persistence, external seat state and integration events.
 /// </summary>
 public class BookingService : IBookingService
 {
+    private const int DefaultBookingExpirationMinutes = 10;
+    private const int DefaultPaymentCreationMaxRetries = 8;
+    private const int DefaultPaymentCreationInitialDelayMs = 200;
+
     private readonly IBookingRepository _bookingRepository;
+    private readonly IBookingCreationPreparationService _bookingCreationPreparationService;
+    private readonly IBookingResponseFactory _bookingResponseFactory;
     private readonly ISeatStatusService _seatStatusService;
-    private readonly IExternalServiceClient _externalClient;
     private readonly PaymentApiClient _paymentApiClient;
     private readonly IEventBus _eventBus;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<BookingService> _logger;
     private readonly IConfiguration _configuration;
 
     public BookingService(
         IBookingRepository bookingRepository,
+        IBookingCreationPreparationService bookingCreationPreparationService,
+        IBookingResponseFactory bookingResponseFactory,
         ISeatStatusService seatStatusService,
-        IExternalServiceClient externalClient,
         PaymentApiClient paymentApiClient,
         IEventBus eventBus,
+        IUnitOfWork unitOfWork,
         ILogger<BookingService> logger,
         IConfiguration configuration)
     {
         _bookingRepository = bookingRepository ?? throw new ArgumentNullException(nameof(bookingRepository));
+        _bookingCreationPreparationService = bookingCreationPreparationService ?? throw new ArgumentNullException(nameof(bookingCreationPreparationService));
+        _bookingResponseFactory = bookingResponseFactory ?? throw new ArgumentNullException(nameof(bookingResponseFactory));
         _seatStatusService = seatStatusService ?? throw new ArgumentNullException(nameof(seatStatusService));
-        _externalClient = externalClient ?? throw new ArgumentNullException(nameof(externalClient));
         _paymentApiClient = paymentApiClient ?? throw new ArgumentNullException(nameof(paymentApiClient));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     public async Task<ApiResponse<BookingResponse>> CreateBookingAsync(CreateBookingRequest request)
     {
-        _logger.LogInformation("Creating booking for user {UserId}, showtime {ShowtimeId}, seats: {SeatCount}",
-            request.UserId, request.ShowtimeId, request.SeatIds.Count);
+        _logger.LogInformation(
+            "Creating booking for user {UserId}, showtime {ShowtimeId}, seats: {SeatCount}",
+            request.UserId,
+            request.ShowtimeId,
+            request.SeatIds.Count);
 
-        // 1. Validate business rules
-        var validationResult = await ValidateBookingRequestAsync(request);
-        if (!validationResult.Success)
+        var preparation = await _bookingCreationPreparationService.PrepareAsync(request);
+        if (!preparation.Success)
         {
-            return validationResult;
+            return preparation.FailureResponse!;
         }
 
-        // 2. Get showtime info from Movie.API
-        var showtime = await _externalClient.GetShowtimeByIdAsync(request.ShowtimeId);
-        if (showtime == null)
-        {
-            return ApiResponse<BookingResponse>.NotFoundResponse(
-                $"Showtime {request.ShowtimeId} not found"
-            );
-        }
-
-        // Check if showtime is still active
-        if (!showtime.IsActive || showtime.StartTime < DateTime.UtcNow)
-        {
-            return ApiResponse<BookingResponse>.FailureResponse(
-                "Showtime is no longer available for booking",
-                400,
-                new List<ErrorDetail>
-                {
-                    new("SHOWTIME_INACTIVE", "Showtime is no longer available")
-                }
-            );
-        }
-
-        // 3. Get seat details from Cinema.API
-        var seats = await _externalClient.GetSeatsByCinemaHallIdAsync(showtime.CinemaHallId);
-        var selectedSeats = seats.Where(s => request.SeatIds.Contains(s.Id)).ToList();
-
-        if (selectedSeats.Count != request.SeatIds.Count)
-        {
-            return ApiResponse<BookingResponse>.FailureResponse(
-                "Some selected seats do not exist",
-                400,
-                new List<ErrorDetail>
-                {
-                    new("INVALID_SEATS", "Some selected seats do not exist")
-                }
-            );
-        }
-
-        // 4. Verify locked seats and mark as booked atomically
-        // Note: Seats should already be locked by the user from the seat selection step
-        // This verifies the lock is still valid and marks them as booked
         var bookingId = Guid.NewGuid();
-        var bookingResult = await _seatStatusService.VerifyAndMarkAsBookedAsync(
+        var seatBookingResult = await _seatStatusService.VerifyAndMarkAsBookedAsync(
             request.ShowtimeId,
             request.SeatIds,
             request.UserId,
-            bookingId
-        );
+            bookingId);
 
-        if (!bookingResult.Success)
+        if (!seatBookingResult.Success)
         {
-            var errorCode = bookingResult.FailureReason switch
-            {
-                SeatBookingFailureReason.NotLocked => "SEATS_NOT_LOCKED",
-                SeatBookingFailureReason.LockExpired => "LOCK_EXPIRED",
-                SeatBookingFailureReason.WrongUser => "SEATS_LOCKED_BY_OTHER_USER",
-                SeatBookingFailureReason.AlreadyBooked => "SEATS_ALREADY_BOOKED",
-                _ => "SEATS_UNAVAILABLE"
-            };
-
-            var statusCode = bookingResult.FailureReason == SeatBookingFailureReason.LockExpired ? 410 : 409;
-
-            return ApiResponse<BookingResponse>.FailureResponse(
-                bookingResult.Message ?? "Cannot book seats",
-                statusCode,
-                new List<ErrorDetail>
-                {
-                    new(errorCode, bookingResult.Message ?? "Seats are not available for booking")
-                }
-            );
+            return BuildSeatBookingFailureResponse(seatBookingResult);
         }
 
-        // 5. Calculate total price
-        //var totalPrice = selectedSeats.Sum(s => s.);
-
-        // 6. Create booking in database
-        var expirationMinutes = _configuration.GetValue<int>("Booking:ExpirationMinutes", 10);
-        var booking = new Booking.API.Domain.Entities.Booking
-        {
-            Id = bookingId, // Use the same ID from verification step
-            UserId = request.UserId,
-            ShowtimeId = request.ShowtimeId,
-            TotalPrice = 0,
-            Status = BookingStatus.Pending,
-            BookingDate = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes),
-            BookingSeats = selectedSeats.Select(s => new BookingSeat
-            {
-                Id = Guid.NewGuid(),
-                SeatId = s.Id,
-                Price = showtime.Price
-            }).ToList()
-        };
-        var totalPrice = booking.BookingSeats.Sum(bs => bs.Price);
-        booking.TotalPrice = totalPrice;
+        var nowUtc = DateTime.UtcNow;
+        var booking = BookingEntity.CreatePending(
+            bookingId,
+            request.UserId,
+            request.ShowtimeId,
+            preparation.SelectedSeats.Select(seat => seat.Id),
+            preparation.Showtime!.Price,
+            nowUtc,
+            nowUtc.AddMinutes(GetBookingExpirationMinutes()));
 
         try
         {
-            await _bookingRepository.CreateAsync(booking);
-
-            // 7. Seats are already marked as booked in step 4 (VerifyAndMarkAsBookedAsync)
-            // No need to call MarkSeatsAsBookedAsync again
-
-            // 8. Publish integration event
-            var integrationEvent = new BookingCreatedIntegrationEvent(
-                booking.Id,
-                booking.UserId,
-                booking.ShowtimeId,
-                request.SeatIds,
-                totalPrice,
-                booking.BookingDate,
-                request.ContactEmail,
-                request.ContactPhone,
-                request.ContactName
-            );
-
-            _eventBus.Publish(integrationEvent);
-
-            _logger.LogInformation("Booking {BookingId} created successfully", booking.Id);
-
-            // 9. Wait for Payment.API to create payment record (via event handler)
-            // Reduced retries to prevent gateway timeout (5s → 35s gateway timeout)
-            _logger.LogInformation("Waiting for payment creation for booking {BookingId}", booking.Id);
-
-            var paymentCheckout = await _paymentApiClient.WaitForPaymentCreationAsync(
-                booking.Id,
-                maxRetries: 8,  // ✅ Reduced from 15 to 8 (max ~6 seconds total)
-                initialDelayMs: 200  // ✅ Increased from 100ms to 200ms for better event processing
-            );
-
-            // 10. Return response with payment checkout info
-            var response = await MapToBookingResponseAsync(booking);
-
-            if (paymentCheckout != null)
+            await ExecuteInTransactionAsync(nameof(CreateBookingAsync), async () =>
             {
-                response.PaymentId = paymentCheckout.PaymentId;
-                response.CheckoutUrl = paymentCheckout.CheckoutUrl;
-
-                _logger.LogInformation(
-                    "Booking {BookingId} created with payment {PaymentId}, checkout URL: {CheckoutUrl}",
-                    booking.Id, paymentCheckout.PaymentId, paymentCheckout.CheckoutUrl);
-            }
-            else
-            {
-                _logger.LogWarning(
-                    "Booking {BookingId} created but payment was not ready in time. Client should poll for payment.",
-                    booking.Id);
-            }
-
-            return ApiResponse<BookingResponse>.SuccessResponse(
-                response,
-                "Booking created successfully",
-                201
-            );
+                await _bookingRepository.CreateAsync(booking);
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating booking, rolling back seats to available");
+            _logger.LogError(ex, "Error creating booking record {BookingId}, releasing seats", booking.Id);
+            await TryReleaseSeatsAsync(request.ShowtimeId, request.SeatIds, nameof(CreateBookingAsync));
 
-            // Rollback: release booked seats back to available
-            // Note: Seats were already marked as booked in step 4, so we need to release them
-            await _seatStatusService.ReleaseBookedSeatsAsync(
-                request.ShowtimeId,
-                request.SeatIds
-            );
-
+            var value = BookingException.DATABASE_ERROR(ex.Message);
             return ApiResponse<BookingResponse>.FailureResponse(
-                "Failed to create booking due to system error",
+                BookingException.BOOKING_CREATION_FAILED,
                 500,
-                new List<ErrorDetail>
-                {
-                    new("DATABASE_ERROR", ex.Message)
-                }
-            );
+                [new ErrorDetail(value.Code, value.Message, value.Field)]);
         }
+
+        _logger.LogInformation("Booking {BookingId} created successfully", booking.Id);
+
+        var paymentCheckout = await TryCreatePaymentCheckoutAsync(booking, request);
+        var response = await _bookingResponseFactory.CreateAsync(booking, paymentCheckout);
+
+        return ApiResponse<BookingResponse>.SuccessResponse(
+            response,
+            BookingException.BOOKING_CREATED_SUCCESSFULLY,
+            201);
     }
 
     public async Task<ApiResponse<BookingResponse>> GetBookingByIdAsync(Guid bookingId)
@@ -237,11 +124,10 @@ public class BookingService : IBookingService
         if (booking == null)
         {
             return ApiResponse<BookingResponse>.NotFoundResponse(
-                $"Booking {bookingId} not found"
-            );
+                BookingException.BOOKING_NOT_FOUND(bookingId));
         }
 
-        var response = await MapToBookingResponseAsync(booking);
+        var response = await _bookingResponseFactory.CreateAsync(booking);
         return ApiResponse<BookingResponse>.SuccessResponse(response);
     }
 
@@ -250,119 +136,108 @@ public class BookingService : IBookingService
         _logger.LogInformation("Getting bookings for user {UserId}", userId);
 
         var bookings = await _bookingRepository.GetByUserIdAsync(userId);
-
         var responses = new List<BookingResponse>();
+
         foreach (var booking in bookings)
         {
-            responses.Add(await MapToBookingResponseAsync(booking));
+            responses.Add(await _bookingResponseFactory.CreateAsync(booking));
         }
 
         return ApiResponse<List<BookingResponse>>.SuccessResponse(
             responses,
-            $"Found {responses.Count} bookings"
-        );
+            BookingException.USER_BOOKINGS_FOUND(responses.Count));
     }
 
     public async Task<ApiResponse> CancelBookingAsync(Guid bookingId, CancelBookingRequest request)
     {
-        _logger.LogInformation("Cancelling booking {BookingId} by user {UserId}",
-            bookingId, request.UserId);
+        _logger.LogInformation(
+            "Cancelling booking {BookingId} by user {UserId}",
+            bookingId,
+            request.UserId);
 
         var booking = await _bookingRepository.GetByIdWithSeatsAsync(bookingId);
         if (booking == null)
         {
-            return ApiResponse.NotFoundResponse($"Booking {bookingId} not found");
+            return ApiResponse.NotFoundResponse(BookingException.BOOKING_NOT_FOUND(bookingId));
         }
 
-        // Verify ownership
-        if (booking.UserId != request.UserId)
+        if (!booking.IsOwnedBy(request.UserId))
         {
-            return ApiResponse.UnauthorizedResponse("You can only cancel your own bookings");
+            return ApiResponse.UnauthorizedResponse(BookingException.UNAUTHORIZED_CANCELLATION);
         }
 
-        // Check if can be cancelled
-        if (booking.Status == BookingStatus.Cancelled)
+        var validationResponse = ValidateCancellation(booking);
+        if (validationResponse != null)
         {
-            return ApiResponse.FailureResponse(
-                "Booking is already cancelled",
-                400,
-                new List<ErrorDetail>
-                {
-                    new("ALREADY_CANCELLED", "Booking is already cancelled")
-                }
-            );
+            return validationResponse;
         }
 
-        if (booking.Status == BookingStatus.Expired)
+        var seatIds = booking.GetSeatIds();
+        var needsRefund = booking.NeedsRefundOnCancellation();
+
+        try
         {
-            return ApiResponse.FailureResponse(
-                "Booking has expired",
-                400,
-                new List<ErrorDetail>
-                {
-                    new("BOOKING_EXPIRED", "Cannot cancel expired booking")
-                }
-            );
+            await ExecuteInTransactionAsync(nameof(CancelBookingAsync), async () =>
+            {
+                booking.MarkCancelled(DateTime.UtcNow);
+                await _bookingRepository.UpdateAsync(booking);
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cancelling booking {BookingId}", bookingId);
+            return ApiResponse.InternalServerErrorResponse(BookingException.BOOKING_CANCELLATION_FAILED);
         }
 
-        // Update booking status
-        booking.Status = BookingStatus.Cancelled;
-        booking.UpdatedAt = DateTime.UtcNow;
-        await _bookingRepository.UpdateAsync(booking);
-
-        // Release seats in Redis
-        var seatIds = booking.BookingSeats.Select(bs => bs.SeatId).ToList();
-        await _seatStatusService.ReleaseBookedSeatsAsync(booking.ShowtimeId, seatIds);
-
-        // Publish cancellation event (for refund processing if confirmed)
-        var cancellationEvent = new BookingCancelledIntegrationEvent(
-            booking.Id,
-            booking.UserId,
-            booking.ShowtimeId,
+        await TryReleaseSeatsAsync(booking.ShowtimeId, seatIds, nameof(CancelBookingAsync));
+        TryPublishBookingCancelledEvent(
+            booking,
             seatIds,
-            booking.Status == BookingStatus.Confirmed, // needsRefund
-            request.CancellationReason ?? "User cancelled"
-        );
-
-        _eventBus.Publish(cancellationEvent);
+            needsRefund,
+            request.CancellationReason ?? BookingException.USER_CANCELLED_REASON);
 
         _logger.LogInformation("Booking {BookingId} cancelled successfully", bookingId);
-
-        return ApiResponse.SuccessResponse("Booking cancelled successfully");
+        return ApiResponse.SuccessResponse(BookingException.BOOKING_CANCELLED_SUCCESSFULLY);
     }
 
     public async Task<ApiResponse> ConfirmBookingAsync(Guid bookingId, string transactionId)
     {
-        _logger.LogInformation("Confirming booking {BookingId} with transaction {TransactionId}",
-            bookingId, transactionId);
+        _logger.LogInformation(
+            "Confirming booking {BookingId} with transaction {TransactionId}",
+            bookingId,
+            transactionId);
 
         var booking = await _bookingRepository.GetByIdAsync(bookingId);
         if (booking == null)
         {
-            return ApiResponse.NotFoundResponse($"Booking {bookingId} not found");
+            return ApiResponse.NotFoundResponse(BookingException.BOOKING_NOT_FOUND(bookingId));
         }
 
-        if (booking.Status != BookingStatus.Pending)
+        if (!booking.IsPending())
         {
+            var value = BookingException.INVALID_CONFIRM_STATUS(booking.Status);
             return ApiResponse.FailureResponse(
-                $"Booking is not in Pending status (current: {booking.Status})",
+                BookingException.INVALID_CONFIRM_STATUS_MESSAGE(booking.Status),
                 400,
-                new List<ErrorDetail>
-                {
-                    new("INVALID_STATUS", $"Cannot confirm booking with status {booking.Status}")
-                }
-            );
+                [new ErrorDetail(value.Code, value.Message, value.Field)]);
         }
 
-        // Update booking status
-        booking.Status = BookingStatus.Confirmed;
-        booking.ExpiresAt = null; // No longer expires
-        booking.UpdatedAt = DateTime.UtcNow;
-        await _bookingRepository.UpdateAsync(booking);
+        try
+        {
+            await ExecuteInTransactionAsync(nameof(ConfirmBookingAsync), async () =>
+            {
+                booking.MarkConfirmed(DateTime.UtcNow);
+                await _bookingRepository.UpdateAsync(booking);
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error confirming booking {BookingId}", bookingId);
+            return ApiResponse.InternalServerErrorResponse(BookingException.BOOKING_CONFIRMATION_FAILED);
+        }
 
         _logger.LogInformation("Booking {BookingId} confirmed successfully", bookingId);
-
-        return ApiResponse.SuccessResponse("Booking confirmed successfully");
+        return ApiResponse.SuccessResponse(BookingException.BOOKING_CONFIRMED_SUCCESSFULLY);
     }
 
     public async Task<ApiResponse> ExpireBookingAsync(Guid bookingId)
@@ -372,153 +247,249 @@ public class BookingService : IBookingService
         var booking = await _bookingRepository.GetByIdWithSeatsAsync(bookingId);
         if (booking == null)
         {
-            return ApiResponse.NotFoundResponse($"Booking {bookingId} not found");
+            return ApiResponse.NotFoundResponse(BookingException.BOOKING_NOT_FOUND(bookingId));
         }
 
-        if (booking.Status != BookingStatus.Pending)
+        if (!booking.IsPending())
         {
-            _logger.LogWarning("Cannot expire booking {BookingId} - status is {Status}",
-                bookingId, booking.Status);
+            _logger.LogWarning("Cannot expire booking {BookingId} - status is {Status}", bookingId, booking.Status);
 
+            var value = BookingException.ONLY_PENDING_CAN_EXPIRE;
             return ApiResponse.FailureResponse(
-                $"Cannot expire booking with status {booking.Status}",
+                BookingException.INVALID_EXPIRE_STATUS_MESSAGE(booking.Status),
                 400,
-                new List<ErrorDetail>
-                {
-                    new("INVALID_STATUS", "Only pending bookings can be expired")
-                }
-            );
+                [new ErrorDetail(value.Code, value.Message, value.Field)]);
         }
 
-        // Update booking status
-        booking.Status = BookingStatus.Expired;
-        booking.UpdatedAt = DateTime.UtcNow;
-        await _bookingRepository.UpdateAsync(booking);
+        var seatIds = booking.GetSeatIds();
 
-        // Release seats in Redis
-        var seatIds = booking.BookingSeats.Select(bs => bs.SeatId).ToList();
-        await _seatStatusService.ReleaseBookedSeatsAsync(booking.ShowtimeId, seatIds);
+        try
+        {
+            await ExecuteInTransactionAsync(nameof(ExpireBookingAsync), async () =>
+            {
+                booking.MarkExpired(DateTime.UtcNow);
+                await _bookingRepository.UpdateAsync(booking);
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error expiring booking {BookingId}", bookingId);
+            return ApiResponse.InternalServerErrorResponse(BookingException.BOOKING_EXPIRATION_FAILED);
+        }
 
-        // Publish expiration event
-        var expirationEvent = new BookingExpiredIntegrationEvent(
-            booking.Id,
-            booking.ShowtimeId,
-            seatIds,
-            DateTime.UtcNow
-        );
-
-        _eventBus.Publish(expirationEvent);
+        await TryReleaseSeatsAsync(booking.ShowtimeId, seatIds, nameof(ExpireBookingAsync));
+        TryPublishBookingExpiredEvent(booking, seatIds);
 
         _logger.LogInformation("Booking {BookingId} expired successfully", bookingId);
-
-        return ApiResponse.SuccessResponse("Booking expired successfully");
+        return ApiResponse.SuccessResponse(BookingException.BOOKING_EXPIRED_SUCCESSFULLY);
     }
 
-    // Private helper methods
-    private async Task<ApiResponse<BookingResponse>> ValidateBookingRequestAsync(CreateBookingRequest request)
+    private ApiResponse<BookingResponse> BuildSeatBookingFailureResponse(SeatBookingResult bookingResult)
     {
-        var errors = new List<ErrorDetail>();
-
-        // Check max seats per booking
-        var maxSeats = _configuration.GetValue<int>("Booking:MaxSeatsPerBooking", 10);
-        if (request.SeatIds.Count > maxSeats)
+        var errorCode = bookingResult.FailureReason switch
         {
-            errors.Add(new ErrorDetail(
-                "MAX_SEATS_EXCEEDED",
-                $"Cannot book more than {maxSeats} seats at once",
-                "SeatIds"
-            ));
-        }
-
-        if (request.SeatIds.Count == 0)
-        {
-            errors.Add(new ErrorDetail(
-                "SEATS_REQUIRED",
-                "At least one seat must be selected",
-                "SeatIds"
-            ));
-        }
-
-        // Check minimum time before showtime
-        var showtime = await _externalClient.GetShowtimeByIdAsync(request.ShowtimeId);
-        if (showtime != null)
-        {
-            var minMinutes = _configuration.GetValue<int>("Booking:MinutesBeforeShowtimeToBook", 30);
-            var minBookingTime = showtime.StartTime.AddMinutes(-minMinutes);
-
-            if (DateTime.UtcNow > minBookingTime)
-            {
-                errors.Add(new ErrorDetail(
-                    "TOO_LATE_TO_BOOK",
-                    $"Cannot book seats less than {minMinutes} minutes before showtime",
-                    "ShowtimeId"
-                ));
-            }
-        }
-
-        if (errors.Any())
-        {
-            return ApiResponse<BookingResponse>.ValidationErrorResponse("Validation failed", errors);
-        }
-
-        return ApiResponse<BookingResponse>.SuccessResponse(null!, "Validation passed");
-    }
-
-    private async Task<BookingResponse> MapToBookingResponseAsync(Booking.API.Domain.Entities.Booking booking)
-    {
-        // Get showtime details
-        var showtime = await _externalClient.GetShowtimeByIdAsync(booking.ShowtimeId);
-        ShowtimeDetailsDto? showtimeDetails = null;
-
-        if (showtime != null)
-        {
-            var movie = await _externalClient.GetMovieByIdAsync(showtime.MovieId);
-            var cinemaHall = await _externalClient.GetCinemaHallByIdAsync(showtime.CinemaHallId);
-
-            showtimeDetails = new ShowtimeDetailsDto
-            {
-                ShowtimeId = showtime.Id,
-                MovieTitle = movie?.Title ?? "Unknown",
-                StartTime = showtime.StartTime,
-                EndTime = showtime.EndTime,
-                CinemaHallName = cinemaHall?.Name ?? "Unknown"
-            };
-        }
-
-        // Get seat details
-        var seatDtos = new List<BookingSeatResponseDto>();
-        if (showtime != null)
-        {
-            var seats = await _externalClient.GetSeatsByCinemaHallIdAsync(showtime.CinemaHallId);
-            foreach (var bookingSeat in booking.BookingSeats)
-            {
-                var seat = seats.FirstOrDefault(s => s.Id == bookingSeat.SeatId);
-                if (seat != null)
-                {
-                    seatDtos.Add(new BookingSeatResponseDto
-                    {
-                        SeatId = seat.Id,
-                        Row = seat.Row,
-                        Number = seat.Number,
-                        Price = bookingSeat.Price
-                    });
-                }
-            }
-        }
-
-        return new BookingResponse
-        {
-            BookingId = booking.Id,
-            UserId = booking.UserId,
-            ShowtimeId = booking.ShowtimeId,
-            Status = booking.Status,
-            TotalPrice = booking.TotalPrice,
-            BookingDate = booking.BookingDate,
-            ExpiresAt = booking.ExpiresAt,
-            Seats = seatDtos,
-            ShowtimeDetails = showtimeDetails
+            SeatBookingFailureReason.NotLocked => "SEATS_NOT_LOCKED",
+            SeatBookingFailureReason.LockExpired => "LOCK_EXPIRED",
+            SeatBookingFailureReason.WrongUser => "SEATS_LOCKED_BY_OTHER_USER",
+            SeatBookingFailureReason.AlreadyBooked => "SEATS_ALREADY_BOOKED",
+            _ => "SEATS_UNAVAILABLE"
         };
+
+        var statusCode = bookingResult.FailureReason == SeatBookingFailureReason.LockExpired ? 410 : 409;
+        var message = bookingResult.Message ?? "Cannot book seats";
+
+        return ApiResponse<BookingResponse>.FailureResponse(
+            message,
+            statusCode,
+            [new ErrorDetail(errorCode, bookingResult.Message ?? "Seats are not available for booking", "SeatIds")]);
+    }
+
+    private static ApiResponse? ValidateCancellation(BookingEntity booking)
+    {
+        if (booking.IsCancelled())
+        {
+            var value = BookingException.ALREADY_CANCELLED;
+            return ApiResponse.FailureResponse(
+                BookingException.ALREADY_CANCELLED_MESSAGE,
+                400,
+                [new ErrorDetail(value.Code, value.Message, value.Field)]);
+        }
+
+        if (booking.IsExpired())
+        {
+            var value = BookingException.BOOKING_EXPIRED;
+            return ApiResponse.FailureResponse(
+                BookingException.BOOKING_EXPIRED_MESSAGE,
+                400,
+                [new ErrorDetail(value.Code, value.Message, value.Field)]);
+        }
+
+        return null;
+    }
+
+    private async Task<PaymentCheckoutDto?> TryCreatePaymentCheckoutAsync(
+        BookingEntity booking,
+        CreateBookingRequest request)
+    {
+        try
+        {
+            _eventBus.Publish(new BookingCreatedIntegrationEvent(
+                booking.Id,
+                booking.UserId,
+                booking.ShowtimeId,
+                booking.GetSeatIds(),
+                booking.TotalPrice,
+                booking.BookingDate,
+                request.ContactEmail,
+                request.ContactPhone,
+                request.ContactName));
+
+            _logger.LogInformation("Waiting for payment creation for booking {BookingId}", booking.Id);
+
+            var paymentCheckout = await _paymentApiClient.WaitForPaymentCreationAsync(
+                booking.Id,
+                maxRetries: GetPaymentCreationMaxRetries(),
+                initialDelayMs: GetPaymentCreationInitialDelayMs());
+
+            if (paymentCheckout != null)
+            {
+                _logger.LogInformation(
+                    "Booking {BookingId} created with payment {PaymentId}, checkout URL: {CheckoutUrl}",
+                    booking.Id,
+                    paymentCheckout.PaymentId,
+                    paymentCheckout.CheckoutUrl);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Booking {BookingId} created but payment was not ready in time. Client should poll for payment.",
+                    booking.Id);
+            }
+
+            return paymentCheckout;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Payment orchestration failed for booking {BookingId}", booking.Id);
+            return null;
+        }
+    }
+
+    private async Task TryReleaseSeatsAsync(
+        Guid showtimeId,
+        List<Guid> seatIds,
+        string operationName)
+    {
+        try
+        {
+            var released = await _seatStatusService.ReleaseBookedSeatsAsync(showtimeId, seatIds);
+            if (!released)
+            {
+                _logger.LogWarning(
+                    "Seat release returned false for booking operation {OperationName}, showtime {ShowtimeId}",
+                    operationName,
+                    showtimeId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Seat release failed for booking operation {OperationName}, showtime {ShowtimeId}",
+                operationName,
+                showtimeId);
+        }
+    }
+
+    private void TryPublishBookingCancelledEvent(
+        BookingEntity booking,
+        List<Guid> seatIds,
+        bool needsRefund,
+        string reason)
+    {
+        try
+        {
+            _eventBus.Publish(new BookingCancelledIntegrationEvent(
+                booking.Id,
+                booking.UserId,
+                booking.ShowtimeId,
+                seatIds,
+                needsRefund,
+                reason));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish BookingCancelledIntegrationEvent for booking {BookingId}", booking.Id);
+        }
+    }
+
+    private void TryPublishBookingExpiredEvent(BookingEntity booking, List<Guid> seatIds)
+    {
+        try
+        {
+            _eventBus.Publish(new BookingExpiredIntegrationEvent(
+                booking.Id,
+                booking.ShowtimeId,
+                seatIds,
+                DateTime.UtcNow));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish BookingExpiredIntegrationEvent for booking {BookingId}", booking.Id);
+        }
+    }
+
+    private async Task ExecuteInTransactionAsync(string operationName, Func<Task> action)
+    {
+        var transactionStarted = false;
+
+        try
+        {
+            await _unitOfWork.BeginTransactionAsync();
+            transactionStarted = true;
+
+            await action();
+            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.CommitAsync();
+        }
+        catch
+        {
+            if (transactionStarted)
+            {
+                await TryRollbackAsync(operationName);
+            }
+
+            throw;
+        }
+    }
+
+    private async Task TryRollbackAsync(string operationName)
+    {
+        try
+        {
+            await _unitOfWork.RollbackAsync();
+        }
+        catch (Exception rollbackException)
+        {
+            _logger.LogError(
+                rollbackException,
+                "Rollback failed for booking operation {OperationName}",
+                operationName);
+        }
+    }
+
+    private int GetBookingExpirationMinutes()
+    {
+        return _configuration.GetValue<int>("Booking:ExpirationMinutes", DefaultBookingExpirationMinutes);
+    }
+
+    private int GetPaymentCreationMaxRetries()
+    {
+        return _configuration.GetValue<int>("Booking:PaymentCreationMaxRetries", DefaultPaymentCreationMaxRetries);
+    }
+
+    private int GetPaymentCreationInitialDelayMs()
+    {
+        return _configuration.GetValue<int>("Booking:PaymentCreationInitialDelayMs", DefaultPaymentCreationInitialDelayMs);
     }
 }
-
-

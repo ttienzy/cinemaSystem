@@ -25,7 +25,8 @@ public class TicketOperationResponseFactory : ITicketOperationResponseFactory
 
         await Task.WhenAll(movieTask, cinemaHallTask, hallSeatsTask);
 
-        var showtimeDetails = showtime.MapToShowtimeDetails(
+        var showtimeDetails = TicketOperationMapper.MapToShowtimeDetails(
+            showtime,
             await movieTask,
             await cinemaHallTask);
 

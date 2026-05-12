@@ -140,7 +140,7 @@ public class ExpiredBookingCleanupService : BackgroundService
             booking.ExpiresAt);
 
         // 1. Update booking status to Expired
-        booking.Status = BookingStatus.Expired;
+        booking.MarkExpired(DateTime.UtcNow);
 
         // 2. Release seats in Redis
         var seatIds = booking.BookingSeats.Select(bs => bs.SeatId).ToList();

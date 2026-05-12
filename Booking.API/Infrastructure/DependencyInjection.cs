@@ -65,6 +65,7 @@ public static class DependencyInjection
 
         services.AddScoped<IExternalServiceClient, ExternalServiceClient>();
         services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ISeatLockService, SeatLockService>();
         services.AddScoped<ISeatStatusService, SeatStatusService>();
         services.AddScoped<IEmailService, EmailService>();

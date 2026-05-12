@@ -68,7 +68,6 @@ public class BookingRepository : IBookingRepository
     public async Task<BookingEntity> CreateAsync(BookingEntity booking)
     {
         _context.Bookings.Add(booking);
-        await _context.SaveChangesAsync();
 
         _logger.LogInformation("Created booking {BookingId} for user {UserId}",
             booking.Id, booking.UserId);
@@ -76,15 +75,14 @@ public class BookingRepository : IBookingRepository
         return booking;
     }
 
-    public async Task<BookingEntity> UpdateAsync(BookingEntity booking)
+    public Task<BookingEntity> UpdateAsync(BookingEntity booking)
     {
         _context.Bookings.Update(booking);
-        await _context.SaveChangesAsync();
 
         _logger.LogInformation("Updated booking {BookingId} to status {Status}",
             booking.Id, booking.Status);
 
-        return booking;
+        return Task.FromResult(booking);
     }
 
     public async Task<bool> DeleteAsync(Guid id)
@@ -96,7 +94,6 @@ public class BookingRepository : IBookingRepository
         }
 
         _context.Bookings.Remove(booking);
-        await _context.SaveChangesAsync();
 
         _logger.LogInformation("Deleted booking {BookingId}", id);
 

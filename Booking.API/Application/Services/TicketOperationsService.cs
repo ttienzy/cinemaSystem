@@ -9,17 +9,20 @@ public class TicketOperationsService : ITicketOperationsService
     private readonly IBookingRepository _bookingRepository;
     private readonly PaymentApiClient _paymentApiClient;
     private readonly ITicketOperationResponseFactory _ticketOperationResponseFactory;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<TicketOperationsService> _logger;
 
     public TicketOperationsService(
         IBookingRepository bookingRepository,
         PaymentApiClient paymentApiClient,
         ITicketOperationResponseFactory ticketOperationResponseFactory,
+        IUnitOfWork unitOfWork,
         ILogger<TicketOperationsService> logger)
     {
         _bookingRepository = bookingRepository ?? throw new ArgumentNullException(nameof(bookingRepository));
         _paymentApiClient = paymentApiClient ?? throw new ArgumentNullException(nameof(paymentApiClient));
         _ticketOperationResponseFactory = ticketOperationResponseFactory ?? throw new ArgumentNullException(nameof(ticketOperationResponseFactory));
+        _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -71,10 +74,11 @@ public class TicketOperationsService : ITicketOperationsService
             return validationResult;
         }
 
-        booking.Status = BookingStatus.CheckedIn;
-        booking.UpdatedAt = DateTime.UtcNow;
-
-        await _bookingRepository.UpdateAsync(booking);
+        await ExecuteInTransactionAsync(nameof(CheckInAsync), async () =>
+        {
+            booking.MarkCheckedIn(DateTime.UtcNow);
+            await _bookingRepository.UpdateAsync(booking);
+        });
 
         _logger.LogInformation("Booking {BookingId} checked in by staff {StaffUserId}", bookingId, staffUserId);
 
@@ -146,5 +150,44 @@ public class TicketOperationsService : ITicketOperationsService
         }
 
         return null;
+    }
+
+    private async Task ExecuteInTransactionAsync(string operationName, Func<Task> action)
+    {
+        var transactionStarted = false;
+
+        try
+        {
+            await _unitOfWork.BeginTransactionAsync();
+            transactionStarted = true;
+
+            await action();
+            await _unitOfWork.SaveChangesAsync();
+            await _unitOfWork.CommitAsync();
+        }
+        catch
+        {
+            if (transactionStarted)
+            {
+                await TryRollbackAsync(operationName);
+            }
+
+            throw;
+        }
+    }
+
+    private async Task TryRollbackAsync(string operationName)
+    {
+        try
+        {
+            await _unitOfWork.RollbackAsync();
+        }
+        catch (Exception rollbackException)
+        {
+            _logger.LogError(
+                rollbackException,
+                "Rollback failed for ticket operation {OperationName}",
+                operationName);
+        }
     }
 }

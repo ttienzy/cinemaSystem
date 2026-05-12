@@ -1,10 +1,7 @@
+using System.Security.Cryptography;
 using Cinema.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using Payment.API.Infrastructure.Persistence;
-using Payment.API.Application.DTOs.Requests;
-using Payment.API.Application.DTOs.Responses;
-using Payment.API.Domain.Entities;
-using System.Security.Cryptography;
 
 namespace Payment.API.Application.Services;
 
@@ -25,41 +22,27 @@ public class PaymentService : IPaymentService
     {
         try
         {
-            var orderInvoiceNumber = GenerateOrderInvoiceNumber();
-
-            var payment = new PaymentEntity
-            {
-                BookingId = request.BookingId,
-                OrderInvoiceNumber = orderInvoiceNumber,
-                Amount = request.Amount,
-                Currency = "VND",
-                OrderDescription = request.OrderDescription,
-                PaymentGateway = "SePay",
-                PaymentMethod = request.PaymentMethod,  // ✅ Set payment method from request
-                Status = PaymentStatus.Pending,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(15), // 15 minutes to complete payment
-                CustomerEmail = request.CustomerEmail,
-                CustomerPhone = request.CustomerPhone,
-                CustomerName = request.CustomerName,
-                SuccessUrl = request.SuccessUrl,
-                ErrorUrl = request.ErrorUrl,
-                CancelUrl = request.CancelUrl
-            };
+            var payment = request.MapToPaymentEntity(
+                GenerateOrderInvoiceNumber(),
+                DateTime.UtcNow);
 
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
             _logger.LogInformation(
                 "Payment created: {PaymentId} for booking {BookingId}",
-                payment.Id, payment.BookingId);
+                payment.Id,
+                payment.BookingId);
 
-            return ApiResponse<PaymentEntity>.SuccessResponse(payment, "Payment created successfully");
+            return ApiResponse<PaymentEntity>.SuccessResponse(
+                payment,
+                PaymentException.PAYMENT_CREATED_SUCCESSFULLY,
+                201);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating payment for booking {BookingId}", request.BookingId);
-            return ApiResponse<PaymentEntity>.FailureResponse("Failed to create payment");
+            return ApiResponse<PaymentEntity>.InternalServerErrorResponse(PaymentException.PAYMENT_CREATE_FAILED);
         }
     }
 
@@ -69,7 +52,7 @@ public class PaymentService : IPaymentService
 
         if (payment == null)
         {
-            return ApiResponse<PaymentEntity>.FailureResponse("Payment not found", 404);
+            return ApiResponse<PaymentEntity>.NotFoundResponse(PaymentException.PAYMENT_NOT_FOUND);
         }
 
         return ApiResponse<PaymentEntity>.SuccessResponse(payment);
@@ -78,12 +61,12 @@ public class PaymentService : IPaymentService
     public async Task<ApiResponse<PaymentEntity>> GetPaymentByBookingIdAsync(Guid bookingId)
     {
         var payment = await _context.Payments
-            .OrderByDescending(p => p.CreatedAt)
-            .FirstOrDefaultAsync(p => p.BookingId == bookingId);
+            .OrderByDescending(payment => payment.CreatedAt)
+            .FirstOrDefaultAsync(payment => payment.BookingId == bookingId);
 
         if (payment == null)
         {
-            return ApiResponse<PaymentEntity>.FailureResponse("Payment not found for booking", 404);
+            return ApiResponse<PaymentEntity>.NotFoundResponse(PaymentException.PAYMENT_NOT_FOUND_FOR_BOOKING);
         }
 
         return ApiResponse<PaymentEntity>.SuccessResponse(payment);
@@ -92,11 +75,11 @@ public class PaymentService : IPaymentService
     public async Task<ApiResponse<PaymentEntity>> GetPaymentByOrderInvoiceNumberAsync(string orderInvoiceNumber)
     {
         var payment = await _context.Payments
-            .FirstOrDefaultAsync(p => p.OrderInvoiceNumber == orderInvoiceNumber);
+            .FirstOrDefaultAsync(payment => payment.OrderInvoiceNumber == orderInvoiceNumber);
 
         if (payment == null)
         {
-            return ApiResponse<PaymentEntity>.FailureResponse("Payment not found", 404);
+            return ApiResponse<PaymentEntity>.NotFoundResponse(PaymentException.PAYMENT_NOT_FOUND);
         }
 
         return ApiResponse<PaymentEntity>.SuccessResponse(payment);
@@ -110,50 +93,20 @@ public class PaymentService : IPaymentService
         var safePage = Math.Max(1, pageNumber);
         var safeSize = Math.Clamp(pageSize, 1, 100);
 
-        IQueryable<PaymentEntity> payments = _context.Payments.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(query))
-        {
-            var searchTerm = query.Trim();
-            var normalizedPhone = NormalizePhone(searchTerm);
-            var hasPhoneSearch = !string.IsNullOrWhiteSpace(normalizedPhone);
-
-            payments = payments.Where(p =>
-                p.OrderInvoiceNumber.Contains(searchTerm) ||
-                p.CustomerEmail.Contains(searchTerm) ||
-                p.CustomerPhone.Contains(searchTerm) ||
-                (hasPhoneSearch &&
-                 p.CustomerPhone
-                    .Replace(" ", string.Empty)
-                    .Replace("-", string.Empty)
-                    .Replace("(", string.Empty)
-                    .Replace(")", string.Empty)
-                    .Contains(normalizedPhone)));
-        }
+        var payments = _context.Payments
+            .AsNoTracking()
+            .ApplySearch(query);
 
         var totalCount = await payments.CountAsync();
 
         var items = await payments
-            .OrderByDescending(p => p.CompletedAt ?? p.CreatedAt)
+            .OrderByDescending(payment => payment.CompletedAt ?? payment.CreatedAt)
             .Skip((safePage - 1) * safeSize)
             .Take(safeSize)
-            .Select(p => new PaymentSearchItemResponse
-            {
-                PaymentId = p.Id,
-                BookingId = p.BookingId,
-                OrderInvoiceNumber = p.OrderInvoiceNumber,
-                CustomerEmail = p.CustomerEmail,
-                CustomerPhone = p.CustomerPhone,
-                CustomerName = p.CustomerName,
-                Amount = p.Amount,
-                Status = p.Status,
-                CreatedAt = p.CreatedAt,
-                CompletedAt = p.CompletedAt
-            })
             .ToListAsync();
 
         var response = PaginatedResponse<PaymentSearchItemResponse>.Create(
-            items,
+            items.Select(payment => payment.PaymentMapToSearchItemResponse()).ToList(),
             totalCount,
             safePage,
             safeSize);
@@ -177,59 +130,38 @@ public class PaymentService : IPaymentService
 
             if (payment == null)
             {
-                return ApiResponse<bool>.FailureResponse("Payment not found", 404);
+                return ApiResponse<bool>.NotFoundResponse(PaymentException.PAYMENT_NOT_FOUND);
             }
 
-            payment.Status = status;
-
-            if (!string.IsNullOrEmpty(transactionId))
-            {
-                payment.TransactionId = transactionId;
-            }
-
-            if (!string.IsNullOrEmpty(paymentMethod))
-            {
-                payment.PaymentMethod = paymentMethod;
-            }
-
-            if (completedAt.HasValue)
-            {
-                payment.CompletedAt = completedAt.Value;
-            }
-
-            if (!string.IsNullOrWhiteSpace(gatewayMetadata))
-            {
-                payment.GatewayMetadata = gatewayMetadata;
-            }
-
-            payment.UpdatedAt = DateTime.UtcNow;
+            payment.ApplyStatusUpdate(
+                status,
+                transactionId,
+                paymentMethod,
+                completedAt,
+                gatewayMetadata);
 
             await _context.SaveChangesAsync();
 
             _logger.LogInformation(
                 "Payment {PaymentId} status updated to {Status}",
-                paymentId, status);
+                paymentId,
+                status);
 
-            return ApiResponse<bool>.SuccessResponse(true, "Payment status updated");
+            return ApiResponse<bool>.SuccessResponse(
+                true,
+                PaymentException.PAYMENT_STATUS_UPDATED_SUCCESSFULLY);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating payment {PaymentId}", paymentId);
-            return ApiResponse<bool>.FailureResponse("Failed to update payment status");
+            return ApiResponse<bool>.InternalServerErrorResponse(PaymentException.PAYMENT_STATUS_UPDATE_FAILED);
         }
     }
 
     private static string GenerateOrderInvoiceNumber()
     {
-        var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+        var timestamp = DateTime.UtcNow.ToString(PaymentTimeConstants.InvoiceTimestampFormat);
         var suffix = RandomNumberGenerator.GetInt32(100000, 999999);
         return $"INV-{timestamp}-{suffix}";
     }
-
-    private static string NormalizePhone(string value)
-    {
-        return new string(value.Where(char.IsDigit).ToArray());
-    }
 }
-
-

@@ -85,14 +85,22 @@ public static class PaymentEndpoints
             };
 
             return ApiResponse<PaymentCheckoutResponse>
-                .SuccessResponse(response, "Payment created successfully", 201)
+                .SuccessResponse(response, PaymentException.PAYMENT_CREATED_SUCCESSFULLY, 201)
                 .ToResult();
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogError(ex, "Invalid SePay configuration while preparing checkout for payment {PaymentId}", payment.Id);
+            return Results.Problem(
+                title: SePayException.CHECKOUT_PREPARATION_FAILED,
+                detail: ex.Message,
+                statusCode: 500);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error preparing SePay checkout for payment {PaymentId}", payment.Id);
             return Results.Problem(
-                title: "Failed to prepare payment checkout",
+                title: SePayException.CHECKOUT_PREPARATION_FAILED,
                 detail: ex.Message,
                 statusCode: 500);
         }

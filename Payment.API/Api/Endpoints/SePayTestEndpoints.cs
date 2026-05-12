@@ -70,7 +70,7 @@ Returns HTML that auto-submits to SePay.
         try
         {
             // Generate unique invoice number
-            var invoiceNumber = $"TEST-{DateTime.UtcNow:yyyyMMddHHmmss}-{Random.Shared.Next(100000, 999999)}";
+            var invoiceNumber = $"TEST-{DateTime.UtcNow.ToString(PaymentTimeConstants.InvoiceTimestampFormat)}-{Random.Shared.Next(100000, 999999)}";
 
             // Create test payment entity
             var payment = new PaymentEntity
@@ -91,7 +91,7 @@ Returns HTML that auto-submits to SePay.
                 ErrorUrl = request.ErrorUrl ?? "https://your-ngrok-url.ngrok-free.dev/api/payments/callback/error",
                 CancelUrl = request.CancelUrl ?? "https://your-ngrok-url.ngrok-free.dev/api/payments/callback/cancel",
                 CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+                ExpiresAt = DateTime.UtcNow.AddMinutes(PaymentTimeConstants.PaymentExpiryMinutes)
             };
 
             logger.LogInformation(
@@ -137,7 +137,7 @@ Returns HTML that auto-submits to SePay.
         try
         {
             // Generate unique invoice number
-            var invoiceNumber = $"TEST-{DateTime.UtcNow:yyyyMMddHHmmss}-{Random.Shared.Next(100000, 999999)}";
+            var invoiceNumber = $"TEST-{DateTime.UtcNow.ToString(PaymentTimeConstants.InvoiceTimestampFormat)}-{Random.Shared.Next(100000, 999999)}";
 
             // Create test payment entity
             var payment = new PaymentEntity
@@ -158,7 +158,7 @@ Returns HTML that auto-submits to SePay.
                 ErrorUrl = request.ErrorUrl ?? "https://your-ngrok-url.ngrok-free.dev/api/payments/callback/error",
                 CancelUrl = request.CancelUrl ?? "https://your-ngrok-url.ngrok-free.dev/api/payments/callback/cancel",
                 CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+                ExpiresAt = DateTime.UtcNow.AddMinutes(PaymentTimeConstants.PaymentExpiryMinutes)
             };
 
             logger.LogInformation(
@@ -485,7 +485,7 @@ Returns HTML that auto-submits to SePay.
                     // Submit after 1 second
                     setTimeout(() => {
                         form.submit();
-                    }, 1000);
+                    }, {PaymentTimeConstants.CheckoutRedirectDelayMilliseconds});
                 } else {
                     const error = await response.json();
                     document.getElementById('errorMessage').innerHTML = 
@@ -590,7 +590,7 @@ Returns HTML that auto-submits to SePay.
         // Auto-submit form after 1 second
         setTimeout(() => {{
             document.getElementById('sePayForm').submit();
-        }}, 1000);
+        }}, {PaymentTimeConstants.CheckoutRedirectDelayMilliseconds});
     </script>
 </body>
 </html>";

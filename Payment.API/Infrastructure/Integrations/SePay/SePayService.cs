@@ -47,12 +47,12 @@ public class SePayService : ISePayService
     {
         if (string.IsNullOrWhiteSpace(_options.MerchantId))
         {
-            throw new SePayException("SePay MerchantId is not configured.");
+            throw new InvalidOperationException(SePayException.MERCHANT_ID_NOT_CONFIGURED);
         }
 
         if (string.IsNullOrWhiteSpace(_options.SecretKey))
         {
-            throw new SePayException("SePay SecretKey is not configured.");
+            throw new InvalidOperationException(SePayException.SECRET_KEY_NOT_CONFIGURED);
         }
 
         var fields = new Dictionary<string, string>
@@ -117,5 +117,4 @@ public class SePayService : ISePayService
         return Convert.ToBase64String(hmac.ComputeHash(dataBytes));
     }
 }
-
 

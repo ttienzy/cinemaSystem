@@ -29,7 +29,7 @@ public class SePayIpnProcessor : ISePayIpnProcessor
         var invoiceNumber = payload.Order?.OrderInvoiceNumber;
         if (string.IsNullOrWhiteSpace(invoiceNumber))
         {
-            throw new ArgumentException("Missing order.order_invoice_number in SePay IPN payload.");
+            throw new ArgumentException(SePayException.MISSING_INVOICE_NUMBER);
         }
 
         var isTestMode = payload.Order?.HasCustomDataFlag("webhook_test") == true;
@@ -38,7 +38,7 @@ public class SePayIpnProcessor : ISePayIpnProcessor
             _logger.LogWarning(
                 "Rejected SePay IPN for invoice {InvoiceNumber}: invalid X-Secret-Key",
                 invoiceNumber);
-            throw new UnauthorizedAccessException("Invalid or missing X-Secret-Key.");
+            throw new UnauthorizedAccessException(SePayException.INVALID_SECRET_KEY);
         }
 
         var paymentResult = await _paymentService.GetPaymentByOrderInvoiceNumberAsync(invoiceNumber);
@@ -105,7 +105,7 @@ public class SePayIpnProcessor : ISePayIpnProcessor
         if (!updateResult.Success)
         {
             throw new InvalidOperationException(
-                $"Failed to update payment {payment.Id} to completed: {updateResult.Message}");
+                $"{PaymentException.PAYMENT_STATUS_UPDATE_FAILED} for payment {payment.Id}: {updateResult.Message}");
         }
 
         _eventPublisher.PublishPaymentCompleted(payment, transactionId, completedAt);
@@ -135,7 +135,7 @@ public class SePayIpnProcessor : ISePayIpnProcessor
         if (!updateResult.Success)
         {
             throw new InvalidOperationException(
-                $"Failed to update payment {payment.Id} to failed: {updateResult.Message}");
+                $"{PaymentException.PAYMENT_STATUS_UPDATE_FAILED} for payment {payment.Id}: {updateResult.Message}");
         }
 
         var reason = "Transaction voided by gateway";
@@ -162,7 +162,7 @@ public class SePayIpnProcessor : ISePayIpnProcessor
         if (!string.IsNullOrWhiteSpace(value) &&
             DateTime.TryParseExact(
                 value,
-                "yyyy-MM-dd HH:mm:ss",
+                PaymentTimeConstants.GatewayTransactionDateFormat,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.None,
                 out var parsed))

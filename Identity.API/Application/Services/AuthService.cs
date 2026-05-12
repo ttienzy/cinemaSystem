@@ -1,13 +1,10 @@
 using Cinema.Shared.Constants;
-using Cinema.Shared.Helpers;
 using Cinema.Shared.Models;
-using Identity.API.Infrastructure.Persistence;
 using Identity.API.Application.DTOs;
+using Identity.API.Application.Mappers;
 using Identity.API.Domain.Entities;
+using Identity.API.Domain.Exceptions;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using System.Security.Cryptography;
 
 namespace Identity.API.Application.Services;
 
@@ -15,19 +12,19 @@ public class AuthService : IAuthService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
-    private readonly IdentityDbContext _context;
-    private readonly JwtSettings _jwtSettings;
+    private readonly IAccessTokenService _accessTokenService;
+    private readonly IRefreshTokenService _refreshTokenService;
 
     public AuthService(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        IdentityDbContext context,
-        IOptions<JwtSettings> jwtSettings)
+        IAccessTokenService accessTokenService,
+        IRefreshTokenService refreshTokenService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
-        _context = context;
-        _jwtSettings = jwtSettings.Value;
+        _accessTokenService = accessTokenService;
+        _refreshTokenService = refreshTokenService;
     }
 
     public async Task<ApiResponse<string>> RegisterAsync(RegisterRequest request)
@@ -36,12 +33,9 @@ public class AuthService : IAuthService
         if (existingUser != null)
         {
             return ApiResponse<string>.FailureResponse(
-                "Email already exists",
+                AuthException.EMAIL_ALREADY_EXISTS,
                 400,
-                new List<ErrorDetail>
-                {
-                    new ErrorDetail("EMAIL_EXISTS", "This email is already registered", "Email")
-                }
+                [AuthException.EmailAlreadyExists()]
             );
         }
 
@@ -61,7 +55,7 @@ public class AuthService : IAuthService
             ).ToList();
 
             return ApiResponse<string>.FailureResponse(
-                "Registration failed",
+                AuthException.REGISTRATION_FAILED,
                 400,
                 errors
             );
@@ -71,7 +65,7 @@ public class AuthService : IAuthService
 
         return ApiResponse<string>.SuccessResponse(
             user.Id,
-            "Registration successful",
+            AuthException.REGISTRATION_SUCCESSFUL,
             201
         );
     }
@@ -81,98 +75,51 @@ public class AuthService : IAuthService
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {
-            return ApiResponse<LoginResponse>.UnauthorizedResponse("Invalid email or password");
+            return ApiResponse<LoginResponse>.UnauthorizedResponse(AuthException.INVALID_EMAIL_OR_PASSWORD);
         }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
         if (!result.Succeeded)
         {
-            return ApiResponse<LoginResponse>.UnauthorizedResponse("Invalid email or password");
+            return ApiResponse<LoginResponse>.UnauthorizedResponse(AuthException.INVALID_EMAIL_OR_PASSWORD);
         }
 
         var roles = await _userManager.GetRolesAsync(user);
-        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
+        var expiresAt = _accessTokenService.GetExpirationTime();
+        var accessToken = _accessTokenService.GenerateToken(user, roles);
+        var refreshToken = await _refreshTokenService.IssueAsync(user.Id);
+        var response = user.ToLoginResponse(roles, accessToken, refreshToken, expiresAt);
 
-        var accessToken = JwtHelper.GenerateToken(
-            user.Id,
-            user.Email!,
-            roles.ToArray(),
-            _jwtSettings.SecretKey,
-            _jwtSettings.Issuer,
-            _jwtSettings.Audience,
-            _jwtSettings.ExpirationMinutes
-        );
-
-        var refreshToken = GenerateRefreshToken();
-        await SaveRefreshTokenAsync(user.Id, refreshToken);
-
-        var response = new LoginResponse
-        {
-            AccessToken = accessToken,
-            RefreshToken = refreshToken,
-            UserId = user.Id,
-            Email = user.Email!,
-            FullName = user.FullName ?? string.Empty,
-            Roles = roles.ToList(),
-            ExpiresAt = expiresAt
-        };
-
-        return ApiResponse<LoginResponse>.SuccessResponse(response, "Login successful");
+        return ApiResponse<LoginResponse>.SuccessResponse(response, AuthException.LOGIN_SUCCESSFUL);
     }
 
     public async Task<ApiResponse<LoginResponse>> RefreshTokenAsync(string refreshToken)
     {
-        var storedToken = await _context.RefreshTokens
-            .Include(rt => rt.User)
-            .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+        var storedToken = await _refreshTokenService.GetByTokenWithUserAsync(refreshToken);
 
         if (storedToken == null)
         {
-            return ApiResponse<LoginResponse>.UnauthorizedResponse("Invalid refresh token");
+            return ApiResponse<LoginResponse>.UnauthorizedResponse(AuthException.INVALID_REFRESH_TOKEN);
         }
 
         if (storedToken.IsRevoked)
         {
-            return ApiResponse<LoginResponse>.UnauthorizedResponse("Refresh token has been revoked");
+            return ApiResponse<LoginResponse>.UnauthorizedResponse(AuthException.REFRESH_TOKEN_REVOKED);
         }
 
-        if (storedToken.ExpiresAt < DateTime.UtcNow)
+        if (storedToken.IsExpired(DateTime.UtcNow))
         {
-            return ApiResponse<LoginResponse>.UnauthorizedResponse("Refresh token has expired");
+            return ApiResponse<LoginResponse>.UnauthorizedResponse(AuthException.REFRESH_TOKEN_EXPIRED);
         }
 
         var user = storedToken.User;
         var roles = await _userManager.GetRolesAsync(user);
-        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
+        var expiresAt = _accessTokenService.GetExpirationTime();
+        var accessToken = _accessTokenService.GenerateToken(user, roles);
+        var newRefreshToken = await _refreshTokenService.RotateAsync(storedToken);
+        var response = user.ToLoginResponse(roles, accessToken, newRefreshToken, expiresAt);
 
-        var accessToken = JwtHelper.GenerateToken(
-            user.Id,
-            user.Email!,
-            roles.ToArray(),
-            _jwtSettings.SecretKey,
-            _jwtSettings.Issuer,
-            _jwtSettings.Audience,
-            _jwtSettings.ExpirationMinutes
-        );
-
-        var newRefreshToken = GenerateRefreshToken();
-        storedToken.IsRevoked = true;
-        storedToken.ReplacedByToken = newRefreshToken;
-        await SaveRefreshTokenAsync(user.Id, newRefreshToken);
-        await _context.SaveChangesAsync();
-
-        var response = new LoginResponse
-        {
-            AccessToken = accessToken,
-            RefreshToken = newRefreshToken,
-            UserId = user.Id,
-            Email = user.Email!,
-            FullName = user.FullName ?? string.Empty,
-            Roles = roles.ToList(),
-            ExpiresAt = expiresAt
-        };
-
-        return ApiResponse<LoginResponse>.SuccessResponse(response, "Token refreshed successfully");
+        return ApiResponse<LoginResponse>.SuccessResponse(response, AuthException.TOKEN_REFRESHED_SUCCESSFULLY);
     }
 
     public async Task<ApiResponse<UserInfoResponse>> GetUserInfoAsync(string userId)
@@ -180,63 +127,32 @@ public class AuthService : IAuthService
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            return ApiResponse<UserInfoResponse>.NotFoundResponse("User not found");
+            return ApiResponse<UserInfoResponse>.NotFoundResponse(AuthException.USER_NOT_FOUND);
         }
 
         var roles = await _userManager.GetRolesAsync(user);
+        var userInfo = user.ToUserInfoResponse(roles);
 
-        var userInfo = new UserInfoResponse
-        {
-            UserId = user.Id,
-            Email = user.Email!,
-            FullName = user.FullName ?? string.Empty,
-            PhoneNumber = user.PhoneNumber,
-            Roles = roles.ToList()
-        };
-
-        return ApiResponse<UserInfoResponse>.SuccessResponse(userInfo, "User info retrieved successfully");
+        return ApiResponse<UserInfoResponse>.SuccessResponse(userInfo, AuthException.USER_INFO_RETRIEVED_SUCCESSFULLY);
     }
 
     public async Task<ApiResponse<bool>> RevokeTokenAsync(string refreshToken)
     {
-        var storedToken = await _context.RefreshTokens
-            .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+        var storedToken = await _refreshTokenService.GetByTokenWithUserAsync(refreshToken);
 
         if (storedToken == null)
         {
-            return ApiResponse<bool>.NotFoundResponse("Refresh token not found");
+            return ApiResponse<bool>.NotFoundResponse(AuthException.REFRESH_TOKEN_NOT_FOUND);
         }
 
         if (storedToken.IsRevoked)
         {
-            return ApiResponse<bool>.FailureResponse("Token already revoked", 400);
+            return ApiResponse<bool>.FailureResponse(AuthException.TOKEN_ALREADY_REVOKED, 400);
         }
 
-        storedToken.IsRevoked = true;
-        await _context.SaveChangesAsync();
+        await _refreshTokenService.RevokeAsync(storedToken);
 
-        return ApiResponse<bool>.SuccessResponse(true, "Token revoked successfully");
-    }
-
-    private string GenerateRefreshToken()
-    {
-        var randomBytes = new byte[64];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(randomBytes);
-        return Convert.ToBase64String(randomBytes);
-    }
-
-    private async Task SaveRefreshTokenAsync(string userId, string token)
-    {
-        var refreshToken = new RefreshToken
-        {
-            UserId = userId,
-            Token = token,
-            ExpiresAt = DateTime.UtcNow.AddDays(7)
-        };
-
-        _context.RefreshTokens.Add(refreshToken);
-        await _context.SaveChangesAsync();
+        return ApiResponse<bool>.SuccessResponse(true, AuthException.TOKEN_REVOKED_SUCCESSFULLY);
     }
 }
 

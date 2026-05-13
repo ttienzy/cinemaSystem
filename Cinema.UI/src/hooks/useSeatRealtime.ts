@@ -16,7 +16,7 @@ interface UseSeatRealtimeOptions {
     onSeatReleased?: (notification: SeatStatusChangedNotification) => void;
     onViewerCountUpdated?: (notification: ViewerCountNotification) => void;
     onConnectionError?: (error: Error) => void;
-    enabled?: boolean; // Allow disabling the hook
+    enabled?: boolean;
 }
 
 interface UseSeatRealtimeReturn {
@@ -27,25 +27,6 @@ interface UseSeatRealtimeReturn {
     reconnect: () => Promise<void>;
 }
 
-/**
- * React hook for real-time seat availability updates via SignalR
- * 
- * @example
- * ```tsx
- * const { isConnected, viewerCount } = useSeatRealtime({
- *   showtimeId: 'abc-123',
- *   apiBaseUrl: 'https://api.example.com',
- *   getAccessToken: () => localStorage.getItem('token'),
- *   onSeatLocked: (notification) => {
- *     console.log('Seat locked:', notification.seatIds);
- *     updateSeatStatus(notification.seatIds, 'locked');
- *   },
- *   onSeatUnlocked: (notification) => {
- *     updateSeatStatus(notification.seatIds, 'available');
- *   },
- * });
- * ```
- */
 export function useSeatRealtime(options: UseSeatRealtimeOptions): UseSeatRealtimeReturn {
     const {
         showtimeId,
@@ -67,27 +48,31 @@ export function useSeatRealtime(options: UseSeatRealtimeOptions): UseSeatRealtim
 
     const serviceRef = useRef<SeatSignalRService | null>(null);
     const isMountedRef = useRef(true);
+    const listenersRegisteredRef = useRef(false);
 
-    // Initialize service
+    // Initialize service ONCE
     useEffect(() => {
         if (!enabled) return;
 
-        serviceRef.current = new SeatSignalRService(apiBaseUrl, getAccessToken);
+        if (!serviceRef.current) {
+            console.log('[useSeatRealtime] 🆕 Creating new service instance');
+            serviceRef.current = new SeatSignalRService(apiBaseUrl, getAccessToken);
+        }
 
         return () => {
             isMountedRef.current = false;
         };
     }, [apiBaseUrl, getAccessToken, enabled]);
 
-    // Setup event handlers
+    // Setup event handlers ONCE - never cleanup to avoid removing listeners
     useEffect(() => {
-        if (!enabled || !serviceRef.current) return;
+        if (!enabled || !serviceRef.current || listenersRegisteredRef.current) return;
 
         const service = serviceRef.current;
+        console.log('[useSeatRealtime] 🔧 Registering event listeners (ONE TIME)');
+
         const unsubscribeConnectionState = service.onConnectionStateChanged((state, stateError) => {
-            if (!isMountedRef.current) {
-                return;
-            }
+            if (!isMountedRef.current) return;
 
             setIsConnected(state === signalR.HubConnectionState.Connected);
             setIsConnecting(
@@ -105,65 +90,58 @@ export function useSeatRealtime(options: UseSeatRealtimeOptions): UseSeatRealtim
         // Seat locked handler
         if (onSeatLocked) {
             service.onSeatLocked((notification) => {
-                if (isMountedRef.current) {
-                    console.log('[useSeatRealtime] Seat locked:', notification);
-                    onSeatLocked(notification);
-                }
+                console.log('[useSeatRealtime] 🔒 Seat locked callback triggered');
+                onSeatLocked(notification);
             });
         }
 
         // Seat unlocked handler
         if (onSeatUnlocked) {
             service.onSeatUnlocked((notification) => {
-                if (isMountedRef.current) {
-                    console.log('[useSeatRealtime] Seat unlocked:', notification);
-                    onSeatUnlocked(notification);
-                }
+                console.log('[useSeatRealtime] 🔓 Seat unlocked callback triggered');
+                onSeatUnlocked(notification);
             });
         }
 
         // Seat booked handler
         if (onSeatBooked) {
             service.onSeatBooked((notification) => {
-                if (isMountedRef.current) {
-                    console.log('[useSeatRealtime] Seat booked:', notification);
-                    onSeatBooked(notification);
-                }
+                console.log('[useSeatRealtime] ✅ Seat booked callback triggered');
+                onSeatBooked(notification);
             });
         }
 
         // Seat released handler
         if (onSeatReleased) {
             service.onSeatReleased((notification) => {
-                if (isMountedRef.current) {
-                    console.log('[useSeatRealtime] Seat released:', notification);
-                    onSeatReleased(notification);
-                }
+                console.log('[useSeatRealtime] 🔄 Seat released callback triggered');
+                onSeatReleased(notification);
             });
         }
 
         // Viewer count handler
         service.onViewerCountUpdated((notification) => {
-            if (isMountedRef.current && notification.showtimeId === showtimeId) {
-                console.log('[useSeatRealtime] Viewer count updated:', notification.viewerCount);
-                setViewerCount(notification.viewerCount);
+            console.log('[useSeatRealtime] 👥 Viewer count callback FIRED!');
+            console.log('[useSeatRealtime] 📦 Notification:', JSON.stringify(notification, null, 2));
+            console.log('[useSeatRealtime] 🎯 ViewerCount:', notification.ViewerCount);
+
+            // Update state
+            setViewerCount(notification.ViewerCount);
+
+            if (notification.ShowtimeId === showtimeId) {
+                console.log('[useSeatRealtime] ✅ Showtime ID matches!');
                 onViewerCountUpdated?.(notification);
             }
         });
 
+        listenersRegisteredRef.current = true;
+        console.log('[useSeatRealtime] ✅ Event listeners registered successfully');
+
+        // DON'T cleanup listeners - they're shared across all instances
         return () => {
             unsubscribeConnectionState();
-            service.offAll();
         };
-    }, [
-        enabled,
-        showtimeId,
-        onSeatLocked,
-        onSeatUnlocked,
-        onSeatBooked,
-        onSeatReleased,
-        onViewerCountUpdated,
-    ]);
+    }, [enabled]); // Only depend on enabled, not callbacks
 
     // Connect and join showtime
     useEffect(() => {
@@ -177,18 +155,18 @@ export function useSeatRealtime(options: UseSeatRealtimeOptions): UseSeatRealtim
                 setIsConnecting(true);
                 setError(null);
 
-                // Start connection
+                console.log('[useSeatRealtime] 🚀 Starting connection...');
                 await service.start();
 
                 if (!isSubscribed) return;
 
-                // Join showtime group
+                console.log('[useSeatRealtime] 🎯 Joining showtime...');
                 await service.joinShowtime(showtimeId);
 
-                console.log(`[useSeatRealtime] Successfully joined showtime ${showtimeId}`);
+                console.log(`[useSeatRealtime] ✅ Successfully joined showtime ${showtimeId}`);
             } catch (err) {
                 const error = err instanceof Error ? err : new Error('Unknown error');
-                console.error('[useSeatRealtime] Connection error:', error);
+                console.error('[useSeatRealtime] ❌ Connection error:', error);
 
                 if (isSubscribed) {
                     setError(error);
@@ -205,7 +183,6 @@ export function useSeatRealtime(options: UseSeatRealtimeOptions): UseSeatRealtim
 
         connectAndJoin();
 
-        // Cleanup
         return () => {
             isSubscribed = false;
 
@@ -213,7 +190,6 @@ export function useSeatRealtime(options: UseSeatRealtimeOptions): UseSeatRealtim
                 try {
                     if (service.isConnected()) {
                         await service.leaveShowtime(showtimeId);
-                        await service.stop();
                     }
                 } catch (err) {
                     console.error('[useSeatRealtime] Cleanup error:', err);

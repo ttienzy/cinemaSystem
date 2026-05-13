@@ -98,6 +98,51 @@
       }
     },
     {
+      "UpstreamPathTemplate": "/hubs/booking/negotiate",
+      "UpstreamHttpMethod": [
+        "POST",
+        "OPTIONS"
+      ],
+      "DownstreamPathTemplate": "/hubs/booking/negotiate",
+      "DownstreamScheme": "http",
+      "ServiceName": "booking-api",
+      "Key": "signalr-booking-negotiate",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/hubs/booking",
+      "UpstreamHttpMethod": [
+        "GET"
+      ],
+      "DownstreamPathTemplate": "/hubs/booking",
+      "DownstreamScheme": "ws",
+      "ServiceName": "booking-api",
+      "Key": "signalr-booking-websocket-root",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/hubs/booking/{everything}",
+      "UpstreamHttpMethod": [
+        "GET",
+        "POST",
+        "OPTIONS"
+      ],
+      "DownstreamPathTemplate": "/hubs/booking/{everything}",
+      "DownstreamScheme": "ws",
+      "ServiceName": "booking-api",
+      "Key": "signalr-booking-websocket",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
+    },
+    {
       "UpstreamPathTemplate": "/hubs/seats/negotiate",
       "UpstreamHttpMethod": [
         "POST",

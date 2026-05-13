@@ -84,6 +84,12 @@ public static class DependencyInjection
             options.HandshakeTimeout = TimeSpan.FromSeconds(configuration.GetValue<int>("SignalR:HandshakeTimeoutSeconds", 15));
             options.MaximumReceiveMessageSize = configuration.GetValue<long?>("SignalR:MaximumReceiveMessageSize", 32 * 1024);
         })
+        .AddJsonProtocol(options =>
+        {
+            // Vô hiệu hóa việc tự động đổi tên thuộc tính và method name
+            // Giữ nguyên PascalCase từ C# để đảm bảo consistency giữa Backend và Frontend
+            options.PayloadSerializerOptions.PropertyNamingPolicy = null;
+        })
         .AddStackExchangeRedis(redisConnection, options =>
         {
             options.Configuration.ChannelPrefix = RedisChannel.Literal(

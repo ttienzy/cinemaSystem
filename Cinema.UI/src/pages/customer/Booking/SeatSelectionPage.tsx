@@ -73,37 +73,39 @@ const SeatSelectionPage: React.FC = () => {
   const handleSeatLocked = useCallback((notification: SeatStatusChangedNotification) => {
     console.log('🔒 Seat locked:', notification);
     updateSeatStatus(
-      notification.seatIds,
+      notification.SeatIds,
       1, // Locked
-      notification.userId,
-      notification.lockedUntil
+      notification.UserId,
+      notification.LockedUntil
     );
 
     // Show notification if it's not current user
     const currentUserId = currentUser?.id;
-    if (notification.userId !== currentUserId) {
-      message.info(`Ghế ${notification.seatIds.length} vừa được chọn bởi người khác`, 2);
+    if (notification.UserId !== currentUserId) {
+      message.info(`Ghế ${notification.SeatIds.length} vừa được chọn bởi người khác`, 2);
     }
-  }, [updateSeatStatus]);
+  }, [updateSeatStatus, currentUser?.id]);
 
   const handleSeatUnlocked = useCallback((notification: SeatStatusChangedNotification) => {
     console.log('🔓 Seat unlocked:', notification);
-    updateSeatStatus(notification.seatIds, 0); // Available
+    updateSeatStatus(notification.SeatIds, 0); // Available
   }, [updateSeatStatus]);
 
   const handleSeatBooked = useCallback((notification: SeatStatusChangedNotification) => {
     console.log('✅ Seat booked:', notification);
-    updateSeatStatus(notification.seatIds, 2); // 2 = Booked
+    updateSeatStatus(notification.SeatIds, 2); // 2 = Booked
   }, [updateSeatStatus]);
 
   const handleSeatReleased = useCallback((notification: SeatStatusChangedNotification) => {
     console.log('🔄 Seat released:', notification);
-    updateSeatStatus(notification.seatIds, 0); // 0 = Available
-    message.success(`${notification.seatIds.length} ghế vừa được giải phóng!`, 2);
+    updateSeatStatus(notification.SeatIds, 0); // 0 = Available
+    message.success(`${notification.SeatIds.length} ghế vừa được giải phóng!`, 2);
   }, [updateSeatStatus]);
 
-  const handleViewerCountUpdated = useCallback((notification: any) => {
-    console.log('👥 Viewer count:', notification.viewerCount);
+  const handleViewerCountUpdated = useCallback((notification: ViewerCountNotification) => {
+    console.log('👥 Viewer count notification received:', notification);
+    console.log('👥 Viewer count value:', notification.ViewerCount);
+    console.log('👥 Showtime ID:', notification.ShowtimeId);
   }, []);
 
   const handleConnectionError = useCallback((error: Error) => {
@@ -231,9 +233,17 @@ const SeatSelectionPage: React.FC = () => {
 
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           {/* Viewer count */}
-          <Badge count={viewerCount} showZero style={{ backgroundColor: '#38bdf8' }}>
+          <Badge
+            count={viewerCount}
+            showZero
+            style={{ backgroundColor: '#38bdf8' }}
+            title={`${viewerCount} người đang xem`}
+          >
             <UserOutlined style={{ fontSize: 20, color: '#94a3b8' }} />
           </Badge>
+          <span style={{ color: '#94a3b8', fontSize: 14 }}>
+            {viewerCount} {viewerCount === 1 ? 'người' : 'người'} đang xem
+          </span>
 
           {/* Connection status */}
           {isConnecting && (

@@ -39,6 +39,7 @@ import { Line, Pie } from '@ant-design/charts';
 import { useQuery } from '@tanstack/react-query';
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr';
 import dayjs from '../../utils/dayjs';
+import { toLocalDateTime } from '../../utils/dateTime';
 import { dashboardApi, type RecentActivity, type NewBookingPayload } from '../../api/dashboardApi';
 import { useAuth } from '../../hooks/useAuth';
 import { getApiGatewayBaseUrl } from '../../utils/apiConfig';
@@ -395,7 +396,7 @@ const Dashboard: React.FC = () => {
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Text strong>{act.customerName}</Text>
                         <Text type="secondary" style={{ fontSize: 12 }}>
-                          {dayjs(act.occurredAtUtc).format('HH:mm')}
+                          {toLocalDateTime(act.occurredAtUtc).format('HH:mm')}
                         </Text>
                       </div>
                       <div style={{ fontSize: 13 }}>

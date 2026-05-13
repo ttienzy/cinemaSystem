@@ -46,7 +46,7 @@ import {
   type TicketOperationResponse,
 } from '../../../features/tickets/api/ticketOperationsApi';
 import type { ColumnsType } from 'antd/es/table';
-import dayjs from '../../../utils/dayjs';
+import { toLocalDateTime } from '../../../utils/dateTime';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -196,7 +196,7 @@ const TicketOperationsPage: React.FC = () => {
             </div>
             <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
               <ClockCircleOutlined style={{ marginRight: 4 }} />
-              {dayjs(st.startTime).format('HH:mm DD/MM')} • {st.cinemaHallName}
+              {toLocalDateTime(st.startTime).format('HH:mm DD/MM')} • {st.cinemaHallName}
             </div>
           </div>
         );
@@ -499,7 +499,7 @@ const TicketOperationsPage: React.FC = () => {
                   <Text strong>{selectedTicket.showtimeDetails.movieTitle}</Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="Giờ chiếu">
-                  {dayjs(selectedTicket.showtimeDetails.startTime).format('HH:mm DD/MM/YYYY')}
+                  {toLocalDateTime(selectedTicket.showtimeDetails.startTime).format('HH:mm DD/MM/YYYY')}
                 </Descriptions.Item>
                 <Descriptions.Item label="Phòng chiếu">
                   {selectedTicket.showtimeDetails.cinemaHallName}
@@ -527,17 +527,17 @@ const TicketOperationsPage: React.FC = () => {
             {/* Timeline */}
             <Descriptions title="Lịch sử" bordered column={1} size="small">
               <Descriptions.Item label="Ngày đặt">
-                {dayjs(selectedTicket.bookingDate).format('HH:mm:ss DD/MM/YYYY')}
+                {toLocalDateTime(selectedTicket.bookingDate).format('HH:mm:ss DD/MM/YYYY')}
               </Descriptions.Item>
               {selectedTicket.paidAt && (
                 <Descriptions.Item label="Thanh toán lúc">
-                  {dayjs(selectedTicket.paidAt).format('HH:mm:ss DD/MM/YYYY')}
+                  {toLocalDateTime(selectedTicket.paidAt).format('HH:mm:ss DD/MM/YYYY')}
                 </Descriptions.Item>
               )}
               {selectedTicket.checkedInAt && (
                 <Descriptions.Item label="Check-in lúc">
                   <Tag color="blue" icon={<CheckCircleOutlined />}>
-                    {dayjs(selectedTicket.checkedInAt).format('HH:mm:ss DD/MM/YYYY')}
+                    {toLocalDateTime(selectedTicket.checkedInAt).format('HH:mm:ss DD/MM/YYYY')}
                   </Tag>
                 </Descriptions.Item>
               )}

@@ -9,6 +9,8 @@ namespace Booking.API.Infrastructure.Notifications.Services;
 
 public class EmailService : IEmailService
 {
+    private static readonly TimeZoneInfo DisplayTimeZone = ResolveDisplayTimeZone();
+
     private readonly SmtpOptions _smtpOptions;
     private readonly ILogger<EmailService> _logger;
 
@@ -139,7 +141,7 @@ public class EmailService : IEmailService
                 <p><strong>Movie:</strong> {booking.MovieTitle}</p>
                 <p><strong>Cinema:</strong> {booking.CinemaName}</p>
                 <p><strong>Hall:</strong> {booking.CinemaHallName}</p>
-                <p><strong>Showtime:</strong> {booking.ShowtimeDate:dddd, MMMM dd, yyyy} at {booking.ShowtimeDate:HH:mm}</p>
+                <p><strong>Showtime:</strong> {FormatShowtime(booking.ShowtimeDate)}</p>
                 <p><strong>Seats:</strong> {string.Join(", ", booking.BookingSeats.Select(s => s.SeatNumber))}</p>
                 <p><strong>Total Amount:</strong> {booking.TotalAmount:C}</p>
                 <p><strong>Status:</strong> {booking.Status}</p>
@@ -171,7 +173,7 @@ Booking Details:
 - Movie: {booking.MovieTitle}
 - Cinema: {booking.CinemaName}
 - Hall: {booking.CinemaHallName}
-- Showtime: {booking.ShowtimeDate:dddd, MMMM dd, yyyy} at {booking.ShowtimeDate:HH:mm}
+- Showtime: {FormatShowtime(booking.ShowtimeDate)}
 - Seats: {string.Join(", ", booking.BookingSeats.Select(s => s.SeatNumber))}
 - Total Amount: {booking.TotalAmount:C}
 - Status: {booking.Status}
@@ -216,7 +218,7 @@ This is an automated email. Please do not reply.
                 <h3>Cancelled Booking Details</h3>
                 <p><strong>Booking Code:</strong> {booking.BookingCode}</p>
                 <p><strong>Movie:</strong> {booking.MovieTitle}</p>
-                <p><strong>Showtime:</strong> {booking.ShowtimeDate:dddd, MMMM dd, yyyy} at {booking.ShowtimeDate:HH:mm}</p>
+                <p><strong>Showtime:</strong> {FormatShowtime(booking.ShowtimeDate)}</p>
                 <p><strong>Amount:</strong> {booking.TotalAmount:C}</p>
             </div>
             
@@ -244,7 +246,7 @@ Reason: {reason}
 Cancelled Booking Details:
 - Booking Code: {booking.BookingCode}
 - Movie: {booking.MovieTitle}
-- Showtime: {booking.ShowtimeDate:dddd, MMMM dd, yyyy} at {booking.ShowtimeDate:HH:mm}
+- Showtime: {FormatShowtime(booking.ShowtimeDate)}
 - Amount: {booking.TotalAmount:C}
 
 If payment was processed, refund will be issued within 3-5 business days.
@@ -287,7 +289,7 @@ This is an automated email. Please do not reply.
                 <p><strong>Movie:</strong> {booking.MovieTitle}</p>
                 <p><strong>Cinema:</strong> {booking.CinemaName}</p>
                 <p><strong>Hall:</strong> {booking.CinemaHallName}</p>
-                <p><strong>Showtime:</strong> {booking.ShowtimeDate:dddd, MMMM dd, yyyy} at {booking.ShowtimeDate:HH:mm}</p>
+                <p><strong>Showtime:</strong> {FormatShowtime(booking.ShowtimeDate)}</p>
                 <p><strong>Seats:</strong> {string.Join(", ", booking.BookingSeats.Select(s => s.SeatNumber))}</p>
             </div>
             
@@ -316,7 +318,7 @@ Your Booking:
 - Movie: {booking.MovieTitle}
 - Cinema: {booking.CinemaName}
 - Hall: {booking.CinemaHallName}
-- Showtime: {booking.ShowtimeDate:dddd, MMMM dd, yyyy} at {booking.ShowtimeDate:HH:mm}
+- Showtime: {FormatShowtime(booking.ShowtimeDate)}
 - Seats: {string.Join(", ", booking.BookingSeats.Select(s => s.SeatNumber))}
 
 Don't forget: Arrive at least 15 minutes early!
@@ -324,6 +326,36 @@ Don't forget: Arrive at least 15 minutes early!
 Enjoy your movie!
 This is an automated email. Please do not reply.
 ";
+    }
+
+    private static string FormatShowtime(DateTime showtimeUtc)
+    {
+        var localShowtime = ConvertUtcToDisplayTime(showtimeUtc);
+        return $"{localShowtime:dddd, MMMM dd, yyyy} at {localShowtime:HH:mm}";
+    }
+
+    private static DateTime ConvertUtcToDisplayTime(DateTime dateTime)
+    {
+        var utcDateTime = dateTime.Kind switch
+        {
+            DateTimeKind.Utc => dateTime,
+            DateTimeKind.Local => dateTime.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc)
+        };
+
+        return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, DisplayTimeZone);
+    }
+
+    private static TimeZoneInfo ResolveDisplayTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
+        }
     }
 }
 

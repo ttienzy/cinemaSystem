@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import {
   Card, Select, DatePicker, Row, Col, Tooltip, Tag, Progress, Spin, Empty,
-  Typography, Space, Badge, Button, Modal, Descriptions, message,
+  Typography, Space, Button, Modal, Descriptions,
 } from 'antd';
 import {
-  CalendarOutlined, ClockCircleOutlined, VideoCameraOutlined,
-  ExclamationCircleOutlined, CheckCircleOutlined, LockOutlined,
+  CalendarOutlined, VideoCameraOutlined,
+  CheckCircleOutlined, LockOutlined,
   ReloadOutlined, InfoCircleOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ import {
   type TimelineRoomDto,
 } from '../../../features/showtimes/api/showtimeTimelineApi';
 import dayjs from '../../../utils/dayjs';
+import { toLocalDateTime } from '../../../utils/dateTime';
 
 const { Title, Text } = Typography;
 
@@ -35,7 +36,7 @@ const getOccupancyColor = (rate: number) => {
 };
 
 const minutesSinceStart = (isoTime: string, baseDate: dayjs.Dayjs): number => {
-  const t = dayjs(isoTime);
+  const t = toLocalDateTime(isoTime);
   const base = baseDate.hour(TIMELINE_START_HOUR).minute(0).second(0);
   return t.diff(base, 'minute');
 };
@@ -65,7 +66,7 @@ const ShowtimeBlock: React.FC<{
         title={
           <div style={{ fontSize: 12 }}>
             <div><b>{showtime.movieTitle}</b></div>
-            <div>{dayjs(showtime.start).format('HH:mm')} – {dayjs(showtime.end).format('HH:mm')}</div>
+            <div>{toLocalDateTime(showtime.start).format('HH:mm')} – {toLocalDateTime(showtime.end).format('HH:mm')}</div>
             <div>Ghế: {showtime.bookedSeats}/{showtime.totalSeats} ({showtime.occupancyRate.toFixed(0)}%)</div>
             <div>Giá: {showtime.price.toLocaleString()}đ</div>
             {showtime.hasBookings && <div style={{ color: '#ffc53d' }}>🔒 Đã có vé bán</div>}
@@ -103,7 +104,7 @@ const ShowtimeBlock: React.FC<{
             {showtime.movieTitle}
           </div>
           <div style={{ color: textColor, fontSize: 10, opacity: 0.85 }}>
-            {dayjs(showtime.start).format('HH:mm')}–{dayjs(showtime.end).format('HH:mm')}
+            {toLocalDateTime(showtime.start).format('HH:mm')}–{toLocalDateTime(showtime.end).format('HH:mm')}
           </div>
           {/* Occupancy bar */}
           <div style={{
@@ -332,8 +333,8 @@ const ShowtimeTimelinePage: React.FC = () => {
             </div>
 
             <Descriptions bordered column={2} size="small">
-              <Descriptions.Item label="Giờ chiếu">{dayjs(detailShowtime.start).format('HH:mm')}</Descriptions.Item>
-              <Descriptions.Item label="Kết thúc">{dayjs(detailShowtime.end).format('HH:mm')}</Descriptions.Item>
+              <Descriptions.Item label="Giờ chiếu">{toLocalDateTime(detailShowtime.start).format('HH:mm')}</Descriptions.Item>
+              <Descriptions.Item label="Kết thúc">{toLocalDateTime(detailShowtime.end).format('HH:mm')}</Descriptions.Item>
               <Descriptions.Item label="Thời lượng">{detailShowtime.durationMinutes} phút</Descriptions.Item>
               <Descriptions.Item label="Buffer dọn dẹp">{detailShowtime.cleaningBufferMinutes} phút</Descriptions.Item>
               <Descriptions.Item label="Giá vé">{detailShowtime.price.toLocaleString()} đ</Descriptions.Item>

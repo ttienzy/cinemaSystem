@@ -1,4 +1,5 @@
 using Booking.API.Infrastructure.Hubs.Builders;
+using Booking.API.Infrastructure.Hubs.Constants;
 using Booking.API.Infrastructure.Hubs.Extensions;
 using Booking.API.Infrastructure.Hubs.Interfaces;
 using Booking.API.Infrastructure.Hubs.Models;
@@ -33,9 +34,9 @@ public class SeatHub : Hub<ISeatHubClient>
     /// Join a showtime group to receive real-time seat updates
     /// </summary>
     /// <param name="showtimeId">The showtime to monitor</param>
-    public async Task JoinShowtime(Guid showtimeId)
+    public async Task<HubOperationResult> JoinShowtime(Guid showtimeId)
     {
-        var userId = Context.GetUserNameOrAnonymous();
+        var userId = Context.GetUserIdOrAnonymous();
         var connectionId = Context.ConnectionId;
 
         _logger.LogInformation(
@@ -51,7 +52,9 @@ public class SeatHub : Hub<ISeatHubClient>
                 _logger.LogWarning(
                     "User {UserId} attempted to join non-existent showtime {ShowtimeId}",
                     userId, showtimeId);
-                throw new HubException($"Showtime {showtimeId} not found");
+                return HubOperationResult.Fail(
+                    HubOperationErrorCodes.ShowtimeNotFound,
+                    $"Showtime {showtimeId} not found");
             }
 
             if (!showtime.IsActive)
@@ -59,7 +62,9 @@ public class SeatHub : Hub<ISeatHubClient>
                 _logger.LogWarning(
                     "User {UserId} attempted to join inactive showtime {ShowtimeId}",
                     userId, showtimeId);
-                throw new HubException($"Showtime {showtimeId} is not active");
+                return HubOperationResult.Fail(
+                    HubOperationErrorCodes.ShowtimeInactive,
+                    $"Showtime {showtimeId} is not active");
             }
 
             // Add to SignalR group
@@ -80,17 +85,17 @@ public class SeatHub : Hub<ISeatHubClient>
             _logger.LogInformation(
                 "User {UserId} successfully joined showtime {ShowtimeId}. Current viewers: {ViewerCount}",
                 userId, showtimeId, viewerCount);
-        }
-        catch (HubException)
-        {
-            throw; // Re-throw HubException as-is
+
+            return HubOperationResult.Ok("Joined showtime successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
                 "Error adding user {UserId} to showtime {ShowtimeId}",
                 userId, showtimeId);
-            throw new HubException("Failed to join showtime. Please try again.");
+            return HubOperationResult.Fail(
+                HubOperationErrorCodes.JoinShowtimeFailed,
+                "Failed to join showtime. Please try again.");
         }
     }
 
@@ -98,9 +103,9 @@ public class SeatHub : Hub<ISeatHubClient>
     /// Leave a showtime group
     /// </summary>
     /// <param name="showtimeId">The showtime to leave</param>
-    public async Task LeaveShowtime(Guid showtimeId)
+    public async Task<HubOperationResult> LeaveShowtime(Guid showtimeId)
     {
-        var userId = Context.GetUserNameOrAnonymous();
+        var userId = Context.GetUserIdOrAnonymous();
         var connectionId = Context.ConnectionId;
 
         _logger.LogInformation(
@@ -126,13 +131,17 @@ public class SeatHub : Hub<ISeatHubClient>
             _logger.LogInformation(
                 "User {UserId} left showtime {ShowtimeId}. Remaining viewers: {ViewerCount}",
                 userId, showtimeId, viewerCount);
+
+            return HubOperationResult.Ok("Left showtime successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
                 "Error removing user {UserId} from showtime {ShowtimeId}",
                 userId, showtimeId);
-            // Don't throw - leaving should be best-effort
+            return HubOperationResult.Fail(
+                HubOperationErrorCodes.LeaveShowtimeFailed,
+                "Failed to leave showtime. Please try again.");
         }
     }
 
@@ -141,7 +150,7 @@ public class SeatHub : Hub<ISeatHubClient>
     /// </summary>
     public override async Task OnConnectedAsync()
     {
-        var userId = Context.GetUserNameOrAnonymous();
+        var userId = Context.GetUserIdOrAnonymous();
         var connectionId = Context.ConnectionId;
 
         _logger.LogInformation(
@@ -156,7 +165,7 @@ public class SeatHub : Hub<ISeatHubClient>
     /// </summary>
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var userId = Context.GetUserNameOrAnonymous();
+        var userId = Context.GetUserIdOrAnonymous();
         var connectionId = Context.ConnectionId;
 
         if (exception != null)

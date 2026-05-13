@@ -5,6 +5,8 @@ namespace Booking.API.Infrastructure.Hubs.Extensions;
 
 public static class HubCallerContextExtensions
 {
-    public static string GetUserNameOrAnonymous(this HubCallerContext context)
-        => context.User?.Identity?.Name ?? HubConstants.AnonymousUser;
+    public static string GetUserIdOrAnonymous(this HubCallerContext context)
+        => string.IsNullOrWhiteSpace(context.UserIdentifier)
+            ? HubConstants.AnonymousUser
+            : context.UserIdentifier;
 }

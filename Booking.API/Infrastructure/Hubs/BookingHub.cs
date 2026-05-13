@@ -1,3 +1,5 @@
+using Booking.API.Infrastructure.Hubs.Builders;
+using Booking.API.Infrastructure.Hubs.Extensions;
 using Booking.API.Infrastructure.Hubs.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -24,7 +26,7 @@ public class BookingHub : Hub<IBookingHubClient>
     /// <param name="bookingId">The booking to monitor</param>
     public async Task JoinBookingGroup(Guid bookingId)
     {
-        var userId = Context.User?.Identity?.Name ?? "anonymous";
+        var userId = Context.GetUserNameOrAnonymous();
         var connectionId = Context.ConnectionId;
 
         _logger.LogInformation(
@@ -33,7 +35,7 @@ public class BookingHub : Hub<IBookingHubClient>
 
         try
         {
-            var groupName = GetBookingGroupName(bookingId);
+            var groupName = HubGroupNameBuilder.ForBooking(bookingId);
             await Groups.AddToGroupAsync(connectionId, groupName);
 
             _logger.LogInformation(
@@ -55,7 +57,7 @@ public class BookingHub : Hub<IBookingHubClient>
     /// <param name="bookingId">The booking to leave</param>
     public async Task LeaveBookingGroup(Guid bookingId)
     {
-        var userId = Context.User?.Identity?.Name ?? "anonymous";
+        var userId = Context.GetUserNameOrAnonymous();
         var connectionId = Context.ConnectionId;
 
         _logger.LogInformation(
@@ -64,7 +66,7 @@ public class BookingHub : Hub<IBookingHubClient>
 
         try
         {
-            var groupName = GetBookingGroupName(bookingId);
+            var groupName = HubGroupNameBuilder.ForBooking(bookingId);
             await Groups.RemoveFromGroupAsync(connectionId, groupName);
 
             _logger.LogInformation(
@@ -84,7 +86,7 @@ public class BookingHub : Hub<IBookingHubClient>
     /// </summary>
     public override async Task OnConnectedAsync()
     {
-        var userId = Context.User?.Identity?.Name ?? "anonymous";
+        var userId = Context.GetUserNameOrAnonymous();
         var connectionId = Context.ConnectionId;
 
         _logger.LogInformation(
@@ -99,7 +101,7 @@ public class BookingHub : Hub<IBookingHubClient>
     /// </summary>
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var userId = Context.User?.Identity?.Name ?? "anonymous";
+        var userId = Context.GetUserNameOrAnonymous();
         var connectionId = Context.ConnectionId;
 
         if (exception != null)
@@ -116,13 +118,5 @@ public class BookingHub : Hub<IBookingHubClient>
         }
 
         await base.OnDisconnectedAsync(exception);
-    }
-
-    /// <summary>
-    /// Gets the SignalR group name for a booking
-    /// </summary>
-    private static string GetBookingGroupName(Guid bookingId)
-    {
-        return $"booking-{bookingId}";
     }
 }

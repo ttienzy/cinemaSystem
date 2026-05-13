@@ -1,3 +1,5 @@
+using Booking.API.Infrastructure.Hubs.Builders;
+using Booking.API.Infrastructure.Hubs.Constants;
 using StackExchange.Redis;
 
 namespace Booking.API.Infrastructure.Hubs.Services;
@@ -11,7 +13,7 @@ public class RedisConnectionTracker : IConnectionTracker
     private readonly IConnectionMultiplexer _redis;
     private readonly ILogger<RedisConnectionTracker> _logger;
     private readonly string _keyPrefix;
-    private readonly TimeSpan _connectionTtl = TimeSpan.FromHours(2);
+    private readonly TimeSpan _connectionTtl = HubConstants.DefaultConnectionTrackingTtl;
 
     public RedisConnectionTracker(
         IConnectionMultiplexer redis,
@@ -20,7 +22,8 @@ public class RedisConnectionTracker : IConnectionTracker
     {
         _redis = redis ?? throw new ArgumentNullException(nameof(redis));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _keyPrefix = configuration.GetValue<string>("Redis:KeyPrefix") ?? "cinema";
+        _keyPrefix = configuration.GetValue<string>(HubConstants.RedisKeyPrefixConfigKey)
+            ?? HubConstants.DefaultRedisKeyPrefix;
     }
 
     public async Task AddConnectionAsync(Guid showtimeId, string connectionId, string userId)
@@ -28,8 +31,8 @@ public class RedisConnectionTracker : IConnectionTracker
         try
         {
             var db = _redis.GetDatabase();
-            var showtimeKey = GetShowtimeConnectionsKey(showtimeId);
-            var connectionKey = GetConnectionShowtimesKey(connectionId);
+            var showtimeKey = RedisHubKeyBuilder.ForShowtimeConnections(_keyPrefix, showtimeId);
+            var connectionKey = RedisHubKeyBuilder.ForConnectionShowtimes(_keyPrefix, connectionId);
 
             // Add connection to showtime set
             await db.SetAddAsync(showtimeKey, connectionId);
@@ -57,8 +60,8 @@ public class RedisConnectionTracker : IConnectionTracker
         try
         {
             var db = _redis.GetDatabase();
-            var showtimeKey = GetShowtimeConnectionsKey(showtimeId);
-            var connectionKey = GetConnectionShowtimesKey(connectionId);
+            var showtimeKey = RedisHubKeyBuilder.ForShowtimeConnections(_keyPrefix, showtimeId);
+            var connectionKey = RedisHubKeyBuilder.ForConnectionShowtimes(_keyPrefix, connectionId);
 
             // Remove connection from showtime set
             await db.SetRemoveAsync(showtimeKey, connectionId);
@@ -84,7 +87,7 @@ public class RedisConnectionTracker : IConnectionTracker
         try
         {
             var db = _redis.GetDatabase();
-            var connectionKey = GetConnectionShowtimesKey(connectionId);
+            var connectionKey = RedisHubKeyBuilder.ForConnectionShowtimes(_keyPrefix, connectionId);
 
             // Get all showtimes this connection is in
             var showtimeIds = await db.SetMembersAsync(connectionKey);
@@ -102,7 +105,7 @@ public class RedisConnectionTracker : IConnectionTracker
             {
                 if (Guid.TryParse(showtimeIdValue, out var showtimeId))
                 {
-                    var showtimeKey = GetShowtimeConnectionsKey(showtimeId);
+                    var showtimeKey = RedisHubKeyBuilder.ForShowtimeConnections(_keyPrefix, showtimeId);
                     await db.SetRemoveAsync(showtimeKey, connectionId);
                 }
             }
@@ -128,7 +131,7 @@ public class RedisConnectionTracker : IConnectionTracker
         try
         {
             var db = _redis.GetDatabase();
-            var showtimeKey = GetShowtimeConnectionsKey(showtimeId);
+            var showtimeKey = RedisHubKeyBuilder.ForShowtimeConnections(_keyPrefix, showtimeId);
 
             var count = await db.SetLengthAsync(showtimeKey);
             return (int)count;
@@ -147,7 +150,7 @@ public class RedisConnectionTracker : IConnectionTracker
         try
         {
             var db = _redis.GetDatabase();
-            var connectionKey = GetConnectionShowtimesKey(connectionId);
+            var connectionKey = RedisHubKeyBuilder.ForConnectionShowtimes(_keyPrefix, connectionId);
 
             var showtimeIds = await db.SetMembersAsync(connectionKey);
 
@@ -169,15 +172,5 @@ public class RedisConnectionTracker : IConnectionTracker
                 connectionId);
             return new List<Guid>();
         }
-    }
-
-    private string GetShowtimeConnectionsKey(Guid showtimeId)
-    {
-        return $"{_keyPrefix}:signalr:showtime:{showtimeId}:connections";
-    }
-
-    private string GetConnectionShowtimesKey(string connectionId)
-    {
-        return $"{_keyPrefix}:signalr:connection:{connectionId}:showtimes";
     }
 }

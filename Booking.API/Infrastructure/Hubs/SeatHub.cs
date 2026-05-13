@@ -1,4 +1,7 @@
+using Booking.API.Infrastructure.Hubs.Builders;
+using Booking.API.Infrastructure.Hubs.Extensions;
 using Booking.API.Infrastructure.Hubs.Interfaces;
+using Booking.API.Infrastructure.Hubs.Models;
 using Booking.API.Infrastructure.Hubs.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -32,7 +35,7 @@ public class SeatHub : Hub<ISeatHubClient>
     /// <param name="showtimeId">The showtime to monitor</param>
     public async Task JoinShowtime(Guid showtimeId)
     {
-        var userId = Context.User?.Identity?.Name ?? "anonymous";
+        var userId = Context.GetUserNameOrAnonymous();
         var connectionId = Context.ConnectionId;
 
         _logger.LogInformation(
@@ -60,7 +63,7 @@ public class SeatHub : Hub<ISeatHubClient>
             }
 
             // Add to SignalR group
-            var groupName = GetShowtimeGroupName(showtimeId);
+            var groupName = HubGroupNameBuilder.ForShowtime(showtimeId);
             await Groups.AddToGroupAsync(connectionId, groupName);
 
             // Track connection
@@ -97,7 +100,7 @@ public class SeatHub : Hub<ISeatHubClient>
     /// <param name="showtimeId">The showtime to leave</param>
     public async Task LeaveShowtime(Guid showtimeId)
     {
-        var userId = Context.User?.Identity?.Name ?? "anonymous";
+        var userId = Context.GetUserNameOrAnonymous();
         var connectionId = Context.ConnectionId;
 
         _logger.LogInformation(
@@ -106,7 +109,7 @@ public class SeatHub : Hub<ISeatHubClient>
 
         try
         {
-            var groupName = GetShowtimeGroupName(showtimeId);
+            var groupName = HubGroupNameBuilder.ForShowtime(showtimeId);
             await Groups.RemoveFromGroupAsync(connectionId, groupName);
 
             // Untrack connection
@@ -138,7 +141,7 @@ public class SeatHub : Hub<ISeatHubClient>
     /// </summary>
     public override async Task OnConnectedAsync()
     {
-        var userId = Context.User?.Identity?.Name ?? "anonymous";
+        var userId = Context.GetUserNameOrAnonymous();
         var connectionId = Context.ConnectionId;
 
         _logger.LogInformation(
@@ -153,7 +156,7 @@ public class SeatHub : Hub<ISeatHubClient>
     /// </summary>
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        var userId = Context.User?.Identity?.Name ?? "anonymous";
+        var userId = Context.GetUserNameOrAnonymous();
         var connectionId = Context.ConnectionId;
 
         if (exception != null)
@@ -173,13 +176,5 @@ public class SeatHub : Hub<ISeatHubClient>
         await _connectionTracker.RemoveConnectionFromAllShowtimesAsync(connectionId);
 
         await base.OnDisconnectedAsync(exception);
-    }
-
-    /// <summary>
-    /// Gets the SignalR group name for a showtime
-    /// </summary>
-    private static string GetShowtimeGroupName(Guid showtimeId)
-    {
-        return $"showtime:{showtimeId}";
     }
 }

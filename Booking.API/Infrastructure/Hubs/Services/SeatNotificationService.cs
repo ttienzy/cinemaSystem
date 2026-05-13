@@ -1,4 +1,7 @@
+using Booking.API.Infrastructure.Hubs.Builders;
+using Booking.API.Infrastructure.Hubs.Constants;
 using Booking.API.Infrastructure.Hubs.Interfaces;
+using Booking.API.Infrastructure.Hubs.Models;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Booking.API.Infrastructure.Hubs.Services;
@@ -24,7 +27,9 @@ public class SeatNotificationService : ISeatNotificationService
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
         // Feature flag for enabling/disabling broadcasts
-        _enableBroadcasts = _configuration.GetValue<bool>("Features:EnableSignalRBroadcasts", true);
+        _enableBroadcasts = _configuration.GetValue<bool>(
+            HubConstants.EnableSignalRBroadcastsConfigKey,
+            HubConstants.EnableSignalRBroadcastsByDefault);
     }
 
     public async Task NotifySeatLockedAsync(
@@ -45,13 +50,13 @@ public class SeatNotificationService : ISeatNotificationService
             {
                 ShowtimeId = showtimeId,
                 SeatIds = seatIds,
-                Status = "locked",
+                Status = SeatStatusConstants.Locked,
                 UserId = userId,
                 LockedUntil = lockedUntil,
                 Timestamp = DateTime.UtcNow
             };
 
-            var groupName = GetShowtimeGroupName(showtimeId);
+            var groupName = HubGroupNameBuilder.ForShowtime(showtimeId);
             await _hubContext.Clients
                 .Group(groupName)
                 .SeatLocked(notification);
@@ -85,11 +90,11 @@ public class SeatNotificationService : ISeatNotificationService
             {
                 ShowtimeId = showtimeId,
                 SeatIds = seatIds,
-                Status = "available",
+                Status = SeatStatusConstants.Available,
                 Timestamp = DateTime.UtcNow
             };
 
-            var groupName = GetShowtimeGroupName(showtimeId);
+            var groupName = HubGroupNameBuilder.ForShowtime(showtimeId);
             await _hubContext.Clients
                 .Group(groupName)
                 .SeatUnlocked(notification);
@@ -123,11 +128,11 @@ public class SeatNotificationService : ISeatNotificationService
             {
                 ShowtimeId = showtimeId,
                 SeatIds = seatIds,
-                Status = "booked",
+                Status = SeatStatusConstants.Booked,
                 Timestamp = DateTime.UtcNow
             };
 
-            var groupName = GetShowtimeGroupName(showtimeId);
+            var groupName = HubGroupNameBuilder.ForShowtime(showtimeId);
             await _hubContext.Clients
                 .Group(groupName)
                 .SeatBooked(notification);
@@ -161,11 +166,11 @@ public class SeatNotificationService : ISeatNotificationService
             {
                 ShowtimeId = showtimeId,
                 SeatIds = seatIds,
-                Status = "available",
+                Status = SeatStatusConstants.Available,
                 Timestamp = DateTime.UtcNow
             };
 
-            var groupName = GetShowtimeGroupName(showtimeId);
+            var groupName = HubGroupNameBuilder.ForShowtime(showtimeId);
             await _hubContext.Clients
                 .Group(groupName)
                 .SeatReleased(notification);
@@ -181,10 +186,5 @@ public class SeatNotificationService : ISeatNotificationService
                 showtimeId);
             // Don't throw - broadcast failure shouldn't fail the operation
         }
-    }
-
-    private static string GetShowtimeGroupName(Guid showtimeId)
-    {
-        return $"showtime:{showtimeId}";
     }
 }

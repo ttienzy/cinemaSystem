@@ -1,3 +1,4 @@
+using Booking.API.Infrastructure.Hubs.Builders;
 using Booking.API.Application.DTOs.Responses;
 using Booking.API.Infrastructure.Hubs.Interfaces;
 using Microsoft.AspNetCore.SignalR;
@@ -64,7 +65,7 @@ public class AdminDashboardNotificationService : IAdminDashboardNotificationServ
         };
 
         await _hubContext.Clients
-            .Group(AdminDashboardHub.GetDashboardGroupName())
+            .Group(HubGroupNameBuilder.ForAdminDashboard())
             .NewBooking(activity);
     }
 }

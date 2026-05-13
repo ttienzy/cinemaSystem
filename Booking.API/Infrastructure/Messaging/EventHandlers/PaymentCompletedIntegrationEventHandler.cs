@@ -141,7 +141,7 @@ public class PaymentCompletedIntegrationEventHandler
             CinemaName = booking.ShowtimeDetails?.CinemaName ?? "Unknown Cinema",
             CinemaHallName = booking.ShowtimeDetails?.CinemaHallName ?? "Unknown Hall",
             ShowtimeDate = booking.ShowtimeDetails?.StartTime ?? DateTime.UtcNow,
-            TotalAmount = booking.TotalPrice,
+            TotalAmount = @event.Amount,
             Status = booking.Status,
             BookingSeats = booking.Seats.Select(seat => new Application.DTOs.BookingSeatDto
             {

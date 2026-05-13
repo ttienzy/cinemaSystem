@@ -1,5 +1,6 @@
 using Booking.API.Infrastructure.Hubs.Builders;
 using Booking.API.Application.DTOs.Responses;
+using Booking.API.Domain.Entities;
 using Booking.API.Infrastructure.Hubs.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,15 @@ public class AdminDashboardNotificationService : IAdminDashboardNotificationServ
         if (booking is null)
         {
             _logger.LogWarning("Cannot publish dashboard activity. Booking {BookingId} not found.", bookingId);
+            return;
+        }
+
+        if (booking.Status is not BookingStatus.Confirmed and not BookingStatus.CheckedIn)
+        {
+            _logger.LogInformation(
+                "Skipping dashboard activity broadcast for booking {BookingId} because status is {Status}.",
+                bookingId,
+                booking.Status);
             return;
         }
 

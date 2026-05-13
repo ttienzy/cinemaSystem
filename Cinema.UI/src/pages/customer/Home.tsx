@@ -3,6 +3,7 @@ import { Carousel, Button, Spin, Tabs } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { movieApi, type Movie } from '../../features/movies/api/movieApi';
 import dayjs from '../../utils/dayjs';
+import { toLocalDateTime } from '../../utils/dateTime';
 import { useNavigate } from 'react-router-dom';
 
 const { TabPane } = Tabs;
@@ -18,8 +19,8 @@ const Home: React.FC = () => {
   const now = dayjs();
 
   // Phân loại Đang chiếu / Sắp chiếu dựa vào ReleaseDate
-  const nowShowing = movies.filter(m => dayjs(m.releaseDate).isBefore(now) || dayjs(m.releaseDate).isSame(now, 'day'));
-  const comingSoon = movies.filter(m => dayjs(m.releaseDate).isAfter(now));
+  const nowShowing = movies.filter(m => toLocalDateTime(m.releaseDate).isBefore(now) || toLocalDateTime(m.releaseDate).isSame(now, 'day'));
+  const comingSoon = movies.filter(m => toLocalDateTime(m.releaseDate).isAfter(now));
 
   const banners = nowShowing.slice(0, 3); // Lấy 3 phim đang chiếu làm banner
 
@@ -40,7 +41,7 @@ const Home: React.FC = () => {
             <p className="movie-meta">
               <span>{movie.language || 'Phụ đề'}</span> • <span>{movie.duration} phút</span>
             </p>
-            <p className="movie-date">Khởi chiếu: {dayjs(movie.releaseDate).format('DD/MM/YYYY')}</p>
+            <p className="movie-date">Khởi chiếu: {toLocalDateTime(movie.releaseDate).format('DD/MM/YYYY')}</p>
           </div>
         </div>
       ))}
@@ -53,8 +54,8 @@ const Home: React.FC = () => {
       <Carousel autoplay effect="fade" className="hero-carousel">
         {banners.map(movie => (
           <div key={`banner-${movie.id}`} className="hero-slide">
-            <div 
-              className="hero-background" 
+            <div
+              className="hero-background"
               style={{ backgroundImage: `url(${movie.posterUrl || 'https://via.placeholder.com/1200x500'})` }}
             />
             <div className="hero-content">

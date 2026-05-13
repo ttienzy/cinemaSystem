@@ -2,6 +2,7 @@ using Booking.API.Api.Endpoints;
 using Booking.API.Application;
 using Booking.API.Infrastructure;
 using Booking.API.Infrastructure.Hubs;
+using Booking.API.Infrastructure.Serialization;
 using Cinema.Shared.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    options.SerializerOptions.Converters.Add(new DateTimeUtcConverter());
+    options.SerializerOptions.Converters.Add(new NullableDateTimeUtcConverter());
 });
 
 builder.Services.AddJwtAuthentication(builder.Configuration);

@@ -7,7 +7,7 @@
 // Kết nối SignalR để nhận real-time hoạt động gần đây (NewBooking).
 // ============================================================
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Card,
   Row,
@@ -40,12 +40,36 @@ import { useQuery } from '@tanstack/react-query';
 import { HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr';
 import dayjs from '../../utils/dayjs';
 import { toLocalDateTime } from '../../utils/dateTime';
-import { dashboardApi, type RecentActivity, type NewBookingPayload } from '../../api/dashboardApi';
+import { dashboardApi, type NewBookingPayload, type RecentActivity, type TopMovie } from '../../api/dashboardApi';
 import { useAuth } from '../../hooks/useAuth';
 import { getApiGatewayBaseUrl } from '../../utils/apiConfig';
 import { getAccessToken } from '../../utils/tokenStorage';
 
 const { Title, Text } = Typography;
+
+const asNumber = (value: unknown, fallback = 0) => {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+};
+
+const formatMoney = (value: unknown) => `${asNumber(value).toLocaleString('vi-VN')} đ`;
+
+const normalizeRecentActivity = (activity: NewBookingPayload): RecentActivity => {
+  return {
+    bookingId: activity.bookingId ?? activity.BookingId ?? crypto.randomUUID(),
+    showtimeId: activity.showtimeId ?? activity.ShowtimeId ?? '',
+    movieId: activity.movieId ?? activity.MovieId ?? '',
+    movieTitle: activity.movieTitle ?? activity.MovieTitle ?? 'Không rõ phim',
+    customerName: activity.customerName ?? activity.CustomerName ?? 'Khách hàng',
+    amount: asNumber(activity.amount ?? activity.Amount),
+    seatsCount: asNumber(activity.seatsCount ?? activity.SeatsCount),
+    status: activity.status ?? activity.Status ?? 'Completed',
+    occurredAtUtc: activity.occurredAtUtc ?? activity.OccurredAtUtc ?? new Date().toISOString(),
+  };
+};
+
+type RevenueTooltipDatum = {
+  revenue?: number;
+};
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -70,12 +94,13 @@ const Dashboard: React.FC = () => {
   // 3. Quản lý trạng thái Real-time (Recent Activities)
   const [realtimeActivities, setRealtimeActivities] = useState<RecentActivity[]>([]);
   const [isSignalRConnected, setIsSignalRConnected] = useState(false);
+  const summaryActivities = useMemo(() => summary?.recentActivities ?? [], [summary?.recentActivities]);
+  const summaryActivitiesRef = useRef<RecentActivity[]>([]);
+  const displayedActivities = realtimeActivities.length > 0 ? realtimeActivities : summaryActivities;
 
   useEffect(() => {
-    if (summary?.recentActivities) {
-      setRealtimeActivities(summary.recentActivities);
-    }
-  }, [summary?.recentActivities]);
+    summaryActivitiesRef.current = summaryActivities;
+  }, [summaryActivities]);
 
   // 4. Kết nối SignalR
   useEffect(() => {
@@ -93,7 +118,13 @@ const Dashboard: React.FC = () => {
     connection.on('NewBooking', (activity: NewBookingPayload) => {
       console.log('🔔 Mới có booking:', activity);
       setRealtimeActivities((prev) => {
-        const newActivities = [activity, ...prev];
+        const currentActivities = prev.length > 0 ? prev : summaryActivitiesRef.current;
+        const normalizedActivity = normalizeRecentActivity(activity);
+        if (normalizedActivity.status !== 'Completed') {
+          return currentActivities;
+        }
+
+        const newActivities = [normalizedActivity, ...currentActivities];
         return newActivities.slice(0, 10);
       });
     });
@@ -161,9 +192,9 @@ const Dashboard: React.FC = () => {
       },
     },
     tooltip: {
-      formatter: (datum: any) => ({
+      formatter: (datum: RevenueTooltipDatum) => ({
         name: 'Doanh thu',
-        value: `${datum.revenue.toLocaleString()} đ`,
+        value: formatMoney(datum.revenue),
       }),
     },
   };
@@ -198,17 +229,17 @@ const Dashboard: React.FC = () => {
     { title: 'Hạng', dataIndex: 'rank', key: 'rank', width: 70, align: 'center' as const, render: (r: number) => <Text strong>{r}</Text> },
     {
       title: 'Phim', key: 'movie',
-      render: (_: unknown, record: any) => (
+      render: (_: unknown, record: TopMovie) => (
         <Space>
           <Avatar src={record.posterUrl} shape="square" icon={<VideoCameraOutlined />} />
           <Text strong>{record.title}</Text>
         </Space>
       ),
     },
-    { title: 'Vé bán', dataIndex: 'ticketsSold', key: 'ticketsSold', render: (val: number) => val.toLocaleString() },
+    { title: 'Vé bán', dataIndex: 'ticketsSold', key: 'ticketsSold', render: (val: number) => asNumber(val).toLocaleString('vi-VN') },
     {
       title: 'Doanh thu', dataIndex: 'revenue', key: 'revenue', align: 'right' as const,
-      render: (val: number) => <Text strong style={{ color: '#1677ff' }}>{val.toLocaleString()} đ</Text>,
+      render: (val: number) => <Text strong style={{ color: '#1677ff' }}>{formatMoney(val)}</Text>,
     },
     {
       title: 'Lấp đầy', dataIndex: 'occupancyRate', key: 'occupancyRate',
@@ -341,7 +372,7 @@ const Dashboard: React.FC = () => {
             bordered={false}
             style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', height: '100%' }}
           >
-            <Pie {...donutConfig as any} height={200} />
+            <Pie {...donutConfig} height={200} />
             
             {kpi?.hotMovie && (
               <div style={{ marginTop: 24, textAlign: 'center', background: '#f5f5f5', padding: '12px', borderRadius: 8 }}>
@@ -351,7 +382,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div style={{ marginTop: 8 }}>
                   <Tag color="orange">{kpi.hotMovie.ticketsSold} vé</Tag>
-                  <Tag color="blue">{(kpi.hotMovie.revenue / 1000).toFixed(0)}K đ</Tag>
+                  <Tag color="blue">{(asNumber(kpi.hotMovie.revenue) / 1000).toFixed(0)}K đ</Tag>
                 </div>
               </div>
             )}
@@ -385,9 +416,9 @@ const Dashboard: React.FC = () => {
             style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', height: '100%' }}
           >
             <div style={{ maxHeight: 350, overflowY: 'auto', paddingRight: 8 }}>
-              {realtimeActivities.length > 0 ? (
+              {displayedActivities.length > 0 ? (
                 <Timeline>
-                  {realtimeActivities.map((act) => (
+                  {displayedActivities.map((act) => (
                     <Timeline.Item
                       key={act.bookingId}
                       color={act.status === 'Completed' ? 'green' : 'blue'}
@@ -403,7 +434,7 @@ const Dashboard: React.FC = () => {
                         Đặt <Text strong>{act.seatsCount} vé</Text> — <Text italic>{act.movieTitle}</Text>
                       </div>
                       <div style={{ color: '#1677ff', fontWeight: 500, fontSize: 13, marginTop: 4 }}>
-                        +{act.amount.toLocaleString()} đ
+                        +{formatMoney(act.amount)}
                       </div>
                     </Timeline.Item>
                   ))}

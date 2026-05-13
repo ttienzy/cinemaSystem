@@ -40,6 +40,11 @@ export interface CreateBookingRequest {
   contactName: string;
 }
 
+export interface CancelBookingRequest {
+  userId: string;
+  cancellationReason?: string;
+}
+
 export interface BookingResponse {
   bookingId: string;
   userId: string;
@@ -89,5 +94,9 @@ export const bookingApi = {
 
   getBookingById: async (bookingId: string): Promise<ApiResponse<BookingResponse>> => {
     return axiosClient.get(`/api/bookings/${bookingId}`);
+  },
+
+  cancelBooking: async (bookingId: string, data: CancelBookingRequest): Promise<ApiResponse<unknown>> => {
+    return axiosClient.put(`/api/bookings/${bookingId}/cancel`, data);
   }
 };

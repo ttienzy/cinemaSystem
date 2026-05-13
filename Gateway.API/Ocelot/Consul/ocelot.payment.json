@@ -12,6 +12,28 @@
       }
     },
     {
+      "UpstreamPathTemplate": "/api/payments/sepay/cancel",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/api/payments/sepay/cancel",
+      "DownstreamScheme": "http",
+      "ServiceName": "payment-api",
+      "Key": "payments-sepay-cancel",
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/payments/sepay/error",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/api/payments/sepay/error",
+      "DownstreamScheme": "http",
+      "ServiceName": "payment-api",
+      "Key": "payments-sepay-error",
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      }
+    },
+    {
       "UpstreamPathTemplate": "/api/payments/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
       "DownstreamPathTemplate": "/api/payments/{everything}",

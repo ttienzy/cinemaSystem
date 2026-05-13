@@ -1,11 +1,32 @@
+import { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Result, Button } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import { getAccessToken } from '../../../utils/tokenStorage';
+import { getApiGatewayBaseUrl } from '../../../utils/apiConfig';
 
 const PaymentCancelPage = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const bookingId = searchParams.get('bookingId');
+
+    useEffect(() => {
+        if (!bookingId || !getAccessToken()) {
+            return;
+        }
+
+        void fetch(`${getApiGatewayBaseUrl()}/api/bookings/${bookingId}/cancel`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${getAccessToken()}`
+            },
+            body: JSON.stringify({
+                userId: 'current-user',
+                cancellationReason: 'Payment cancelled by customer'
+            })
+        }).catch(() => undefined);
+    }, [bookingId]);
 
     return (
         <div style={{ padding: '60px 20px', maxWidth: 600, margin: '0 auto' }}>

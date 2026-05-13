@@ -29,6 +29,12 @@ public static class ShowtimeException
     public static (string Code, string Message, string Field) INVALID_START_TIME
         => ("INVALID_START_TIME", "Showtime must be scheduled at least 1 hour in advance", "StartTime");
 
+    public static (string Code, string Message, string Field) START_TIME_MUST_BE_AFTER_TODAY
+        => ("START_TIME_MUST_BE_AFTER_TODAY", "Showtime date must be later than today in local operating time", "StartTime");
+
+    public static (string Code, string Message, string Field) START_TIME_BEFORE_OPENING_HOUR
+        => ("START_TIME_BEFORE_OPENING_HOUR", "Showtime must start after 08:00 AM local operating time", "StartTime");
+
     public static (string Code, string Message, string Field) INVALID_CINEMA_HALL
         => ("INVALID_CINEMA_HALL", "Cinema hall does not exist", "CinemaHallId");
 

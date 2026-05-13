@@ -7,6 +7,8 @@ namespace Payment.API.Infrastructure.Integrations.SePay;
 
 public class SePayIpnProcessor : ISePayIpnProcessor
 {
+    private static readonly TimeZoneInfo VietnamTimeZone = ResolveVietnamTimeZone();
+
     private readonly ISePayService _sePayService;
     private readonly IPaymentService _paymentService;
     private readonly IPaymentIntegrationEventPublisher _eventPublisher;
@@ -167,10 +169,36 @@ public class SePayIpnProcessor : ISePayIpnProcessor
                 DateTimeStyles.None,
                 out var parsed))
         {
-            return parsed;
+            var localGatewayTime = DateTime.SpecifyKind(parsed, DateTimeKind.Unspecified);
+            return TimeZoneInfo.ConvertTimeToUtc(localGatewayTime, VietnamTimeZone);
         }
 
         return DateTime.UtcNow;
+    }
+
+    private static TimeZoneInfo ResolveVietnamTimeZone()
+    {
+        var candidateIds = new[] { "SE Asia Standard Time", "Asia/Ho_Chi_Minh" };
+
+        foreach (var timeZoneId in candidateIds)
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        return TimeZoneInfo.CreateCustomTimeZone(
+            "Vietnam Standard Time",
+            TimeSpan.FromHours(7),
+            "Vietnam Standard Time",
+            "Vietnam Standard Time");
     }
 }
 

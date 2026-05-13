@@ -6,6 +6,7 @@ import { PlayCircleOutlined, ClockCircleOutlined, CalendarOutlined } from '@ant-
 import { movieApi } from '../../features/movies/api/movieApi';
 import { showtimeApi, type Showtime } from '../../features/showtimes/api/showtimeApi';
 import dayjs from '../../utils/dayjs';
+import { toLocalDateTime } from '../../utils/dateTime';
 
 const MovieDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,7 +44,7 @@ const MovieDetails: React.FC = () => {
   // Group suất chiếu theo ngày -> rạp -> phòng chiếu
   const groupedShowtimes = showtimes.reduce((acc, curr) => {
     // Convert UTC to local time
-    const localStartTime = dayjs.utc(curr.startTime).local();
+    const localStartTime = toLocalDateTime(curr.startTime);
     const dateKey = localStartTime.format('YYYY-MM-DD');
     const cinemaKey = curr.cinemaName;
     const hallKey = curr.cinemaHallName;
@@ -79,7 +80,7 @@ const MovieDetails: React.FC = () => {
             <div className="details-meta">
               <Tag color="gold">{movie.language || '2D Phụ đề'}</Tag>
               <span><ClockCircleOutlined /> {movie.duration} phút</span>
-              <span><CalendarOutlined /> Khởi chiếu: {dayjs(movie.releaseDate).format('DD/MM/YYYY')}</span>
+              <span><CalendarOutlined /> Khởi chiếu: {toLocalDateTime(movie.releaseDate).format('DD/MM/YYYY')}</span>
             </div>
             <div className="details-desc">
               <h3>Nội dung phim</h3>
@@ -122,7 +123,7 @@ const MovieDetails: React.FC = () => {
                         <div className="hall-name">Phòng {hallName}</div>
                         <div className="showtime-tags">
                           {times.map(t => {
-                            const localStart = dayjs.utc(t.startTime).local();
+                            const localStart = toLocalDateTime(t.startTime);
 
                             return (
                               <Button

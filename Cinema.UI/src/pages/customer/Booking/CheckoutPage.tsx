@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query';
 import { bookingApi, type CreateBookingRequest } from '../../../features/booking/api/bookingApi';
 import { useBookingStore } from '../../../features/booking/store/useBookingStore';
 import dayjs from '../../../utils/dayjs';
+import { toLocalDateTime } from '../../../utils/dateTime';
 
 const { Countdown } = Statistic;
 
@@ -52,7 +53,7 @@ const CheckoutPage: React.FC = () => {
   });
 
   const onFinish = (values: any) => {
-    if (dayjs().isAfter(dayjs(lockedUntil))) {
+    if (dayjs().isAfter(toLocalDateTime(lockedUntil!))) {
       message.error('Đã hết thời gian giữ ghế. Vui lòng chọn lại.');
       navigate(`/booking/${showtimeId}`);
       return;
@@ -100,7 +101,7 @@ const CheckoutPage: React.FC = () => {
         <div style={{ textAlign: 'center', marginBottom: 24, padding: 16, background: '#1e293b', borderRadius: 8 }}>
           <p style={{ color: '#94a3b8', margin: 0 }}>Thời gian giữ ghế còn lại</p>
           <Countdown
-            value={dayjs(lockedUntil).valueOf()}
+            value={toLocalDateTime(lockedUntil).valueOf()}
             onFinish={handleTimeout}
             format="mm:ss"
             valueStyle={{ color: '#ef4444', fontSize: '2rem', fontWeight: 'bold' }}

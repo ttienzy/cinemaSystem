@@ -11,6 +11,7 @@ namespace Movie.API.Application.Services;
 public class ShowtimeService : IShowtimeService
 {
     private const decimal ValidationDefaultPrice = 50000m;
+    private static readonly TimeZoneInfo VietnamTimeZone = ResolveVietnamTimeZone();
 
     private readonly IShowtimeRepository _showtimeRepository;
     private readonly IMovieRepository _movieRepository;
@@ -159,8 +160,15 @@ public class ShowtimeService : IShowtimeService
             }
 
             var halls = await _cinemaApiClient.GetCinemaHallsByCinemaIdAsync(cinemaId);
-            var timelineStart = date.Date.AddHours(_schedulingOptions.TimelineStartHour);
-            var timelineEnd = date.Date.AddDays(1).AddHours(_schedulingOptions.TimelineEndHourNextDay);
+
+            // Ensure date is treated as local date, then convert to UTC for database query
+            var localDate = DateTime.SpecifyKind(date.Date, DateTimeKind.Local);
+            var timelineStartLocal = localDate.AddHours(_schedulingOptions.TimelineStartHour);
+            var timelineEndLocal = localDate.AddDays(1).AddHours(_schedulingOptions.TimelineEndHourNextDay);
+
+            // Convert to UTC for database query
+            var timelineStart = timelineStartLocal.ToUniversalTime();
+            var timelineEnd = timelineEndLocal.ToUniversalTime();
 
             var hallIds = halls.Select(hall => hall.Id).ToList();
             var showtimes = await _showtimeRepository.GetByCinemaHallIdsAndTimeRangeAsync(hallIds, timelineStart, timelineEnd);
@@ -426,10 +434,25 @@ public class ShowtimeService : IShowtimeService
     private async Task<ApiResponse<bool>> ValidateCreateRequestAsync(CreateShowtimeRequest request)
     {
         var errors = new List<ErrorDetail>();
+        var localStartTime = ConvertToVietnamLocalTime(request.StartTime);
+        var localNow = ConvertToVietnamLocalTime(DateTime.UtcNow);
+        var openingTime = localStartTime.Date.AddHours(_schedulingOptions.TimelineStartHour);
 
         if (request.StartTime < DateTime.UtcNow.AddHours(1))
         {
             var value = ShowtimeException.INVALID_START_TIME;
+            errors.Add(new ErrorDetail(value.Item1, value.Item2, value.Item3));
+        }
+
+        if (localStartTime.Date <= localNow.Date)
+        {
+            var value = ShowtimeException.START_TIME_MUST_BE_AFTER_TODAY;
+            errors.Add(new ErrorDetail(value.Item1, value.Item2, value.Item3));
+        }
+
+        if (localStartTime <= openingTime)
+        {
+            var value = ShowtimeException.START_TIME_BEFORE_OPENING_HOUR;
             errors.Add(new ErrorDetail(value.Item1, value.Item2, value.Item3));
         }
 
@@ -446,6 +469,43 @@ public class ShowtimeService : IShowtimeService
         }
 
         return ApiResponse<bool>.SuccessResponse(true);
+    }
+
+    private static DateTime ConvertToVietnamLocalTime(DateTime value)
+    {
+        var utcValue = value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+
+        return TimeZoneInfo.ConvertTimeFromUtc(utcValue, VietnamTimeZone);
+    }
+
+    private static TimeZoneInfo ResolveVietnamTimeZone()
+    {
+        var candidateIds = new[] { "SE Asia Standard Time", "Asia/Ho_Chi_Minh" };
+
+        foreach (var timeZoneId in candidateIds)
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        return TimeZoneInfo.CreateCustomTimeZone(
+            "Vietnam Standard Time",
+            TimeSpan.FromHours(7),
+            "Vietnam Standard Time",
+            "Vietnam Standard Time");
     }
 
     private async Task<bool> HasOverlapAsync(Showtime showtime, Guid? excludeShowtimeId = null)

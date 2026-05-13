@@ -13,14 +13,15 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { movieApi, type MovieAdminListItem } from '../../../features/movies/api/movieApi';
 import dayjs from '../../../utils/dayjs';
+import { toLocalDateTime } from '../../../utils/dateTime';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 
 const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
-  Showing:    { color: 'green',   label: '🟢 Đang chiếu' },
-  ComingSoon: { color: 'gold',    label: '🟡 Sắp chiếu' },
-  Archived:   { color: 'default', label: '🔴 Ngừng chiếu' },
+  Showing: { color: 'green', label: '🟢 Đang chiếu' },
+  ComingSoon: { color: 'gold', label: '🟡 Sắp chiếu' },
+  Archived: { color: 'default', label: '🔴 Ngừng chiếu' },
 };
 
 const MoviesPage: React.FC = () => {
@@ -98,7 +99,7 @@ const MoviesPage: React.FC = () => {
       description: movie.description,
       duration: movie.duration,
       language: movie.language,
-      releaseDate: dayjs(movie.releaseDate),
+      releaseDate: toLocalDateTime(movie.releaseDate),
     });
     setDrawerOpen(true);
   };
@@ -177,7 +178,7 @@ const MoviesPage: React.FC = () => {
       dataIndex: 'releaseDate',
       key: 'releaseDate',
       width: 120,
-      render: (d: string) => dayjs(d).format('DD/MM/YYYY'),
+      render: (d: string) => toLocalDateTime(d).format('DD/MM/YYYY'),
     },
     {
       title: 'Suất chiếu',

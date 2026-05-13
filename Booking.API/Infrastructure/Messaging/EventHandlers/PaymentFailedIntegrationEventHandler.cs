@@ -12,13 +12,16 @@ public class PaymentFailedIntegrationEventHandler
     : IIntegrationEventHandler<PaymentFailedIntegrationEvent>
 {
     private readonly IBookingService _bookingService;
+    private readonly IBookingRepository _bookingRepository;
     private readonly ILogger<PaymentFailedIntegrationEventHandler> _logger;
 
     public PaymentFailedIntegrationEventHandler(
         IBookingService bookingService,
+        IBookingRepository bookingRepository,
         ILogger<PaymentFailedIntegrationEventHandler> logger)
     {
         _bookingService = bookingService ?? throw new ArgumentNullException(nameof(bookingService));
+        _bookingRepository = bookingRepository ?? throw new ArgumentNullException(nameof(bookingRepository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -31,10 +34,8 @@ public class PaymentFailedIntegrationEventHandler
 
         try
         {
-            // Get booking to retrieve userId
-            var bookingResult = await _bookingService.GetBookingByIdAsync(@event.BookingId);
-
-            if (!bookingResult.Success || bookingResult.Data == null)
+            var booking = await _bookingRepository.GetByIdAsync(@event.BookingId);
+            if (booking is null)
             {
                 _logger.LogWarning(
                     "Booking {BookingId} not found when handling payment failure",
@@ -42,10 +43,19 @@ public class PaymentFailedIntegrationEventHandler
                 return;
             }
 
+            if (!booking.IsPending())
+            {
+                _logger.LogInformation(
+                    "Skipping payment failure cancellation for booking {BookingId} because status is {Status}",
+                    @event.BookingId,
+                    booking.Status);
+                return;
+            }
+
             // Cancel the booking and release seats
             var cancelRequest = new CancelBookingRequest
             {
-                UserId = bookingResult.Data.UserId,
+                UserId = booking.UserId,
                 CancellationReason = $"Payment failed: {@event.Reason}"
             };
 

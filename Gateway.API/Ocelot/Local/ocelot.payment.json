@@ -19,6 +19,42 @@
       }
     },
     {
+      "UpstreamPathTemplate": "/api/payments/sepay/cancel",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/api/payments/sepay/cancel",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 7252 }
+      ],
+      "Key": "payments-sepay-cancel",
+      "RateLimitOptions": {
+        "EnableRateLimiting": false
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 2,
+        "DurationOfBreak": 15000,
+        "TimeoutValue": 3000
+      }
+    },
+    {
+      "UpstreamPathTemplate": "/api/payments/sepay/error",
+      "UpstreamHttpMethod": [ "GET" ],
+      "DownstreamPathTemplate": "/api/payments/sepay/error",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        { "Host": "localhost", "Port": 7252 }
+      ],
+      "Key": "payments-sepay-error",
+      "RateLimitOptions": {
+        "EnableRateLimiting": false
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 2,
+        "DurationOfBreak": 15000,
+        "TimeoutValue": 3000
+      }
+    },
+    {
       "UpstreamPathTemplate": "/api/payments/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
       "DownstreamPathTemplate": "/api/payments/{everything}",

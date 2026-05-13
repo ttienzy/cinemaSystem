@@ -33,8 +33,9 @@ public class BookingCreatedIntegrationEventHandler
 
         try
         {
-            // Get frontend base URL from configuration
-            var frontendUrl = _configuration["Frontend:BaseUrl"] ?? "http://localhost:3000";
+            // Get return URLs from configuration
+            var frontendUrl = (_configuration["Frontend:BaseUrl"] ?? "http://localhost:3000").TrimEnd('/');
+            var paymentCallbackBaseUrl = ResolvePaymentCallbackBaseUrl(_configuration);
 
             // Create payment record for this booking
             var request = new CreatePaymentRequest
@@ -46,10 +47,10 @@ public class BookingCreatedIntegrationEventHandler
                 CustomerPhone = @event.CustomerPhone,
                 CustomerName = @event.CustomerName,
 
-                // Pass return URLs with bookingId for frontend routing
+                // Route failed/cancelled browser returns through Payment.API so seats are released immediately.
                 SuccessUrl = $"{frontendUrl}/payment/success?bookingId={@event.BookingId}",
-                ErrorUrl = $"{frontendUrl}/payment/error?bookingId={@event.BookingId}",
-                CancelUrl = $"{frontendUrl}/payment/cancel?bookingId={@event.BookingId}"
+                ErrorUrl = $"{paymentCallbackBaseUrl}/api/payments/sepay/error?bookingId={@event.BookingId}",
+                CancelUrl = $"{paymentCallbackBaseUrl}/api/payments/sepay/cancel?bookingId={@event.BookingId}"
             };
 
             var result = await _paymentService.CreatePaymentAsync(request);
@@ -79,5 +80,16 @@ public class BookingCreatedIntegrationEventHandler
             // Re-throw to trigger retry mechanism (if configured)
             throw;
         }
+    }
+
+    private static string ResolvePaymentCallbackBaseUrl(IConfiguration configuration)
+    {
+        var configuredBaseUrl = configuration["Payment:PublicBaseUrl"];
+        if (!string.IsNullOrWhiteSpace(configuredBaseUrl))
+        {
+            return configuredBaseUrl.TrimEnd('/');
+        }
+
+        return "https://localhost:7252";
     }
 }

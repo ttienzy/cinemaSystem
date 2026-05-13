@@ -108,11 +108,17 @@ public static class ShowtimeEndpoints
 
     private static async Task<IResult> GetTimeline(
         Guid cinemaId,
-        DateTime date,
+        string date, // Changed from DateTime to string to handle date-only properly
         IShowtimeService service,
         HttpContext context)
     {
-        var response = await service.GetTimelineAsync(cinemaId, date);
+        // Parse date string as local date (not UTC)
+        if (!DateTime.TryParse(date, out var parsedDate))
+        {
+            return Results.BadRequest(new { message = "Invalid date format. Use YYYY-MM-DD." });
+        }
+
+        var response = await service.GetTimelineAsync(cinemaId, parsedDate);
         response.SetTraceId(context);
         return response.ToResult();
     }

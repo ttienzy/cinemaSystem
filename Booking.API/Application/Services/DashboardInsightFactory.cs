@@ -131,7 +131,7 @@ public class DashboardInsightFactory : IDashboardInsightFactory
                     CustomerName = payment?.CustomerName ?? booking.UserId,
                     Amount = payment is null ? booking.TotalPrice : Convert.ToDecimal(payment.Amount),
                     SeatsCount = booking.BookingSeats.Count,
-                    Status = payment?.Status.ToString() ?? "Completed",
+                    Status = "Completed",
                     OccurredAtUtc = payment?.CompletedAt ?? booking.UpdatedAt ?? booking.BookingDate
                 };
             })

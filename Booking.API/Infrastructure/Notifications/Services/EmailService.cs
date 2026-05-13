@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Mail;
 using System.Text;
+using System.Globalization;
 using Booking.API.Infrastructure.Configuration;
 using Booking.API.Application.DTOs;
 using Microsoft.Extensions.Options;
@@ -9,6 +10,7 @@ namespace Booking.API.Infrastructure.Notifications.Services;
 
 public class EmailService : IEmailService
 {
+    private static readonly CultureInfo CurrencyCulture = CultureInfo.GetCultureInfo("vi-VN");
     private static readonly TimeZoneInfo DisplayTimeZone = ResolveDisplayTimeZone();
 
     private readonly SmtpOptions _smtpOptions;
@@ -86,6 +88,9 @@ public class EmailService : IEmailService
             message.From = new MailAddress(_smtpOptions.FromEmail, _smtpOptions.FromName);
             message.To.Add(toEmail);
             message.Subject = subject;
+            message.SubjectEncoding = Encoding.UTF8;
+            message.BodyEncoding = Encoding.UTF8;
+            message.HeadersEncoding = Encoding.UTF8;
             message.IsBodyHtml = true;
             message.Body = htmlBody;
 
@@ -143,7 +148,7 @@ public class EmailService : IEmailService
                 <p><strong>Hall:</strong> {booking.CinemaHallName}</p>
                 <p><strong>Showtime:</strong> {FormatShowtime(booking.ShowtimeDate)}</p>
                 <p><strong>Seats:</strong> {string.Join(", ", booking.BookingSeats.Select(s => s.SeatNumber))}</p>
-                <p><strong>Total Amount:</strong> {booking.TotalAmount:C}</p>
+                <p><strong>Total Amount:</strong> {FormatCurrency(booking.TotalAmount)}</p>
                 <p><strong>Status:</strong> {booking.Status}</p>
             </div>
             
@@ -175,7 +180,7 @@ Booking Details:
 - Hall: {booking.CinemaHallName}
 - Showtime: {FormatShowtime(booking.ShowtimeDate)}
 - Seats: {string.Join(", ", booking.BookingSeats.Select(s => s.SeatNumber))}
-- Total Amount: {booking.TotalAmount:C}
+- Total Amount: {FormatCurrency(booking.TotalAmount)}
 - Status: {booking.Status}
 
 Important: Please arrive at the cinema at least 15 minutes before showtime.
@@ -219,7 +224,7 @@ This is an automated email. Please do not reply.
                 <p><strong>Booking Code:</strong> {booking.BookingCode}</p>
                 <p><strong>Movie:</strong> {booking.MovieTitle}</p>
                 <p><strong>Showtime:</strong> {FormatShowtime(booking.ShowtimeDate)}</p>
-                <p><strong>Amount:</strong> {booking.TotalAmount:C}</p>
+                <p><strong>Amount:</strong> {FormatCurrency(booking.TotalAmount)}</p>
             </div>
             
             <p>If payment was processed, refund will be issued within 3-5 business days.</p>
@@ -247,7 +252,7 @@ Cancelled Booking Details:
 - Booking Code: {booking.BookingCode}
 - Movie: {booking.MovieTitle}
 - Showtime: {FormatShowtime(booking.ShowtimeDate)}
-- Amount: {booking.TotalAmount:C}
+- Amount: {FormatCurrency(booking.TotalAmount)}
 
 If payment was processed, refund will be issued within 3-5 business days.
 
@@ -331,17 +336,20 @@ This is an automated email. Please do not reply.
     private static string FormatShowtime(DateTime showtimeUtc)
     {
         var localShowtime = ConvertUtcToDisplayTime(showtimeUtc);
-        return $"{localShowtime:dddd, MMMM dd, yyyy} at {localShowtime:HH:mm}";
+        return $"{localShowtime.ToString("dd/MM/yyyy HH:mm", CurrencyCulture)} (GMT+7)";
+    }
+
+    private static string FormatCurrency(decimal amount)
+    {
+        return $"{amount.ToString("N0", CurrencyCulture)} VND";
     }
 
     private static DateTime ConvertUtcToDisplayTime(DateTime dateTime)
     {
-        var utcDateTime = dateTime.Kind switch
-        {
-            DateTimeKind.Utc => dateTime,
-            DateTimeKind.Local => dateTime.ToUniversalTime(),
-            _ => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc)
-        };
+        // Showtime is stored as UTC in datetime2, which drops DateTime.Kind on read.
+        var utcDateTime = dateTime.Kind == DateTimeKind.Utc
+            ? dateTime
+            : DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
 
         return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, DisplayTimeZone);
     }

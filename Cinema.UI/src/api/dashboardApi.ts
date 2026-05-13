@@ -74,6 +74,18 @@ export interface RecentActivity {
   occurredAtUtc: string;
 }
 
+export type SignalRRecentActivityPayload = Partial<RecentActivity> & {
+  BookingId?: string;
+  ShowtimeId?: string;
+  MovieId?: string;
+  MovieTitle?: string;
+  CustomerName?: string;
+  Amount?: number;
+  SeatsCount?: number;
+  Status?: string;
+  OccurredAtUtc?: string;
+};
+
 // ---- Full Summary ----
 
 export interface DashboardSummary {
@@ -86,7 +98,7 @@ export interface DashboardSummary {
 }
 
 // ---- SignalR NewBooking payload (same as RecentActivity) ----
-export type NewBookingPayload = RecentActivity;
+export type NewBookingPayload = SignalRRecentActivityPayload;
 
 // ---- API Calls ----
 

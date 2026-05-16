@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'antd';
-import { CalendarOutlined, PlusCircleOutlined, BlockOutlined } from '@ant-design/icons';
+import { CalendarOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { CreateShowtimeForm } from '../../../features/showtimes/components/CreateShowtimeForm';
 import { SeatMapEditor } from '../../../features/cinemas/components/SeatMapEditor';
 import { lazy, Suspense } from 'react';

@@ -7,9 +7,7 @@ WORKDIR /src
 # Copy project files
 COPY ["Payment.API/Payment.API.csproj", "Payment.API/"]
 COPY ["Cinema.Shared/Cinema.Shared.csproj", "Cinema.Shared/"]
-COPY ["Cinema.ServiceDefaults/Cinema.ServiceDefaults.csproj", "Cinema.ServiceDefaults/"]
-COPY ["Cinema.EventBus/Cinema.EventBus.csproj", "Cinema.EventBus/"]
-COPY ["Cinema.EventBusRabbitMQ/Cinema.EventBusRabbitMQ.csproj", "Cinema.EventBusRabbitMQ/"]
+COPY ["Cinema.Contracts/Cinema.Contracts.csproj", "Cinema.Contracts/"]
 
 # Restore dependencies
 RUN dotnet restore "Payment.API/Payment.API.csproj"

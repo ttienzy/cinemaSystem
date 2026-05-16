@@ -232,7 +232,7 @@ public static class PaymentEndpoints
 
             if (updateResult.Success)
             {
-                eventPublisher.PublishPaymentFailed(payment, reason, DateTime.UtcNow);
+                await eventPublisher.PublishPaymentFailedAsync(payment, reason, DateTime.UtcNow);
             }
             else
             {

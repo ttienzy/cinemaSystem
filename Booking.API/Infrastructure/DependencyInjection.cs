@@ -4,13 +4,11 @@ using Booking.API.Infrastructure.Configuration;
 using Booking.API.Infrastructure.Hubs;
 using Booking.API.Infrastructure.Hubs.Services;
 using Booking.API.Infrastructure.Integrations.Clients;
-using Booking.API.Infrastructure.Messaging.EventHandlers;
-using Booking.API.Infrastructure.Notifications.Services;
+using Booking.API.Infrastructure.Messaging.Consumers;
 using Booking.API.Infrastructure.Persistence.Repositories;
-using Cinema.EventBus.Abstractions;
-using Cinema.EventBus.Events;
-using Cinema.EventBusRabbitMQ.Extensions;
-using Microsoft.AspNetCore.Builder;
+using Cinema.Contracts.Events;
+using Cinema.Contracts.Messaging;
+using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
@@ -24,7 +22,6 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddDatabaseConfiguration(configuration);
-        services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
 
         var redisConnection = configuration.GetConnectionString("redis");
         if (string.IsNullOrWhiteSpace(redisConnection))
@@ -39,7 +36,7 @@ public static class DependencyInjection
             options.InstanceName = "CinemaBooking:";
         });
 
-        services.AddRabbitMQEventBus(configuration);
+
 
         var cinemaApiUrl = configuration["ServiceUrls:CinemaApi"] ?? "https://localhost:7251";
         var movieApiUrl = configuration["ServiceUrls:MovieApi"] ?? "https://localhost:7295";
@@ -68,7 +65,6 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ISeatLockService, SeatLockService>();
         services.AddScoped<ISeatStatusService, SeatStatusService>();
-        services.AddScoped<IEmailService, EmailService>();
 
         // SignalR services
         services.AddSingleton<IConnectionTracker, RedisConnectionTracker>();
@@ -96,8 +92,7 @@ public static class DependencyInjection
                 configuration.GetValue<string>("Redis:SignalRChannelPrefix") ?? "cinema:signalr");
         });
 
-        services.AddTransient<PaymentCompletedIntegrationEventHandler>();
-        services.AddTransient<PaymentFailedIntegrationEventHandler>();
+        services.AddBookingMassTransit(configuration);
 
         if (configuration.GetValue("BackgroundServices:EnableCleanupService", true))
         {
@@ -107,11 +102,95 @@ public static class DependencyInjection
         return services;
     }
 
-    public static void UseBookingMessaging(this IApplicationBuilder app)
+    private static IServiceCollection AddBookingMassTransit(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
-        var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
+        services.AddMassTransit(busRegistration =>
+        {
+            busRegistration.AddConsumer<PaymentCompletedConsumer>();
+            busRegistration.AddConsumer<PaymentFailedConsumer>();
 
-        eventBus.Subscribe<PaymentCompletedIntegrationEvent, PaymentCompletedIntegrationEventHandler>();
-        eventBus.Subscribe<PaymentFailedIntegrationEvent, PaymentFailedIntegrationEventHandler>();
+            busRegistration.UsingRabbitMq((context, cfg) =>
+            {
+                ConfigureRabbitMqHost(cfg, configuration);
+                ConfigureEventTopology(cfg);
+
+                cfg.ReceiveEndpoint(
+                    CinemaQueues.Booking,
+                    endpoint =>
+                    {
+                        ConfigureEndpoint(endpoint, configuration);
+                        endpoint.ConfigureConsumer<PaymentCompletedConsumer>(context);
+                        endpoint.ConfigureConsumer<PaymentFailedConsumer>(context);
+                    });
+            });
+        });
+
+        return services;
+    }
+
+    private static void ConfigureRabbitMqHost(
+        IRabbitMqBusFactoryConfigurator cfg,
+        IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("rabbitmq");
+        if (!string.IsNullOrWhiteSpace(connectionString))
+        {
+            var uri = new Uri(connectionString);
+            var virtualHost = uri.AbsolutePath.Trim('/');
+
+            cfg.Host(
+                uri.Host,
+                (ushort)(uri.IsDefaultPort ? 5672 : uri.Port),
+                string.IsNullOrWhiteSpace(virtualHost) ? "/" : virtualHost,
+                host =>
+                {
+                    if (!string.IsNullOrWhiteSpace(uri.UserInfo))
+                    {
+                        var userInfo = uri.UserInfo.Split(':', 2);
+                        host.Username(Uri.UnescapeDataString(userInfo[0]));
+
+                        if (userInfo.Length > 1)
+                        {
+                            host.Password(Uri.UnescapeDataString(userInfo[1]));
+                        }
+                    }
+                });
+
+            return;
+        }
+
+        cfg.Host(
+            configuration["RabbitMQ:Connection"] ?? "localhost",
+            "/",
+            host =>
+            {
+                host.Username(configuration["RabbitMQ:UserName"] ?? "guest");
+                host.Password(configuration["RabbitMQ:Password"] ?? "guest");
+            });
+    }
+
+    private static void ConfigureEndpoint(
+        IRabbitMqReceiveEndpointConfigurator endpoint,
+        IConfiguration configuration)
+    {
+        endpoint.PrefetchCount = configuration.GetValue<ushort>("MassTransit:PrefetchCount", 16);
+
+        endpoint.UseMessageRetry(retry =>
+        {
+            retry.Interval(
+                configuration.GetValue("MassTransit:RetryLimit", 3),
+                TimeSpan.FromSeconds(configuration.GetValue("MassTransit:RetryIntervalSeconds", 5)));
+        });
+    }
+
+    private static void ConfigureEventTopology(IRabbitMqBusFactoryConfigurator cfg)
+    {
+        cfg.Message<BookingCreatedEvent>(x => x.SetEntityName(CinemaEventNames.BookingCreated));
+        cfg.Message<BookingCancelledEvent>(x => x.SetEntityName(CinemaEventNames.BookingCancelled));
+        cfg.Message<BookingExpiredEvent>(x => x.SetEntityName(CinemaEventNames.BookingExpired));
+        cfg.Message<PaymentCompletedEvent>(x => x.SetEntityName(CinemaEventNames.PaymentCompleted));
+        cfg.Message<PaymentFailedEvent>(x => x.SetEntityName(CinemaEventNames.PaymentFailed));
     }
 }

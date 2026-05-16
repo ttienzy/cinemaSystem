@@ -124,7 +124,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ConnectionStrings__booking-db=Server=sqlserver,1433;Database=BookingDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123};TrustServerCertificate=true;
       - ConnectionStrings__Redis=redis:6379
-      - EventBusConnection=rabbitmq
+      - ConnectionStrings__rabbitmq=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
       - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
       - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
       - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
@@ -153,13 +153,36 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ConnectionStrings__payment-db=Server=sqlserver,1433;Database=PaymentDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123};TrustServerCertificate=true;
-      - EventBusConnection=rabbitmq
+      - ConnectionStrings__rabbitmq=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
       - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
       - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
       - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
     depends_on:
       sqlserver:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cinema-network
+    restart: unless-stopped
+
+  notification-api:
+    build:
+      context: .
+      dockerfile: Notification.API/Dockerfile
+    container_name: notification-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__rabbitmq=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      - Smtp__Host=${SMTP_HOST:-smtp.gmail.com}
+      - Smtp__Port=${SMTP_PORT:-587}
+      - Smtp__EnableSsl=${SMTP_ENABLE_SSL:-true}
+      - Smtp__Username=${SMTP_USERNAME:-}
+      - Smtp__Password=${SMTP_PASSWORD:-}
+      - Smtp__FromEmail=${SMTP_FROM_EMAIL:-noreply@cinema-system.com}
+      - Smtp__FromName=${SMTP_FROM_NAME:-CinemaSystem}
+      - Smtp__TimeoutSeconds=30
+    depends_on:
       rabbitmq:
         condition: service_healthy
     networks:
@@ -194,6 +217,8 @@ services:
       booking-api:
         condition: service_started
       payment-api:
+        condition: service_started
+      notification-api:
         condition: service_started
       redis:
         condition: service_healthy

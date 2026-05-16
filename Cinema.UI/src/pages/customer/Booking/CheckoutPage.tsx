@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Card, message, Statistic } from 'antd';
 import { useMutation } from '@tanstack/react-query';
@@ -28,23 +28,9 @@ const CheckoutPage: React.FC = () => {
     mutationFn: bookingApi.createBooking,
     onSuccess: (res) => {
       if (res.success && res.data) {
-        // Check if payment checkout URL is available
-        if (res.data.checkoutUrl) {
-          message.success('Đang chuyển đến trang thanh toán...');
-          clearBookingSession();
-
-          // ✅ FIXED: Redirect directly to Payment.API (not through Gateway)
-          // Gateway doesn't handle HTML responses from checkout endpoint
-          window.location.href = `https://localhost:7252${res.data.checkoutUrl}`;
-        } else {
-          // Fallback: Payment not ready yet
-          message.warning('Đang xử lý thanh toán, vui lòng đợi...');
-
-          // Could implement polling here or redirect to a waiting page
-          setTimeout(() => {
-            navigate(`/booking-status/${res.data.bookingId}`);
-          }, 2000);
-        }
+        message.success('Booking đã được tạo. Đang tạo liên kết thanh toán...');
+        clearBookingSession();
+        navigate(`/booking-status/${res.data.bookingId}`);
       } else {
         message.error(res.message || 'Lỗi khi tạo booking');
       }

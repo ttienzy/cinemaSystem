@@ -7,7 +7,7 @@ import { useAuthStore } from '../../../store/useAuthStore';
 import { bookingApi, type SeatStatusDto } from '../../../features/booking/api/bookingApi';
 import { useBookingStore } from '../../../features/booking/store/useBookingStore';
 import { useSeatRealtime } from '../../../hooks/useSeatRealtime';
-import type { SeatStatusChangedNotification } from '../../../services/signalr/seatSignalRService';
+import type { SeatStatusChangedNotification, ViewerCountNotification } from '../../../services/signalr/seatSignalRService';
 import { getApiGatewayBaseUrl } from '../../../utils/apiConfig';
 import { getAccessToken as getStoredAccessToken } from '../../../utils/tokenStorage';
 import dayjs from '../../../utils/dayjs';

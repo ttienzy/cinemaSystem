@@ -1,10 +1,7 @@
-using Cinema.EventBus.Abstractions;
-using Cinema.EventBus.Events;
 using Cinema.Shared.Extensions;
 using Payment.API.Api.Endpoints;
 using Payment.API.Application;
 using Payment.API.Infrastructure;
-using Payment.API.Infrastructure.Messaging.EventHandlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,9 +15,6 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 // Add database migration
 builder.Services.AddMigration<Payment.API.Infrastructure.Persistence.PaymentDbContext>();
-
-// Register event handlers
-builder.Services.AddTransient<BookingCreatedIntegrationEventHandler>();
 
 var app = builder.Build();
 
@@ -39,9 +33,5 @@ app.MapPaymentEndpoints();
 app.MapSePayIpnEndpoints();
 app.MapSePayTestEndpoints();  // ✅ Test endpoints for SePay
 app.MapHealthChecks("/health");
-
-// Subscribe to integration events
-var eventBus = app.Services.GetRequiredService<IEventBus>();
-eventBus.Subscribe<BookingCreatedIntegrationEvent, BookingCreatedIntegrationEventHandler>();
 
 app.Run();

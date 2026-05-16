@@ -1,33 +1,34 @@
-using Cinema.EventBus.Abstractions;
-using Cinema.EventBus.Events;
+using Cinema.Contracts.Events;
+using MassTransit;
 using Payment.API.Domain.Entities;
 
 namespace Payment.API.Infrastructure.Messaging.EventPublishers;
 
 public class PaymentIntegrationEventPublisher : IPaymentIntegrationEventPublisher
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IPublishEndpoint _publishEndpoint;
     private readonly ILogger<PaymentIntegrationEventPublisher> _logger;
 
     public PaymentIntegrationEventPublisher(
-        IServiceProvider serviceProvider,
+        IPublishEndpoint publishEndpoint,
         ILogger<PaymentIntegrationEventPublisher> logger)
     {
-        _serviceProvider = serviceProvider;
+        _publishEndpoint = publishEndpoint;
         _logger = logger;
     }
 
-    public void PublishPaymentCompleted(
+    public async Task PublishPaymentCompletedAsync(
         PaymentEntity payment,
         string? transactionId,
         DateTime completedAt)
     {
         _logger.LogInformation(
-            "Publishing PaymentCompletedIntegrationEvent for payment {PaymentId}",
+            "Publishing PaymentCompletedEvent for payment {PaymentId}",
             payment.Id);
 
-        ResolveEventBus().Publish(new PaymentCompletedIntegrationEvent
+        await _publishEndpoint.Publish(new PaymentCompletedEvent
         {
+            CorrelationId = payment.BookingId,
             BookingId = payment.BookingId,
             PaymentId = payment.Id,
             TransactionId = transactionId ?? string.Empty,
@@ -38,23 +39,19 @@ public class PaymentIntegrationEventPublisher : IPaymentIntegrationEventPublishe
         });
     }
 
-    public void PublishPaymentFailed(PaymentEntity payment, string reason, DateTime failedAt)
+    public async Task PublishPaymentFailedAsync(PaymentEntity payment, string reason, DateTime failedAt)
     {
         _logger.LogInformation(
-            "Publishing PaymentFailedIntegrationEvent for payment {PaymentId}",
+            "Publishing PaymentFailedEvent for payment {PaymentId}",
             payment.Id);
 
-        ResolveEventBus().Publish(new PaymentFailedIntegrationEvent
+        await _publishEndpoint.Publish(new PaymentFailedEvent
         {
+            CorrelationId = payment.BookingId,
             BookingId = payment.BookingId,
             PaymentId = payment.Id,
             Reason = reason,
             FailedAt = failedAt
         });
     }
-
-    private IEventBus ResolveEventBus() =>
-        _serviceProvider.GetRequiredService<IEventBus>();
 }
-
-

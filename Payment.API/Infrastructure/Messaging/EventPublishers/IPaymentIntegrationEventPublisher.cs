@@ -4,8 +4,8 @@ namespace Payment.API.Infrastructure.Messaging.EventPublishers;
 
 public interface IPaymentIntegrationEventPublisher
 {
-    void PublishPaymentCompleted(PaymentEntity payment, string? transactionId, DateTime completedAt);
-    void PublishPaymentFailed(PaymentEntity payment, string reason, DateTime failedAt);
+    Task PublishPaymentCompletedAsync(PaymentEntity payment, string? transactionId, DateTime completedAt);
+    Task PublishPaymentFailedAsync(PaymentEntity payment, string reason, DateTime failedAt);
 }
 
 

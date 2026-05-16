@@ -1,8 +1,8 @@
 using Booking.API.Infrastructure.Persistence;
 using Booking.API.Domain.Entities;
 using BookingEntity = Booking.API.Domain.Entities.Booking;
-using Cinema.EventBus.Abstractions;
-using Cinema.EventBus.Events;
+using Cinema.Contracts.Events;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 namespace Booking.API.Infrastructure.BackgroundServices;
@@ -67,7 +67,7 @@ public class ExpiredBookingCleanupService : BackgroundService
 
         var dbContext = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
         var seatStatusService = scope.ServiceProvider.GetRequiredService<ISeatStatusService>();
-        var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
+        var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
         try
         {
@@ -98,7 +98,7 @@ public class ExpiredBookingCleanupService : BackgroundService
                     await ProcessExpiredBookingAsync(
                         booking,
                         seatStatusService,
-                        eventBus,
+                        publishEndpoint,
                         cancellationToken);
 
                     successCount++;
@@ -130,7 +130,7 @@ public class ExpiredBookingCleanupService : BackgroundService
     private async Task ProcessExpiredBookingAsync(
         BookingEntity booking,
         ISeatStatusService seatStatusService,
-        IEventBus eventBus,
+        IPublishEndpoint publishEndpoint,
         CancellationToken cancellationToken)
     {
         _logger.LogInformation(
@@ -173,19 +173,21 @@ public class ExpiredBookingCleanupService : BackgroundService
             // Continue anyway - we still want to mark the booking as expired
         }
 
-        // 3. Publish BookingExpiredIntegrationEvent
+        // 3. Publish BookingExpiredEvent via MassTransit
         try
         {
-            var expiredEvent = new BookingExpiredIntegrationEvent(
-                booking.Id,
-                booking.ShowtimeId,
-                seatIds,
-                DateTime.UtcNow);
-
-            eventBus.Publish(expiredEvent);
+            await publishEndpoint.Publish(new BookingExpiredEvent
+            {
+                CorrelationId = booking.Id,
+                BookingId = booking.Id,
+                ShowtimeId = booking.ShowtimeId,
+                SeatIds = seatIds,
+                ExpiredAt = DateTime.UtcNow,
+                OccurredAt = DateTime.UtcNow
+            }, cancellationToken);
 
             _logger.LogInformation(
-                "Published BookingExpiredIntegrationEvent for booking {BookingId}",
+                "Published BookingExpiredEvent for booking {BookingId}",
                 booking.Id);
         }
         catch (Exception ex)

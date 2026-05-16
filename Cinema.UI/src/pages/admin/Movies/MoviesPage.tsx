@@ -6,7 +6,7 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
-  PlusOutlined, SearchOutlined, DeleteOutlined, EditOutlined,
+  PlusOutlined, DeleteOutlined, EditOutlined,
   EyeOutlined, VideoCameraOutlined, CalendarOutlined,
   UploadOutlined, FireOutlined, ClockCircleOutlined, InboxOutlined,
 } from '@ant-design/icons';
@@ -15,7 +15,7 @@ import { movieApi, type MovieAdminListItem } from '../../../features/movies/api/
 import dayjs from '../../../utils/dayjs';
 import { toLocalDateTime } from '../../../utils/dateTime';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Search } = Input;
 
 const STATUS_CONFIG: Record<string, { color: string; label: string }> = {

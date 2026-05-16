@@ -1,102 +1,112 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Spin, message, Button } from 'antd';
+import { Button, Card, Spin, message } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
-import axiosClient from '../../../api/axiosClient';
+import { bookingApi } from '../../../features/booking/api/bookingApi';
+import { getPaymentApiBaseUrl } from '../../../utils/apiConfig';
+
+const maxAttempts = 30;
+const pollIntervalMs = 1000;
 
 const BookingStatusPage: React.FC = () => {
-    const { bookingId } = useParams<{ bookingId: string }>();
-    const navigate = useNavigate();
-    const [polling, setPolling] = useState(true);
-    const [attempts, setAttempts] = useState(0);
-    const maxAttempts = 20;
+  const { bookingId } = useParams<{ bookingId: string }>();
+  const navigate = useNavigate();
+  const [attempts, setAttempts] = useState(0);
+  const [hasFailed, setHasFailed] = useState(false);
 
-    useEffect(() => {
-        if (!bookingId) {
-            message.error('Booking ID không hợp lệ');
-            navigate('/');
-            return;
+  const paymentApiBaseUrl = useMemo(() => getPaymentApiBaseUrl(), []);
+
+  useEffect(() => {
+    if (!bookingId) {
+      message.error('Booking ID không hợp lệ');
+      navigate('/');
+      return;
+    }
+
+    if (hasFailed || attempts >= maxAttempts) {
+      setHasFailed(true);
+      return;
+    }
+
+    let cancelled = false;
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const payment = await bookingApi.getPaymentByBookingId(bookingId);
+        if (cancelled) {
+          return;
         }
 
-        const pollPayment = async () => {
-            try {
-                // Poll for payment by booking ID
-                const response = await axiosClient.get(`/api/payments/booking/${bookingId}`);
-
-                if (response.success && response.data) {
-                    // Payment found, redirect to checkout
-                    message.success('Đang chuyển đến trang thanh toán...');
-                    window.location.href = `http://localhost:5000/api/payments/${response.data.id}/checkout`;
-                    setPolling(false);
-                } else if (attempts >= maxAttempts) {
-                    // Max attempts reached
-                    message.error('Không thể tạo thanh toán. Vui lòng thử lại sau.');
-                    setPolling(false);
-                } else {
-                    // Continue polling
-                    setAttempts(prev => prev + 1);
-                }
-            } catch (error) {
-                if (attempts >= maxAttempts) {
-                    message.error('Lỗi khi kiểm tra trạng thái thanh toán');
-                    setPolling(false);
-                } else {
-                    setAttempts(prev => prev + 1);
-                }
-            }
-        };
-
-        if (polling && attempts < maxAttempts) {
-            const timer = setTimeout(pollPayment, 500); // Poll every 500ms
-            return () => clearTimeout(timer);
+        const paymentId = payment?.paymentId || payment?.id;
+        if (paymentId) {
+          message.success('Đang chuyển đến trang thanh toán...');
+          window.location.href = `${paymentApiBaseUrl}/api/payments/${paymentId}/checkout`;
+          return;
         }
-    }, [bookingId, polling, attempts, navigate]);
+      } catch {
+        if (!cancelled && attempts + 1 >= maxAttempts) {
+          message.error('Không thể tạo liên kết thanh toán. Vui lòng thử lại sau.');
+        }
+      }
 
-    return (
-        <div style={{
-            padding: '40px 10%',
-            backgroundColor: '#0f172a',
-            minHeight: '100vh',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-        }}>
-            <Card
-                style={{
-                    background: 'rgba(30,41,59,0.8)',
-                    border: 'none',
-                    textAlign: 'center',
-                    minWidth: 400
-                }}
+      if (!cancelled) {
+        setAttempts((current) => current + 1);
+      }
+    }, attempts === 0 ? 300 : pollIntervalMs);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [attempts, bookingId, hasFailed, navigate, paymentApiBaseUrl]);
+
+  const polling = !hasFailed && attempts < maxAttempts;
+
+  return (
+    <div style={{
+      padding: '40px 10%',
+      backgroundColor: '#0f172a',
+      minHeight: '100vh',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
+      <Card
+        style={{
+          background: 'rgba(30,41,59,0.8)',
+          border: 'none',
+          textAlign: 'center',
+          minWidth: 400
+        }}
+      >
+        {polling ? (
+          <>
+            <Spin indicator={<LoadingOutlined style={{ fontSize: 48, color: '#38bdf8' }} spin />} />
+            <h2 style={{ color: 'white', marginTop: 24 }}>Đang tạo liên kết thanh toán...</h2>
+            <p style={{ color: '#94a3b8' }}>Vui lòng chờ trong giây lát</p>
+            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
+              Đang kiểm tra ({attempts}/{maxAttempts})
+            </p>
+          </>
+        ) : (
+          <>
+            <h2 style={{ color: '#ef4444' }}>Không thể tạo liên kết thanh toán</h2>
+            <p style={{ color: '#94a3b8', marginBottom: 24 }}>
+              Booking đã được tạo nhưng Payment.API chưa sẵn sàng. Vui lòng kiểm tra lại sau.
+            </p>
+            <Button
+              type="primary"
+              size="large"
+              onClick={() => navigate('/')}
+              style={{ background: '#38bdf8' }}
             >
-                {polling ? (
-                    <>
-                        <Spin indicator={<LoadingOutlined style={{ fontSize: 48, color: '#38bdf8' }} spin />} />
-                        <h2 style={{ color: 'white', marginTop: 24 }}>Đang xử lý thanh toán...</h2>
-                        <p style={{ color: '#94a3b8' }}>Vui lòng đợi trong giây lát</p>
-                        <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
-                            Đang kiểm tra ({attempts}/{maxAttempts})
-                        </p>
-                    </>
-                ) : (
-                    <>
-                        <h2 style={{ color: '#ef4444' }}>Không thể xử lý thanh toán</h2>
-                        <p style={{ color: '#94a3b8', marginBottom: 24 }}>
-                            Hệ thống đang gặp sự cố. Vui lòng thử lại sau.
-                        </p>
-                        <Button
-                            type="primary"
-                            size="large"
-                            onClick={() => navigate('/')}
-                            style={{ background: '#38bdf8' }}
-                        >
-                            Quay về trang chủ
-                        </Button>
-                    </>
-                )}
-            </Card>
-        </div>
-    );
+              Quay về trang chủ
+            </Button>
+          </>
+        )}
+      </Card>
+    </div>
+  );
 };
 
 export default BookingStatusPage;

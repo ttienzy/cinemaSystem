@@ -10,8 +10,6 @@ COPY ["CinemaSystem.sln", "./"]
 # Copy all project files for restore
 COPY ["Identity.API/Identity.API.csproj", "Identity.API/"]
 COPY ["Cinema.Shared/Cinema.Shared.csproj", "Cinema.Shared/"]
-COPY ["Cinema.EventBus/Cinema.EventBus.csproj", "Cinema.EventBus/"]
-COPY ["Cinema.EventBusRabbitMQ/Cinema.EventBusRabbitMQ.csproj", "Cinema.EventBusRabbitMQ/"]
 
 # Restore NuGet packages
 RUN dotnet restore "Identity.API/Identity.API.csproj"

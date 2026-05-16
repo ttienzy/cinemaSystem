@@ -13,6 +13,6 @@ internal static class ApiResponseJsonHelper
         }
 
         var apiResponse = JsonSerializer.Deserialize<ApiResponse<T>>(content, options);
-        return apiResponse.Data;
+        return apiResponse is null ? default : apiResponse.Data;
     }
 }

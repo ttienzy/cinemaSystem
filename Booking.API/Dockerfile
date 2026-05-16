@@ -7,8 +7,7 @@ WORKDIR /src
 # Copy project files for restore
 COPY ["Booking.API/Booking.API.csproj", "Booking.API/"]
 COPY ["Cinema.Shared/Cinema.Shared.csproj", "Cinema.Shared/"]
-COPY ["Cinema.EventBus/Cinema.EventBus.csproj", "Cinema.EventBus/"]
-COPY ["Cinema.EventBusRabbitMQ/Cinema.EventBusRabbitMQ.csproj", "Cinema.EventBusRabbitMQ/"]
+COPY ["Cinema.Contracts/Cinema.Contracts.csproj", "Cinema.Contracts/"]
 
 # Restore dependencies
 RUN dotnet restore "Booking.API/Booking.API.csproj"

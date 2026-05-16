@@ -174,7 +174,6 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ConnectionStrings__rabbitmq=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
-      - MassTransit__EndpointName=notification-api-masstransit
       - Smtp__Host=${SMTP_HOST:-smtp.gmail.com}
       - Smtp__Port=${SMTP_PORT:-587}
       - Smtp__EnableSsl=${SMTP_ENABLE_SSL:-true}

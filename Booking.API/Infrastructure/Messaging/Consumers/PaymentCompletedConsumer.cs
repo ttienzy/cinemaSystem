@@ -48,8 +48,14 @@ public class PaymentCompletedConsumer : IConsumer<PaymentCompletedEvent>
             }
             else
             {
+                if (result.StatusCode >= 500 || result.StatusCode == 404)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to confirm booking {message.BookingId}: {result.Message}");
+                }
+
                 _logger.LogWarning(
-                    "Failed to confirm booking {BookingId}: {Message}",
+                    "Skipping PaymentCompletedEvent for booking {BookingId}: {Message}",
                     message.BookingId,
                     result.Message);
             }

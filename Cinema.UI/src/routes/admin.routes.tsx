@@ -6,7 +6,6 @@ import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 
 const Dashboard = lazy(() => import('../pages/admin/Dashboard'));
 const MoviesPage = lazy(() => import('../pages/admin/Movies/MoviesPage'));
-const CinemasPage = lazy(() => import('../pages/admin/Cinemas/CinemasPage'));
 const CinemaManagementPage = lazy(() => import('../pages/admin/Cinemas/CinemaManagementPage'));
 const CinemaHallManagementPage = lazy(() => import('../pages/admin/Cinemas/CinemaHallManagementPage'));
 const SeatMapEditorPage = lazy(() => import('../pages/admin/Cinemas/SeatMapEditorPage'));

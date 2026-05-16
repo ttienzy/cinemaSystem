@@ -1,4 +1,6 @@
 using MassTransit;
+using Cinema.Contracts.Events;
+using Cinema.Contracts.Messaging;
 using Notification.API.Infrastructure.Configuration;
 using Notification.API.Infrastructure.Messaging.Consumers;
 using Notification.API.Infrastructure.Notifications;
@@ -29,9 +31,10 @@ public static class DependencyInjection
             busRegistration.UsingRabbitMq((context, cfg) =>
             {
                 ConfigureRabbitMqHost(cfg, configuration);
+                ConfigureEventTopology(cfg);
 
                 cfg.ReceiveEndpoint(
-                    configuration["MassTransit:EndpointName"] ?? "notification-api-masstransit",
+                    CinemaQueues.Notification,
                     endpoint =>
                     {
                         endpoint.PrefetchCount = configuration.GetValue<ushort>("MassTransit:PrefetchCount", 16);
@@ -89,5 +92,14 @@ public static class DependencyInjection
                 host.Username(configuration["RabbitMQ:UserName"] ?? "guest");
                 host.Password(configuration["RabbitMQ:Password"] ?? "guest");
             });
+    }
+
+    private static void ConfigureEventTopology(IRabbitMqBusFactoryConfigurator cfg)
+    {
+        cfg.Message<BookingCreatedEvent>(x => x.SetEntityName(CinemaEventNames.BookingCreated));
+        cfg.Message<BookingCancelledEvent>(x => x.SetEntityName(CinemaEventNames.BookingCancelled));
+        cfg.Message<BookingExpiredEvent>(x => x.SetEntityName(CinemaEventNames.BookingExpired));
+        cfg.Message<PaymentCompletedEvent>(x => x.SetEntityName(CinemaEventNames.PaymentCompleted));
+        cfg.Message<PaymentFailedEvent>(x => x.SetEntityName(CinemaEventNames.PaymentFailed));
     }
 }

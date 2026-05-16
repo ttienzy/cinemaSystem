@@ -6,6 +6,8 @@ using Booking.API.Infrastructure.Hubs.Services;
 using Booking.API.Infrastructure.Integrations.Clients;
 using Booking.API.Infrastructure.Messaging.Consumers;
 using Booking.API.Infrastructure.Persistence.Repositories;
+using Cinema.Contracts.Events;
+using Cinema.Contracts.Messaging;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -112,9 +114,10 @@ public static class DependencyInjection
             busRegistration.UsingRabbitMq((context, cfg) =>
             {
                 ConfigureRabbitMqHost(cfg, configuration);
+                ConfigureEventTopology(cfg);
 
                 cfg.ReceiveEndpoint(
-                    configuration["MassTransit:EndpointName"] ?? "booking-api-masstransit",
+                    CinemaQueues.Booking,
                     endpoint =>
                     {
                         ConfigureEndpoint(endpoint, configuration);
@@ -180,5 +183,14 @@ public static class DependencyInjection
                 configuration.GetValue("MassTransit:RetryLimit", 3),
                 TimeSpan.FromSeconds(configuration.GetValue("MassTransit:RetryIntervalSeconds", 5)));
         });
+    }
+
+    private static void ConfigureEventTopology(IRabbitMqBusFactoryConfigurator cfg)
+    {
+        cfg.Message<BookingCreatedEvent>(x => x.SetEntityName(CinemaEventNames.BookingCreated));
+        cfg.Message<BookingCancelledEvent>(x => x.SetEntityName(CinemaEventNames.BookingCancelled));
+        cfg.Message<BookingExpiredEvent>(x => x.SetEntityName(CinemaEventNames.BookingExpired));
+        cfg.Message<PaymentCompletedEvent>(x => x.SetEntityName(CinemaEventNames.PaymentCompleted));
+        cfg.Message<PaymentFailedEvent>(x => x.SetEntityName(CinemaEventNames.PaymentFailed));
     }
 }

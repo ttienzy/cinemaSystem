@@ -178,6 +178,7 @@ public class ExpiredBookingCleanupService : BackgroundService
         {
             await publishEndpoint.Publish(new BookingExpiredEvent
             {
+                CorrelationId = booking.Id,
                 BookingId = booking.Id,
                 ShowtimeId = booking.ShowtimeId,
                 SeatIds = seatIds,

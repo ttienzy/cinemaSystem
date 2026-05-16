@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Table, Button, Modal, Form, Input, Select, message, Popconfirm, Space,
-    Card, Row, Col, Statistic, Typography, Breadcrumb, Tag, Badge,
+    Card, Row, Col, Statistic, Breadcrumb, Tag, Badge,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -13,10 +13,8 @@ import { useNavigate } from 'react-router-dom';
 import {
     cinemaApi,
     type Cinema,
-    type CinemaAdminSummary,
 } from '../../../features/cinemas/api/cinemaApi';
 
-const { Title } = Typography;
 const { Search } = Input;
 
 const CinemaManagementPage: React.FC = () => {

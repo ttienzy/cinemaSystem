@@ -62,10 +62,8 @@ public class BookingCreatedConsumer : IConsumer<BookingCreatedEvent>
             }
             else
             {
-                _logger.LogError(
-                    "Failed to create payment for booking {BookingId}: {Message}",
-                    message.BookingId,
-                    result.Message);
+                throw new InvalidOperationException(
+                    $"Failed to create payment for booking {message.BookingId}: {result.Message}");
             }
         }
         catch (Exception ex)

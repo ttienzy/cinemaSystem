@@ -70,9 +70,16 @@ public class PaymentFailedConsumer : IConsumer<PaymentFailedEvent>
             }
             else
             {
+                if (cancelResult.StatusCode >= 500)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to cancel booking {message.BookingId}: {cancelResult.Message}");
+                }
+
                 _logger.LogWarning(
-                    "Failed to cancel booking {BookingId} - booking may not exist or already processed",
-                    message.BookingId);
+                    "Skipping payment failure cancellation for booking {BookingId}: {Message}",
+                    message.BookingId,
+                    cancelResult.Message);
             }
         }
         catch (InvalidOperationException ex)

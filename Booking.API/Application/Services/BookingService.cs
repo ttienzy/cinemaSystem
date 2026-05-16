@@ -329,6 +329,7 @@ public class BookingService : IBookingService
         {
             await _publishEndpoint.Publish(new BookingCreatedEvent
             {
+                CorrelationId = booking.Id,
                 BookingId = booking.Id,
                 UserId = booking.UserId,
                 ShowtimeId = booking.ShowtimeId,
@@ -387,6 +388,7 @@ public class BookingService : IBookingService
         {
             await _publishEndpoint.Publish(new BookingCancelledEvent
             {
+                CorrelationId = booking.Id,
                 BookingId = booking.Id,
                 UserId = booking.UserId,
                 ShowtimeId = booking.ShowtimeId,
@@ -408,6 +410,7 @@ public class BookingService : IBookingService
         {
             await _publishEndpoint.Publish(new BookingExpiredEvent
             {
+                CorrelationId = booking.Id,
                 BookingId = booking.Id,
                 ShowtimeId = booking.ShowtimeId,
                 SeatIds = seatIds,

@@ -2,6 +2,8 @@ namespace Cinema.Contracts.Events;
 
 public class PaymentCompletedEvent
 {
+    public Guid EventId { get; init; } = Guid.NewGuid();
+    public Guid CorrelationId { get; init; }
     public Guid PaymentId { get; init; }
     public Guid BookingId { get; init; }
     public string TransactionId { get; init; } = string.Empty;

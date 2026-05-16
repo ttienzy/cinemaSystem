@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import {
   Table, Tag, Card, Row, Col, Statistic, Input, Select, Space,
-  Typography, Breadcrumb, Progress, Badge, Tooltip, Button, Empty,
+  Typography, Breadcrumb, Progress, Badge, Tooltip, Empty,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
-  BankOutlined, HomeOutlined, SearchOutlined, CheckCircleOutlined,
+  BankOutlined, HomeOutlined, CheckCircleOutlined,
   CloseCircleOutlined, SettingOutlined, AppstoreOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
@@ -15,7 +15,7 @@ import {
   type CinemaHall,
 } from '../../../features/cinemas/api/cinemaApi';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Search } = Input;
 
 const CinemasPage: React.FC = () => {

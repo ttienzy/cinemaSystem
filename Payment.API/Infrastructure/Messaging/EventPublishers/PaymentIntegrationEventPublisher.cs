@@ -28,6 +28,7 @@ public class PaymentIntegrationEventPublisher : IPaymentIntegrationEventPublishe
 
         await _publishEndpoint.Publish(new PaymentCompletedEvent
         {
+            CorrelationId = payment.BookingId,
             BookingId = payment.BookingId,
             PaymentId = payment.Id,
             TransactionId = transactionId ?? string.Empty,
@@ -46,6 +47,7 @@ public class PaymentIntegrationEventPublisher : IPaymentIntegrationEventPublishe
 
         await _publishEndpoint.Publish(new PaymentFailedEvent
         {
+            CorrelationId = payment.BookingId,
             BookingId = payment.BookingId,
             PaymentId = payment.Id,
             Reason = reason,
@@ -53,4 +55,3 @@ public class PaymentIntegrationEventPublisher : IPaymentIntegrationEventPublishe
         });
     }
 }
-

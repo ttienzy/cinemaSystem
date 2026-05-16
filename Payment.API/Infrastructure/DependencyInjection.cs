@@ -1,4 +1,3 @@
-using Cinema.EventBusRabbitMQ.Extensions;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,8 +19,6 @@ public static class DependencyInjection
         services.AddScoped<ISePayService, SePayService>();
         services.AddScoped<ISePayIpnProcessor, SePayIpnProcessor>();
         services.AddScoped<IPaymentIntegrationEventPublisher, PaymentIntegrationEventPublisher>();
-
-        services.AddRabbitMQEventBus(configuration);
         services.AddPaymentMassTransit(configuration);
         services.AddHealthChecks();
 

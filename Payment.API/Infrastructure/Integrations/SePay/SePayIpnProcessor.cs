@@ -110,7 +110,7 @@ public class SePayIpnProcessor : ISePayIpnProcessor
                 $"{PaymentException.PAYMENT_STATUS_UPDATE_FAILED} for payment {payment.Id}: {updateResult.Message}");
         }
 
-        _eventPublisher.PublishPaymentCompleted(payment, transactionId, completedAt);
+        await _eventPublisher.PublishPaymentCompletedAsync(payment, transactionId, completedAt);
 
         _logger.LogInformation(
             "Processed SePay ORDER_PAID for payment {PaymentId}, booking {BookingId}",
@@ -141,7 +141,7 @@ public class SePayIpnProcessor : ISePayIpnProcessor
         }
 
         var reason = "Transaction voided by gateway";
-        _eventPublisher.PublishPaymentFailed(payment, reason, DateTime.UtcNow);
+        await _eventPublisher.PublishPaymentFailedAsync(payment, reason, DateTime.UtcNow);
 
         _logger.LogInformation(
             "Processed SePay TRANSACTION_VOID for payment {PaymentId}, booking {BookingId}",

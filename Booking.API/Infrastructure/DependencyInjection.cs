@@ -5,14 +5,10 @@ using Booking.API.Infrastructure.Hubs;
 using Booking.API.Infrastructure.Hubs.Services;
 using Booking.API.Infrastructure.Integrations.Clients;
 using Booking.API.Infrastructure.Messaging.Consumers;
-using Booking.API.Infrastructure.Messaging.EventHandlers;
+
 using Booking.API.Infrastructure.Notifications.Services;
 using Booking.API.Infrastructure.Persistence.Repositories;
-using Cinema.EventBus.Abstractions;
-using Cinema.EventBus.Events;
-using Cinema.EventBusRabbitMQ.Extensions;
 using MassTransit;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
@@ -41,7 +37,7 @@ public static class DependencyInjection
             options.InstanceName = "CinemaBooking:";
         });
 
-        services.AddRabbitMQEventBus(configuration);
+
 
         var cinemaApiUrl = configuration["ServiceUrls:CinemaApi"] ?? "https://localhost:7251";
         var movieApiUrl = configuration["ServiceUrls:MovieApi"] ?? "https://localhost:7295";
@@ -98,8 +94,6 @@ public static class DependencyInjection
                 configuration.GetValue<string>("Redis:SignalRChannelPrefix") ?? "cinema:signalr");
         });
 
-        services.AddTransient<PaymentCompletedIntegrationEventHandler>();
-        services.AddTransient<PaymentFailedIntegrationEventHandler>();
         services.AddBookingMassTransit(configuration);
 
         if (configuration.GetValue("BackgroundServices:EnableCleanupService", true))
@@ -108,14 +102,6 @@ public static class DependencyInjection
         }
 
         return services;
-    }
-
-    public static void UseBookingMessaging(this IApplicationBuilder app)
-    {
-        var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
-
-        eventBus.Subscribe<PaymentCompletedIntegrationEvent, PaymentCompletedIntegrationEventHandler>();
-        eventBus.Subscribe<PaymentFailedIntegrationEvent, PaymentFailedIntegrationEventHandler>();
     }
 
     private static IServiceCollection AddBookingMassTransit(

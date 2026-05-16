@@ -67,6 +67,4 @@ app.MapHub<SeatHub>("/hubs/seats");
 app.MapHub<AdminDashboardHub>("/hubs/admin-dashboard");
 app.MapHub<BookingHub>("/hubs/booking");
 
-app.UseBookingMessaging();
-
 app.Run();

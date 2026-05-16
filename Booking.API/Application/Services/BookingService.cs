@@ -1,9 +1,9 @@
 using Booking.API.Application.DTOs.Requests;
 using Booking.API.Application.DTOs.Responses;
 using Booking.API.Infrastructure.Persistence.Repositories;
-using Cinema.EventBus.Abstractions;
-using Cinema.EventBus.Events;
+using Cinema.Contracts.Events;
 using Cinema.Shared.Models;
+using MassTransit;
 using BookingEntity = Booking.API.Domain.Entities.Booking;
 
 namespace Booking.API.Application.Services;
@@ -23,7 +23,7 @@ public class BookingService : IBookingService
     private readonly IBookingResponseFactory _bookingResponseFactory;
     private readonly ISeatStatusService _seatStatusService;
     private readonly PaymentApiClient _paymentApiClient;
-    private readonly IEventBus _eventBus;
+    private readonly IPublishEndpoint _publishEndpoint;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<BookingService> _logger;
     private readonly IConfiguration _configuration;
@@ -34,7 +34,7 @@ public class BookingService : IBookingService
         IBookingResponseFactory bookingResponseFactory,
         ISeatStatusService seatStatusService,
         PaymentApiClient paymentApiClient,
-        IEventBus eventBus,
+        IPublishEndpoint publishEndpoint,
         IUnitOfWork unitOfWork,
         ILogger<BookingService> logger,
         IConfiguration configuration)
@@ -44,12 +44,11 @@ public class BookingService : IBookingService
         _bookingResponseFactory = bookingResponseFactory ?? throw new ArgumentNullException(nameof(bookingResponseFactory));
         _seatStatusService = seatStatusService ?? throw new ArgumentNullException(nameof(seatStatusService));
         _paymentApiClient = paymentApiClient ?? throw new ArgumentNullException(nameof(paymentApiClient));
-        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
-
     public async Task<ApiResponse<BookingResponse>> CreateBookingAsync(CreateBookingRequest request)
     {
         _logger.LogInformation(
@@ -190,7 +189,7 @@ public class BookingService : IBookingService
         }
 
         await TryReleaseSeatsAsync(booking.ShowtimeId, seatIds, nameof(CancelBookingAsync));
-        TryPublishBookingCancelledEvent(
+        await TryPublishBookingCancelledEventAsync(
             booking,
             seatIds,
             needsRefund,
@@ -278,7 +277,7 @@ public class BookingService : IBookingService
         }
 
         await TryReleaseSeatsAsync(booking.ShowtimeId, seatIds, nameof(ExpireBookingAsync));
-        TryPublishBookingExpiredEvent(booking, seatIds);
+        await TryPublishBookingExpiredEventAsync(booking, seatIds);
 
         _logger.LogInformation("Booking {BookingId} expired successfully", bookingId);
         return ApiResponse.SuccessResponse(BookingException.BOOKING_EXPIRED_SUCCESSFULLY);
@@ -333,16 +332,19 @@ public class BookingService : IBookingService
     {
         try
         {
-            _eventBus.Publish(new BookingCreatedIntegrationEvent(
-                booking.Id,
-                booking.UserId,
-                booking.ShowtimeId,
-                booking.GetSeatIds(),
-                booking.TotalPrice,
-                booking.BookingDate,
-                request.ContactEmail,
-                request.ContactPhone,
-                request.ContactName));
+            await _publishEndpoint.Publish(new BookingCreatedEvent
+            {
+                BookingId = booking.Id,
+                UserId = booking.UserId,
+                ShowtimeId = booking.ShowtimeId,
+                SeatIds = booking.GetSeatIds(),
+                TotalPrice = booking.TotalPrice,
+                BookingDate = booking.BookingDate,
+                CustomerEmail = request.ContactEmail,
+                CustomerPhone = request.ContactPhone,
+                CustomerName = request.ContactName,
+                OccurredAt = DateTime.UtcNow
+            });
 
             _logger.LogInformation("Waiting for payment creation for booking {BookingId}", booking.Id);
 
@@ -401,7 +403,7 @@ public class BookingService : IBookingService
         }
     }
 
-    private void TryPublishBookingCancelledEvent(
+    private async Task TryPublishBookingCancelledEventAsync(
         BookingEntity booking,
         List<Guid> seatIds,
         bool needsRefund,
@@ -409,33 +411,39 @@ public class BookingService : IBookingService
     {
         try
         {
-            _eventBus.Publish(new BookingCancelledIntegrationEvent(
-                booking.Id,
-                booking.UserId,
-                booking.ShowtimeId,
-                seatIds,
-                needsRefund,
-                reason));
+            await _publishEndpoint.Publish(new BookingCancelledEvent
+            {
+                BookingId = booking.Id,
+                UserId = booking.UserId,
+                ShowtimeId = booking.ShowtimeId,
+                SeatIds = seatIds,
+                NeedsRefund = needsRefund,
+                Reason = reason,
+                OccurredAt = DateTime.UtcNow
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish BookingCancelledIntegrationEvent for booking {BookingId}", booking.Id);
+            _logger.LogError(ex, "Failed to publish BookingCancelledEvent for booking {BookingId}", booking.Id);
         }
     }
 
-    private void TryPublishBookingExpiredEvent(BookingEntity booking, List<Guid> seatIds)
+    private async Task TryPublishBookingExpiredEventAsync(BookingEntity booking, List<Guid> seatIds)
     {
         try
         {
-            _eventBus.Publish(new BookingExpiredIntegrationEvent(
-                booking.Id,
-                booking.ShowtimeId,
-                seatIds,
-                DateTime.UtcNow));
+            await _publishEndpoint.Publish(new BookingExpiredEvent
+            {
+                BookingId = booking.Id,
+                ShowtimeId = booking.ShowtimeId,
+                SeatIds = seatIds,
+                ExpiredAt = DateTime.UtcNow,
+                OccurredAt = DateTime.UtcNow
+            });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish BookingExpiredIntegrationEvent for booking {BookingId}", booking.Id);
+            _logger.LogError(ex, "Failed to publish BookingExpiredEvent for booking {BookingId}", booking.Id);
         }
     }
 
@@ -493,3 +501,4 @@ public class BookingService : IBookingService
         return _configuration.GetValue<int>("Booking:PaymentCreationInitialDelayMs", DefaultPaymentCreationInitialDelayMs);
     }
 }
+

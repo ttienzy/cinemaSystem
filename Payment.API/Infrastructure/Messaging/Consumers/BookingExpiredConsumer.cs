@@ -30,9 +30,11 @@ public class BookingExpiredConsumer : IConsumer<BookingExpiredEvent>
         if (!paymentResult.Success || paymentResult.Data is null)
         {
             _logger.LogWarning(
-                "Payment not found for expired booking {BookingId}",
+                "Payment not found for expired booking {BookingId}. Message will be retried.",
                 message.BookingId);
-            return;
+
+            throw new InvalidOperationException(
+                $"Payment not found for expired booking {message.BookingId}");
         }
 
         var payment = paymentResult.Data;
@@ -45,9 +47,20 @@ public class BookingExpiredConsumer : IConsumer<BookingExpiredEvent>
             return;
         }
 
-        await _paymentService.UpdatePaymentStatusAsync(
+        var updateResult = await _paymentService.UpdatePaymentStatusAsync(
             payment.Id,
             PaymentStatus.Cancelled,
             gatewayMetadata: $"Booking expired at {message.ExpiredAt:O}");
+
+        if (!updateResult.Success)
+        {
+            throw new InvalidOperationException(
+                $"Failed to expire payment {payment.Id} for booking {message.BookingId}: {updateResult.Message}");
+        }
+
+        _logger.LogInformation(
+            "Expired payment {PaymentId} for expired booking {BookingId}",
+            payment.Id,
+            message.BookingId);
     }
 }

@@ -15,14 +15,11 @@ namespace Booking.API.Application.Services;
 public class BookingService : IBookingService
 {
     private const int DefaultBookingExpirationMinutes = 10;
-    private const int DefaultPaymentCreationMaxRetries = 8;
-    private const int DefaultPaymentCreationInitialDelayMs = 200;
 
     private readonly IBookingRepository _bookingRepository;
     private readonly IBookingCreationPreparationService _bookingCreationPreparationService;
     private readonly IBookingResponseFactory _bookingResponseFactory;
     private readonly ISeatStatusService _seatStatusService;
-    private readonly PaymentApiClient _paymentApiClient;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<BookingService> _logger;
@@ -33,7 +30,6 @@ public class BookingService : IBookingService
         IBookingCreationPreparationService bookingCreationPreparationService,
         IBookingResponseFactory bookingResponseFactory,
         ISeatStatusService seatStatusService,
-        PaymentApiClient paymentApiClient,
         IPublishEndpoint publishEndpoint,
         IUnitOfWork unitOfWork,
         ILogger<BookingService> logger,
@@ -43,7 +39,6 @@ public class BookingService : IBookingService
         _bookingCreationPreparationService = bookingCreationPreparationService ?? throw new ArgumentNullException(nameof(bookingCreationPreparationService));
         _bookingResponseFactory = bookingResponseFactory ?? throw new ArgumentNullException(nameof(bookingResponseFactory));
         _seatStatusService = seatStatusService ?? throw new ArgumentNullException(nameof(seatStatusService));
-        _paymentApiClient = paymentApiClient ?? throw new ArgumentNullException(nameof(paymentApiClient));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -106,8 +101,8 @@ public class BookingService : IBookingService
 
         _logger.LogInformation("Booking {BookingId} created successfully", booking.Id);
 
-        var paymentCheckout = await TryCreatePaymentCheckoutAsync(booking, request);
-        var response = await _bookingResponseFactory.CreateAsync(booking, paymentCheckout);
+        await TryPublishBookingCreatedEventAsync(booking, request);
+        var response = await _bookingResponseFactory.CreateAsync(booking);
 
         return ApiResponse<BookingResponse>.SuccessResponse(
             response,
@@ -326,7 +321,7 @@ public class BookingService : IBookingService
         return null;
     }
 
-    private async Task<PaymentCheckoutDto?> TryCreatePaymentCheckoutAsync(
+    private async Task TryPublishBookingCreatedEventAsync(
         BookingEntity booking,
         CreateBookingRequest request)
     {
@@ -346,34 +341,13 @@ public class BookingService : IBookingService
                 OccurredAt = DateTime.UtcNow
             });
 
-            _logger.LogInformation("Waiting for payment creation for booking {BookingId}", booking.Id);
-
-            var paymentCheckout = await _paymentApiClient.WaitForPaymentCreationAsync(
-                booking.Id,
-                maxRetries: GetPaymentCreationMaxRetries(),
-                initialDelayMs: GetPaymentCreationInitialDelayMs());
-
-            if (paymentCheckout != null)
-            {
-                _logger.LogInformation(
-                    "Booking {BookingId} created with payment {PaymentId}, checkout URL: {CheckoutUrl}",
-                    booking.Id,
-                    paymentCheckout.PaymentId,
-                    paymentCheckout.CheckoutUrl);
-            }
-            else
-            {
-                _logger.LogWarning(
-                    "Booking {BookingId} created but payment was not ready in time. Client should poll for payment.",
-                    booking.Id);
-            }
-
-            return paymentCheckout;
+            _logger.LogInformation(
+                "Published BookingCreatedEvent for booking {BookingId}. Client should poll payment status.",
+                booking.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Payment orchestration failed for booking {BookingId}", booking.Id);
-            return null;
+            _logger.LogError(ex, "Failed to publish BookingCreatedEvent for booking {BookingId}", booking.Id);
         }
     }
 
@@ -491,14 +465,5 @@ public class BookingService : IBookingService
         return _configuration.GetValue<int>("Booking:ExpirationMinutes", DefaultBookingExpirationMinutes);
     }
 
-    private int GetPaymentCreationMaxRetries()
-    {
-        return _configuration.GetValue<int>("Booking:PaymentCreationMaxRetries", DefaultPaymentCreationMaxRetries);
-    }
-
-    private int GetPaymentCreationInitialDelayMs()
-    {
-        return _configuration.GetValue<int>("Booking:PaymentCreationInitialDelayMs", DefaultPaymentCreationInitialDelayMs);
-    }
 }
 

@@ -8,10 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.19" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.4.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Cinema.Contracts\Cinema.Contracts.csproj" />
     <ProjectReference Include="..\Cinema.Shared\Cinema.Shared.csproj" />
   </ItemGroup>
 

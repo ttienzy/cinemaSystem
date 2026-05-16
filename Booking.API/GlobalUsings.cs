@@ -12,8 +12,6 @@ global using Booking.API.Infrastructure.Caching.Models;
 global using Booking.API.Infrastructure.Caching.Services;
 global using Booking.API.Infrastructure.Configuration;
 global using Booking.API.Infrastructure.Integrations.Clients;
-
-global using Booking.API.Infrastructure.Notifications.Services;
 global using Booking.API.Infrastructure.Persistence;
 global using Booking.API.Infrastructure.Persistence.Repositories;
 

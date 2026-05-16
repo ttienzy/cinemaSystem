@@ -34,6 +34,7 @@ Start-ServiceWindow 'Cinema.API'   'Cinema.API'   '7251'
 Start-ServiceWindow 'Movie.API'    'Movie.API'    '7295'
 Start-ServiceWindow 'Booking.API'  'Booking.API'  '7043'
 Start-ServiceWindow 'Payment.API'  'Payment.API'  '7252'
+Start-ServiceWindow 'Notification.API' 'Notification.API' '7147'
 
 # Summary
 Write-Host ''
@@ -49,6 +50,7 @@ Write-Host '  Cinema.API:    https://localhost:7251/swagger'
 Write-Host '  Movie.API:     https://localhost:7295/swagger'
 Write-Host '  Booking.API:   https://localhost:7043/swagger'
 Write-Host '  Payment.API:   https://localhost:7252/swagger'
+Write-Host '  Notification.API: https://localhost:7147/swagger'
 
 Write-Host ''
 Write-Host 'Close all PowerShell windows to stop services' -ForegroundColor Yellow

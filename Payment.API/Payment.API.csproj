@@ -22,8 +22,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Cinema.Contracts\Cinema.Contracts.csproj" />
     <ProjectReference Include="..\Cinema.Shared\Cinema.Shared.csproj" />
-    <ProjectReference Include="..\Cinema.EventBus\Cinema.EventBus.csproj" />
-    <ProjectReference Include="..\Cinema.EventBusRabbitMQ\Cinema.EventBusRabbitMQ.csproj" />
   </ItemGroup>
 
 </Project>

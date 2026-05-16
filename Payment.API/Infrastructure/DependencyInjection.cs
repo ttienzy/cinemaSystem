@@ -95,14 +95,13 @@ public static class DependencyInjection
             return;
         }
 
-        var eventBusConfig = configuration.GetSection("EventBus");
         cfg.Host(
-            eventBusConfig["Connection"] ?? configuration["EventBusConnection"] ?? "localhost",
+            configuration["RabbitMQ:Connection"] ?? "localhost",
             "/",
             host =>
             {
-                host.Username(eventBusConfig["UserName"] ?? "guest");
-                host.Password(eventBusConfig["Password"] ?? "guest");
+                host.Username(configuration["RabbitMQ:UserName"] ?? "guest");
+                host.Password(configuration["RabbitMQ:Password"] ?? "guest");
             });
     }
 

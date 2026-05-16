@@ -21,8 +21,4 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Cinema.EventBus\Cinema.EventBus.csproj" />
-  </ItemGroup>
-
 </Project>

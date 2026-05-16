@@ -59,7 +59,6 @@ app.MapBookingEndpoints();
 app.MapBookingAnalyticsEndpoints();
 app.MapBookingOperationsEndpoints();
 app.MapDashboardEndpoints();
-app.MapEmailTestEndpoints();
 app.MapHealthChecks("/health");
 
 // Map SignalR Hub

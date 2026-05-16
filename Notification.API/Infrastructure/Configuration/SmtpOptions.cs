@@ -1,4 +1,4 @@
-namespace Booking.API.Infrastructure.Configuration;
+namespace Notification.API.Infrastructure.Configuration;
 
 public class SmtpOptions
 {
@@ -10,7 +10,6 @@ public class SmtpOptions
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public string FromEmail { get; set; } = string.Empty;
-    public string FromName { get; set; } = string.Empty;
+    public string FromName { get; set; } = "CinemaSystem";
     public int TimeoutSeconds { get; set; } = 30;
 }
-

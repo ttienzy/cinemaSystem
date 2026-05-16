@@ -1,5 +1,8 @@
 import axiosClient from '../../../api/axiosClient';
+import axios from 'axios';
 import type { ApiResponse } from '../../../types/api';
+import { getAccessToken } from '../../../utils/tokenStorage';
+import { getApiGatewayBaseUrl } from '../../../utils/apiConfig';
 
 export interface SeatStatusDto {
   seatId: string;
@@ -60,6 +63,16 @@ export interface BookingResponse {
   checkoutUrl?: string;
 }
 
+export interface PaymentLookupResponse {
+  id: string;
+  paymentId?: string;
+  bookingId: string;
+  orderInvoiceNumber: string;
+  amount: number;
+  status: number | string;
+  expiresAt?: string;
+}
+
 export interface BookingSeatDto {
   seatId: string;
   row: string;
@@ -94,6 +107,27 @@ export const bookingApi = {
 
   getBookingById: async (bookingId: string): Promise<ApiResponse<BookingResponse>> => {
     return axiosClient.get(`/api/bookings/${bookingId}`);
+  },
+
+  getPaymentByBookingId: async (bookingId: string): Promise<PaymentLookupResponse | null> => {
+    try {
+      const token = getAccessToken();
+      const response = await axios.get<ApiResponse<PaymentLookupResponse>>(
+        `${getApiGatewayBaseUrl()}/api/payments/booking/${bookingId}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          timeout: 10000,
+        }
+      );
+
+      return response.data?.success ? response.data.data : null;
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        return null;
+      }
+
+      throw error;
+    }
   },
 
   cancelBooking: async (bookingId: string, data: CancelBookingRequest): Promise<ApiResponse<unknown>> => {

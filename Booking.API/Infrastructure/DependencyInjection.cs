@@ -5,8 +5,6 @@ using Booking.API.Infrastructure.Hubs;
 using Booking.API.Infrastructure.Hubs.Services;
 using Booking.API.Infrastructure.Integrations.Clients;
 using Booking.API.Infrastructure.Messaging.Consumers;
-
-using Booking.API.Infrastructure.Notifications.Services;
 using Booking.API.Infrastructure.Persistence.Repositories;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
@@ -22,7 +20,6 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddDatabaseConfiguration(configuration);
-        services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
 
         var redisConnection = configuration.GetConnectionString("redis");
         if (string.IsNullOrWhiteSpace(redisConnection))
@@ -66,7 +63,6 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ISeatLockService, SeatLockService>();
         services.AddScoped<ISeatStatusService, SeatStatusService>();
-        services.AddScoped<IEmailService, EmailService>();
 
         // SignalR services
         services.AddSingleton<IConnectionTracker, RedisConnectionTracker>();
@@ -162,14 +158,13 @@ public static class DependencyInjection
             return;
         }
 
-        var eventBusConfig = configuration.GetSection("EventBus");
         cfg.Host(
-            eventBusConfig["Connection"] ?? "localhost",
+            configuration["RabbitMQ:Connection"] ?? "localhost",
             "/",
             host =>
             {
-                host.Username(eventBusConfig["UserName"] ?? "guest");
-                host.Password(eventBusConfig["Password"] ?? "guest");
+                host.Username(configuration["RabbitMQ:UserName"] ?? "guest");
+                host.Password(configuration["RabbitMQ:Password"] ?? "guest");
             });
     }
 

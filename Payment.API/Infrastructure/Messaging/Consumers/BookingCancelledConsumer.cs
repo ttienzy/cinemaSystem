@@ -30,9 +30,11 @@ public class BookingCancelledConsumer : IConsumer<BookingCancelledEvent>
         if (!paymentResult.Success || paymentResult.Data is null)
         {
             _logger.LogWarning(
-                "Payment not found for cancelled booking {BookingId}",
+                "Payment not found for cancelled booking {BookingId}. Message will be retried.",
                 message.BookingId);
-            return;
+
+            throw new InvalidOperationException(
+                $"Payment not found for cancelled booking {message.BookingId}");
         }
 
         var payment = paymentResult.Data;
@@ -55,9 +57,20 @@ public class BookingCancelledConsumer : IConsumer<BookingCancelledEvent>
             return;
         }
 
-        await _paymentService.UpdatePaymentStatusAsync(
+        var updateResult = await _paymentService.UpdatePaymentStatusAsync(
             payment.Id,
             PaymentStatus.Cancelled,
             gatewayMetadata: $"Booking cancelled: {message.Reason}");
+
+        if (!updateResult.Success)
+        {
+            throw new InvalidOperationException(
+                $"Failed to cancel payment {payment.Id} for booking {message.BookingId}: {updateResult.Message}");
+        }
+
+        _logger.LogInformation(
+            "Cancelled payment {PaymentId} for cancelled booking {BookingId}",
+            payment.Id,
+            message.BookingId);
     }
 }

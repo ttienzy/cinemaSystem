@@ -2,7 +2,7 @@ using Booking.API.Infrastructure.Persistence;
 using Booking.API.Domain.Entities;
 using BookingEntity = Booking.API.Domain.Entities.Booking;
 using Cinema.Contracts.Events;
-using MassTransit;
+using Cinema.Messaging.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Booking.API.Infrastructure.BackgroundServices;
@@ -67,7 +67,7 @@ public class ExpiredBookingCleanupService : BackgroundService
 
         var dbContext = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
         var seatStatusService = scope.ServiceProvider.GetRequiredService<ISeatStatusService>();
-        var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+        var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
 
         try
         {
@@ -98,7 +98,7 @@ public class ExpiredBookingCleanupService : BackgroundService
                     await ProcessExpiredBookingAsync(
                         booking,
                         seatStatusService,
-                        publishEndpoint,
+                        eventBus,
                         cancellationToken);
 
                     successCount++;
@@ -130,7 +130,7 @@ public class ExpiredBookingCleanupService : BackgroundService
     private async Task ProcessExpiredBookingAsync(
         BookingEntity booking,
         ISeatStatusService seatStatusService,
-        IPublishEndpoint publishEndpoint,
+        IEventBus eventBus,
         CancellationToken cancellationToken)
     {
         _logger.LogInformation(
@@ -176,7 +176,7 @@ public class ExpiredBookingCleanupService : BackgroundService
         // 3. Publish BookingExpiredEvent via MassTransit
         try
         {
-            await publishEndpoint.Publish(new BookingExpiredEvent
+            await eventBus.PublishAsync(new BookingExpiredEvent
             {
                 CorrelationId = booking.Id,
                 BookingId = booking.Id,

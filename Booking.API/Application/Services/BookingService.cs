@@ -2,8 +2,8 @@ using Booking.API.Application.DTOs.Requests;
 using Booking.API.Application.DTOs.Responses;
 using Booking.API.Infrastructure.Persistence.Repositories;
 using Cinema.Contracts.Events;
+using Cinema.Messaging.Abstractions;
 using Cinema.Shared.Models;
-using MassTransit;
 using BookingEntity = Booking.API.Domain.Entities.Booking;
 
 namespace Booking.API.Application.Services;
@@ -20,7 +20,7 @@ public class BookingService : IBookingService
     private readonly IBookingCreationPreparationService _bookingCreationPreparationService;
     private readonly IBookingResponseFactory _bookingResponseFactory;
     private readonly ISeatStatusService _seatStatusService;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IEventBus _eventBus;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<BookingService> _logger;
     private readonly IConfiguration _configuration;
@@ -30,7 +30,7 @@ public class BookingService : IBookingService
         IBookingCreationPreparationService bookingCreationPreparationService,
         IBookingResponseFactory bookingResponseFactory,
         ISeatStatusService seatStatusService,
-        IPublishEndpoint publishEndpoint,
+        IEventBus eventBus,
         IUnitOfWork unitOfWork,
         ILogger<BookingService> logger,
         IConfiguration configuration)
@@ -39,7 +39,7 @@ public class BookingService : IBookingService
         _bookingCreationPreparationService = bookingCreationPreparationService ?? throw new ArgumentNullException(nameof(bookingCreationPreparationService));
         _bookingResponseFactory = bookingResponseFactory ?? throw new ArgumentNullException(nameof(bookingResponseFactory));
         _seatStatusService = seatStatusService ?? throw new ArgumentNullException(nameof(seatStatusService));
-        _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
@@ -327,7 +327,7 @@ public class BookingService : IBookingService
     {
         try
         {
-            await _publishEndpoint.Publish(new BookingCreatedEvent
+            await _eventBus.PublishAsync(new BookingCreatedEvent
             {
                 CorrelationId = booking.Id,
                 BookingId = booking.Id,
@@ -386,7 +386,7 @@ public class BookingService : IBookingService
     {
         try
         {
-            await _publishEndpoint.Publish(new BookingCancelledEvent
+            await _eventBus.PublishAsync(new BookingCancelledEvent
             {
                 CorrelationId = booking.Id,
                 BookingId = booking.Id,
@@ -408,7 +408,7 @@ public class BookingService : IBookingService
     {
         try
         {
-            await _publishEndpoint.Publish(new BookingExpiredEvent
+            await _eventBus.PublishAsync(new BookingExpiredEvent
             {
                 CorrelationId = booking.Id,
                 BookingId = booking.Id,

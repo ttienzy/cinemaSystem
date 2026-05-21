@@ -4,6 +4,7 @@ import { Button, Card, Spin, message } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { bookingApi } from '../../../features/booking/api/bookingApi';
 import { getPaymentApiBaseUrl } from '../../../utils/apiConfig';
+import { useBookingStore } from '../../../features/booking/store/useBookingStore';
 
 const maxAttempts = 30;
 const pollIntervalMs = 1000;
@@ -13,8 +14,13 @@ const BookingStatusPage: React.FC = () => {
   const navigate = useNavigate();
   const [attempts, setAttempts] = useState(0);
   const [hasFailed, setHasFailed] = useState(false);
+  const clearBookingSession = useBookingStore((state) => state.clearBookingSession);
 
   const paymentApiBaseUrl = useMemo(() => getPaymentApiBaseUrl(), []);
+
+  useEffect(() => {
+    clearBookingSession();
+  }, [clearBookingSession]);
 
   useEffect(() => {
     if (!bookingId) {

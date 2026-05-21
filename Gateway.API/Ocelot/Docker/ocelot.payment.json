@@ -70,6 +70,30 @@
       }
     },
     {
+      "UpstreamPathTemplate": "/api/payments/{id}/checkout",
+      "UpstreamHttpMethod": [
+        "GET"
+      ],
+      "DownstreamPathTemplate": "/api/payments/{id}/checkout",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "payment-api",
+          "Port": 8080
+        }
+      ],
+      "Key": "payments-checkout",
+      "Priority": 100,
+      "RateLimitOptions": {
+        "EnableRateLimiting": false
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 15000,
+        "TimeoutValue": 5000
+      }
+    },
+    {
       "UpstreamPathTemplate": "/api/payments/{everything}",
       "UpstreamHttpMethod": [
         "GET",
@@ -91,10 +115,10 @@
         "AllowedScopes": []
       },
       "RateLimitOptions": {
-        "EnableRateLimiting": true,
+        "EnableRateLimiting": false,
         "Period": "1m",
         "PeriodTimespan": 60,
-        "Limit": 100
+        "Limit": 50
       },
       "QoSOptions": {
         "ExceptionsAllowedBeforeBreaking": 3,

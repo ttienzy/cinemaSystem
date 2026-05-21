@@ -13,10 +13,13 @@ builder.Services.AddAuthorization();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Add database migration
-builder.Services.AddMigration<Payment.API.Infrastructure.Persistence.PaymentDbContext>();
-
 var app = builder.Build();
+
+if (args.IsMigrationOnlyCommand())
+{
+    await app.MigrateAndStopAsync<Payment.API.Infrastructure.Persistence.PaymentDbContext>();
+    return;
+}
 
 if (app.Environment.IsDevelopment())
 {

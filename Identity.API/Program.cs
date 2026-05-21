@@ -52,10 +52,14 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddAuthorization();
 builder.Services.AddHealthChecks();
 
-// Add database migration
-builder.Services.AddMigration<Identity.API.Infrastructure.Persistence.IdentityDbContext>();
-
 var app = builder.Build();
+
+if (args.IsMigrationOnlyCommand())
+{
+    await app.MigrateAndStopAsync<Identity.API.Infrastructure.Persistence.IdentityDbContext>();
+    await app.InitializeDatabaseAsync();
+    return;
+}
 
 if (app.Environment.IsDevelopment())
 {

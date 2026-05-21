@@ -1,8 +1,5 @@
 import axiosClient from '../../../api/axiosClient';
-import axios from 'axios';
 import type { ApiResponse } from '../../../types/api';
-import { getAccessToken } from '../../../utils/tokenStorage';
-import { getApiGatewayBaseUrl } from '../../../utils/apiConfig';
 
 export interface SeatStatusDto {
   seatId: string;
@@ -111,16 +108,11 @@ export const bookingApi = {
 
   getPaymentByBookingId: async (bookingId: string): Promise<PaymentLookupResponse | null> => {
     try {
-      const token = getAccessToken();
-      const response = await axios.get<ApiResponse<PaymentLookupResponse>>(
-        `${getApiGatewayBaseUrl()}/api/payments/booking/${bookingId}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          timeout: 10000,
-        }
-      );
+      const response = await axiosClient.get<ApiResponse<PaymentLookupResponse>>(
+        `/api/payments/booking/${bookingId}`
+      ) as unknown as ApiResponse<PaymentLookupResponse>;
 
-      return response.data?.success ? response.data.data : null;
+      return response.success ? response.data : null;
     } catch (error: any) {
       if (error?.response?.status === 404) {
         return null;

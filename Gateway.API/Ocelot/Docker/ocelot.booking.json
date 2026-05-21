@@ -56,9 +56,16 @@
         }
       ],
       "Key": "showtime-seats-get",
+      "Priority": 100,
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer",
         "AllowedScopes": []
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": false,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 500
       }
     },
     {
@@ -75,6 +82,7 @@
         }
       ],
       "Key": "showtime-seats-actions",
+      "Priority": 100,
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer",
         "AllowedScopes": []

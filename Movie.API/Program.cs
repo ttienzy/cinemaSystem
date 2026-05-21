@@ -20,10 +20,13 @@ builder.Services.AddAuthorization();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Add database migration
-builder.Services.AddMigration<Movie.API.Infrastructure.Persistence.MovieDbContext>();
-
 var app = builder.Build();
+
+if (args.IsMigrationOnlyCommand())
+{
+    await app.MigrateAndStopAsync<Movie.API.Infrastructure.Persistence.MovieDbContext>();
+    return;
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -41,4 +44,3 @@ app.MapShowtimeEndpoints();
 app.MapHealthChecks("/health");
 
 app.Run();
-

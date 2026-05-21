@@ -9,9 +9,16 @@
         { "Host": "identity-api", "Port": 8080 }
       ],
       "Key": "identity-me",
-      "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
-        "AllowedScopes": []
+      "RateLimitOptions": {
+        "EnableRateLimiting": false,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 5000
       }
     },
     {
@@ -22,7 +29,18 @@
       "DownstreamHostAndPorts": [
         { "Host": "identity-api", "Port": 8080 }
       ],
-      "Key": "identity-auth"
+      "Key": "identity-auth",
+      "RateLimitOptions": {
+        "EnableRateLimiting": false,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3,
+        "DurationOfBreak": 10000,
+        "TimeoutValue": 5000
+      }
     }
   ]
 }

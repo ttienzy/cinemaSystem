@@ -56,7 +56,8 @@
       "DownstreamHostAndPorts": [
         { "Host": "movie-api", "Port": 8080 }
       ],
-      "Key": "showtimes-read"
+      "Key": "showtimes-read",
+      "Priority": 0
     },
     {
       "UpstreamPathTemplate": "/api/showtimes/{everything}",
@@ -67,6 +68,7 @@
         { "Host": "movie-api", "Port": 8080 }
       ],
       "Key": "showtimes-write",
+      "Priority": 0,
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer",
         "AllowedScopes": []

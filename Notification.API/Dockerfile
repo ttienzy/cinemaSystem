@@ -7,6 +7,7 @@ WORKDIR /src
 COPY ["Notification.API/Notification.API.csproj", "Notification.API/"]
 COPY ["Cinema.Contracts/Cinema.Contracts.csproj", "Cinema.Contracts/"]
 COPY ["Cinema.Shared/Cinema.Shared.csproj", "Cinema.Shared/"]
+COPY ["Cinema.Messaging/Cinema.Messaging.csproj", "Cinema.Messaging/"]
 RUN dotnet restore "Notification.API/Notification.API.csproj"
 COPY . .
 WORKDIR "/src/Notification.API"

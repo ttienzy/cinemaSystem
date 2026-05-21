@@ -73,6 +73,7 @@
         { "Host": "localhost", "Port": 7295 }
       ],
       "Key": "showtimes-read",
+      "Priority": 0,
       "RateLimitOptions": {
         "EnableRateLimiting": false,
         "Period": "1m",
@@ -94,6 +95,7 @@
         { "Host": "localhost", "Port": 7295 }
       ],
       "Key": "showtimes-write",
+      "Priority": 0,
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer",
         "AllowedScopes": []

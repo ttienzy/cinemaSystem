@@ -8,6 +8,7 @@ WORKDIR /src
 COPY ["Payment.API/Payment.API.csproj", "Payment.API/"]
 COPY ["Cinema.Shared/Cinema.Shared.csproj", "Cinema.Shared/"]
 COPY ["Cinema.Contracts/Cinema.Contracts.csproj", "Cinema.Contracts/"]
+COPY ["Cinema.Messaging/Cinema.Messaging.csproj", "Cinema.Messaging/"]
 
 # Restore dependencies
 RUN dotnet restore "Payment.API/Payment.API.csproj"

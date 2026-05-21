@@ -1,4 +1,4 @@
-version: '3.8'
+name: cinema-system
 
 services:
   # ==========================================
@@ -6,10 +6,10 @@ services:
   # ==========================================
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sqlserver-dev
+    container_name: cinema-system-sqlserver
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123}
+      - MSSQL_SA_PASSWORD=${SA_PASSWORD:-YourStrong@Passw0rd}
       - MSSQL_PID=Developer
     volumes:
       - sqlserver_data:/var/opt/mssql
@@ -17,7 +17,7 @@ services:
       - cinema-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123}", "-Q", "SELECT 1", "-C"]
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${SA_PASSWORD:-YourStrong@Passw0rd}", "-Q", "SELECT 1", "-C"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -25,7 +25,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: redis
+    container_name: cinema-system-redis
     volumes:
       - redis_data:/data
     networks:
@@ -40,7 +40,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: rabbitmq
+    container_name: cinema-system-rabbitmq
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS:-guest}
@@ -58,16 +58,17 @@ services:
       start_period: 20s
 
   # ==========================================
-  # BACKEND MICROSERVICES
+  # DATABASE MIGRATORS
   # ==========================================
-  identity-api:
+  identity-migrator:
     build:
       context: .
       dockerfile: Identity.API/Dockerfile
-    container_name: identity-api
+    container_name: cinema-system-identity-migrator
+    command: ["--migrate-only"]
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
-      - ConnectionStrings__identity-db=Server=sqlserver,1433;Database=CinemaIdentityDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123};TrustServerCertificate=true;
+      - ConnectionStrings__identity-db=Server=sqlserver,1433;Database=CinemaIdentityDb;User Id=sa;Password=${SA_PASSWORD:-YourStrong@Passw0rd};TrustServerCertificate=true;
       - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
       - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
       - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
@@ -77,22 +78,141 @@ services:
         condition: service_healthy
     networks:
       - cinema-network
-    restart: unless-stopped
+    restart: "no"
 
-  cinema-api:
+  cinema-migrator:
     build:
       context: .
       dockerfile: Cinema.API/Dockerfile
-    container_name: cinema-api
+    container_name: cinema-system-cinema-migrator
+    command: ["--migrate-only"]
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
-      - ConnectionStrings__cinema-db=Server=sqlserver,1433;Database=CinemaDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123};TrustServerCertificate=true;
+      - ConnectionStrings__cinema-db=Server=sqlserver,1433;Database=CinemaDb;User Id=sa;Password=${SA_PASSWORD:-YourStrong@Passw0rd};TrustServerCertificate=true;
       - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
       - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
       - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
     depends_on:
       sqlserver:
         condition: service_healthy
+    networks:
+      - cinema-network
+    restart: "no"
+
+  movie-migrator:
+    build:
+      context: .
+      dockerfile: Movie.API/Dockerfile
+    container_name: cinema-system-movie-migrator
+    command: ["--migrate-only"]
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__movie-db=Server=sqlserver,1433;Database=MovieDb;User Id=sa;Password=${SA_PASSWORD:-YourStrong@Passw0rd};TrustServerCertificate=true;
+      - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
+      - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+      - Cloudinary__CloudName=${CLOUDINARY_CLOUD_NAME:-}
+      - Cloudinary__ApiKey=${CLOUDINARY_API_KEY:-}
+      - Cloudinary__ApiSecret=${CLOUDINARY_API_SECRET:-}
+      - ServiceUrls__CinemaApi=${CINEMA_API_URL:-http://cinema-api:8080}
+      - ServiceUrls__BookingApi=${BOOKING_API_URL:-http://booking-api:8080}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - cinema-network
+    restart: "no"
+
+  booking-migrator:
+    build:
+      context: .
+      dockerfile: Booking.API/Dockerfile
+    container_name: cinema-system-booking-migrator
+    command: ["--migrate-only"]
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__booking-db=Server=sqlserver,1433;Database=BookingDb;User Id=sa;Password=${SA_PASSWORD:-YourStrong@Passw0rd};TrustServerCertificate=true;
+      - ConnectionStrings__Redis=redis:6379
+      - ConnectionStrings__rabbitmq=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
+      - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+      - ServiceUrls__CinemaApi=${CINEMA_API_URL:-http://cinema-api:8080}
+      - ServiceUrls__MovieApi=${MOVIE_API_URL:-http://movie-api:8080}
+      - ServiceUrls__PaymentApi=${PAYMENT_API_URL:-http://payment-api:8080}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cinema-network
+    restart: "no"
+
+  payment-migrator:
+    build:
+      context: .
+      dockerfile: Payment.API/Dockerfile
+    container_name: cinema-system-payment-migrator
+    command: ["--migrate-only"]
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=PaymentDb;User Id=sa;Password=${SA_PASSWORD:-YourStrong@Passw0rd};TrustServerCertificate=true;
+      - ConnectionStrings__rabbitmq=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
+      - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cinema-network
+    restart: "no"
+
+  # ==========================================
+  # BACKEND MICROSERVICES
+  # ==========================================
+  identity-api:
+    build:
+      context: .
+      dockerfile: Identity.API/Dockerfile
+    container_name: cinema-system-identity-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__identity-db=Server=sqlserver,1433;Database=CinemaIdentityDb;User Id=sa;Password=${SA_PASSWORD:-YourStrong@Passw0rd};TrustServerCertificate=true;
+      - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
+      - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+      - JwtSettings__ExpiryMinutes=60
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      identity-migrator:
+        condition: service_completed_successfully
+    networks:
+      - cinema-network
+    restart: unless-stopped
+
+  cinema-api:
+    build:
+      context: .
+      dockerfile: Cinema.API/Dockerfile
+    container_name: cinema-system-cinema-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__cinema-db=Server=sqlserver,1433;Database=CinemaDb;User Id=sa;Password=${SA_PASSWORD:-YourStrong@Passw0rd};TrustServerCertificate=true;
+      - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
+      - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
+      - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      cinema-migrator:
+        condition: service_completed_successfully
     networks:
       - cinema-network
     restart: unless-stopped
@@ -101,16 +221,20 @@ services:
     build:
       context: .
       dockerfile: Movie.API/Dockerfile
-    container_name: movie-api
+    container_name: cinema-system-movie-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
-      - ConnectionStrings__movie-db=Server=sqlserver,1433;Database=MovieDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123};TrustServerCertificate=true;
+      - ConnectionStrings__movie-db=Server=sqlserver,1433;Database=MovieDb;User Id=sa;Password=${SA_PASSWORD:-YourStrong@Passw0rd};TrustServerCertificate=true;
       - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
       - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
       - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+      - ServiceUrls__CinemaApi=${CINEMA_API_URL:-http://cinema-api:8080}
+      - ServiceUrls__BookingApi=${BOOKING_API_URL:-http://booking-api:8080}
     depends_on:
       sqlserver:
         condition: service_healthy
+      movie-migrator:
+        condition: service_completed_successfully
     networks:
       - cinema-network
     restart: unless-stopped
@@ -119,20 +243,23 @@ services:
     build:
       context: .
       dockerfile: Booking.API/Dockerfile
-    container_name: booking-api
+    container_name: cinema-system-booking-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
-      - ConnectionStrings__booking-db=Server=sqlserver,1433;Database=BookingDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123};TrustServerCertificate=true;
+      - ConnectionStrings__booking-db=Server=sqlserver,1433;Database=BookingDb;User Id=sa;Password=${SA_PASSWORD:-YourStrong@Passw0rd};TrustServerCertificate=true;
       - ConnectionStrings__Redis=redis:6379
       - ConnectionStrings__rabbitmq=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
       - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
       - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
       - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
-      - ExternalServices__CinemaApiUrl=http://cinema-api:8080
-      - ExternalServices__MovieApiUrl=http://movie-api:8080
+      - ServiceUrls__CinemaApi=${CINEMA_API_URL:-http://cinema-api:8080}
+      - ServiceUrls__MovieApi=${MOVIE_API_URL:-http://movie-api:8080}
+      - ServiceUrls__PaymentApi=${PAYMENT_API_URL:-http://payment-api:8080}
     depends_on:
       sqlserver:
         condition: service_healthy
+      booking-migrator:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       rabbitmq:
@@ -149,17 +276,25 @@ services:
     build:
       context: .
       dockerfile: Payment.API/Dockerfile
-    container_name: payment-api
+    container_name: cinema-system-payment-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
-      - ConnectionStrings__payment-db=Server=sqlserver,1433;Database=PaymentDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-YourStrong@Passw0rd123};TrustServerCertificate=true;
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=PaymentDb;User Id=sa;Password=${SA_PASSWORD:-YourStrong@Passw0rd};TrustServerCertificate=true;
       - ConnectionStrings__rabbitmq=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
       - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
       - JwtSettings__Issuer=${JWT_ISSUER:-CinemaSystem}
       - JwtSettings__Audience=${JWT_AUDIENCE:-CinemaSystem}
+      - SePay__MerchantId=${SEPAY_MERCHANT_ID:-}
+      - SePay__SecretKey=${SEPAY_SECRET_KEY:-}
+      - SePay__Environment=${SEPAY_ENVIRONMENT:-sandbox}
+      - SePay__IpnUrl=${SEPAY_IPN_URL:-}
+      - Payment__PublicBaseUrl=${PAYMENT_PUBLIC_BASE_URL:-http://localhost:5200}
+      - Frontend__BaseUrl=${FRONTEND_BASE_URL:-http://localhost:5173}
     depends_on:
       sqlserver:
         condition: service_healthy
+      payment-migrator:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -170,7 +305,7 @@ services:
     build:
       context: .
       dockerfile: Notification.API/Dockerfile
-    container_name: notification-api
+    container_name: cinema-system-notification-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - ConnectionStrings__rabbitmq=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
@@ -196,7 +331,7 @@ services:
     build:
       context: .
       dockerfile: Gateway.API/Dockerfile
-    container_name: gateway-api
+    container_name: cinema-system-gateway-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Docker
       - JwtSettings__SecretKey=${JWT_SECRET:-your-super-secret-key-that-is-at-least-32-characters-long!}
@@ -222,6 +357,24 @@ services:
         condition: service_started
       redis:
         condition: service_healthy
+    networks:
+      - cinema-network
+    restart: unless-stopped
+
+  # ==========================================
+  # FRONTEND
+  # ==========================================
+  cinema-ui:
+    build:
+      context: ./Cinema.UI
+      dockerfile: Dockerfile
+      args:
+        VITE_API_GATEWAY_URL: ${VITE_API_GATEWAY_URL:-http://localhost:5200}
+        VITE_PAYMENT_API_URL: ${VITE_PAYMENT_API_URL:-http://localhost:5200}
+    container_name: cinema-system-cinema-ui
+    depends_on:
+      gateway-api:
+        condition: service_started
     networks:
       - cinema-network
     restart: unless-stopped

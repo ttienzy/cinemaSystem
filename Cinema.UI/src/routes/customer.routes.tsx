@@ -9,6 +9,7 @@ const Home = lazy(() => import('../pages/customer/Home'));
 const MovieDetails = lazy(() => import('../pages/customer/MovieDetails'));
 const SeatSelectionPage = lazy(() => import('../pages/customer/Booking/SeatSelectionPage'));
 const CheckoutPage = lazy(() => import('../pages/customer/Booking/CheckoutPage'));
+const BookingStatusPage = lazy(() => import('../pages/customer/Booking/BookingStatusPage'));
 const SuccessPage = lazy(() => import('../pages/customer/Booking/SuccessPage'));
 const PaymentSuccessPage = lazy(() => import('../pages/customer/Payment/PaymentSuccessPage'));
 const PaymentErrorPage = lazy(() => import('../pages/customer/Payment/PaymentErrorPage'));
@@ -55,6 +56,14 @@ const customerRoutes: RouteObject[] = [
             element: (
               <Suspense fallback={<Spin size="large" className="global-spinner" />}>
                 <CheckoutPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'booking-status/:bookingId',
+            element: (
+              <Suspense fallback={<Spin size="large" className="global-spinner" />}>
+                <BookingStatusPage />
               </Suspense>
             ),
           },

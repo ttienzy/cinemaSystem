@@ -1,12 +1,6 @@
 {
   "GlobalConfiguration": {
     "BaseUrl": "http://gateway-api",
-    "RequestIdKey": "X-Correlation-Id",
-    "RateLimitOptions": {
-      "ClientIdHeader": "ClientId",
-      "DisableRateLimitHeaders": false,
-      "QuotaExceededMessage": "API rate limit exceeded!",
-      "HttpStatusCode": 429
-    }
+    "RequestIdKey": "X-Correlation-Id"
   }
 }

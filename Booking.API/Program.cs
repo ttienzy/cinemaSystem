@@ -24,9 +24,6 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHealthChecks();
 
-// Add database migration
-builder.Services.AddMigration<Booking.API.Infrastructure.Persistence.BookingDbContext>();
-
 // Configure CORS for SignalR
 builder.Services.AddCors(options =>
 {
@@ -41,6 +38,12 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+if (args.IsMigrationOnlyCommand())
+{
+    await app.MigrateAndStopAsync<Booking.API.Infrastructure.Persistence.BookingDbContext>();
+    return;
+}
 
 if (app.Environment.IsDevelopment())
 {

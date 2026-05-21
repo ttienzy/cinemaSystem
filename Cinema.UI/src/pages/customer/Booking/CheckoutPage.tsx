@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Button, Card, message, Statistic } from 'antd';
 import { useMutation } from '@tanstack/react-query';
@@ -13,9 +13,14 @@ const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const { showtimeId, selectedSeats, lockedUntil, clearBookingSession } = useBookingStore();
   const [form] = Form.useForm();
+  const isNavigatingToPaymentRef = useRef(false);
 
   // Redirect if no active session
   useEffect(() => {
+    if (isNavigatingToPaymentRef.current) {
+      return;
+    }
+
     if (!showtimeId || selectedSeats.length === 0 || !lockedUntil) {
       message.error('Phiên đặt vé đã hết hạn hoặc không hợp lệ.');
       navigate('/');
@@ -29,8 +34,8 @@ const CheckoutPage: React.FC = () => {
     onSuccess: (res) => {
       if (res.success && res.data) {
         message.success('Booking đã được tạo. Đang tạo liên kết thanh toán...');
-        clearBookingSession();
-        navigate(`/booking-status/${res.data.bookingId}`);
+        isNavigatingToPaymentRef.current = true;
+        navigate(`/booking-status/${res.data.bookingId}`, { replace: true });
       } else {
         message.error(res.message || 'Lỗi khi tạo booking');
       }

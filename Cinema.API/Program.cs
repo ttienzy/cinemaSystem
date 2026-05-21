@@ -20,10 +20,13 @@ builder.Services.AddAuthorization();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Add database migration
-builder.Services.AddMigration<Cinema.API.Infrastructure.Persistence.CinemaDbContext>();
-
 var app = builder.Build();
+
+if (args.IsMigrationOnlyCommand())
+{
+    await app.MigrateAndStopAsync<Cinema.API.Infrastructure.Persistence.CinemaDbContext>();
+    return;
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -41,4 +44,3 @@ app.MapSeatEndpoints();
 app.MapHealthChecks("/health");
 
 app.Run();
-

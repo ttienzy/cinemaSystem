@@ -81,7 +81,6 @@ Ports:
 
 ```powershell
 Copy-Item .env.example .env
-Copy-Item Cinema.UI\.env.example Cinema.UI\.env
 Copy-Item Identity.API\appsettings.Example.json Identity.API\appsettings.json
 Copy-Item Cinema.API\appsettings.Example.json Cinema.API\appsettings.json
 Copy-Item Movie.API\appsettings.Example.json Movie.API\appsettings.json
@@ -91,7 +90,7 @@ Copy-Item Gateway.API\appsettings.Example.json Gateway.API\appsettings.json
 Copy-Item Notification.API\appsettings.Example.json Notification.API\appsettings.json
 ```
 
-Then fill in the required values: SQL Server connection strings, JWT secret, Cloudinary, SePay, and SMTP settings.
+Then fill in the required values in the root `.env`: SQL Server password, JWT secret, frontend URLs, Cloudinary, SePay, SMTP, and optional ngrok settings. `Cinema.UI` reads Vite environment variables from the root `.env`.
 
 ### 3. Run migrations
 
@@ -130,11 +129,33 @@ Frontend URL: `http://localhost:5173`
 docker compose up -d --build
 ```
 
+Docker Compose starts infrastructure first, runs one-shot database migrators, and then starts the APIs and gateway.
+
 Gateway is exposed at:
 
 ```env
 VITE_API_GATEWAY_URL=http://localhost:5200
 ```
+
+To test SePay IPN locally through ngrok, fill these values in `.env`:
+
+```env
+NGROK_AUTHTOKEN=your-ngrok-authtoken
+NGROK_DOMAIN=your-domain.ngrok-free.dev
+SEPAY_MERCHANT_ID=your-sepay-merchant-id
+SEPAY_SECRET_KEY=your-sepay-secret-key
+SEPAY_ENVIRONMENT=sandbox
+SEPAY_IPN_URL=https://your-domain.ngrok-free.dev/api/payments/sepay/ipn
+PAYMENT_PUBLIC_BASE_URL=https://your-domain.ngrok-free.dev
+```
+
+Then run:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.sepay.yml --profile sepay up -d --build
+```
+
+Configure the same `SEPAY_IPN_URL` in the SePay dashboard.
 
 ## Demo Accounts
 

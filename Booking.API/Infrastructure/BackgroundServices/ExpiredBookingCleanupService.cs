@@ -1,9 +1,10 @@
-using Booking.API.Infrastructure.Persistence;
-using Booking.API.Domain.Entities;
-using BookingEntity = Booking.API.Domain.Entities.Booking;
+#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
+using BookingEntity = Booking.API.Entities.Booking;
 using Cinema.Contracts.Events;
 using Cinema.Messaging.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Booking.API.Entities;
+using Booking.API.Data;
 
 namespace Booking.API.Infrastructure.BackgroundServices;
 
@@ -205,6 +206,4 @@ public class ExpiredBookingCleanupService : BackgroundService
         await base.StopAsync(cancellationToken);
     }
 }
-
-
-
+#endif

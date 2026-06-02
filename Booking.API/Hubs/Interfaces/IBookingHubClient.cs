@@ -1,0 +1,19 @@
+#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
+namespace Booking.API.Hubs.Interfaces;
+
+/// <summary>
+/// Client interface for BookingHub - defines methods that can be called on connected clients
+/// </summary>
+public interface IBookingHubClient
+{
+    /// <summary>
+    /// Notifies client that booking has been confirmed
+    /// </summary>
+    Task BookingConfirmed(Guid bookingId, string status);
+
+    /// <summary>
+    /// Notifies client that booking has failed
+    /// </summary>
+    Task BookingFailed(Guid bookingId, string reason);
+}
+#endif

@@ -1,4 +1,5 @@
-using Booking.API.Application.DTOs.Responses;
+#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
+using Booking.API.Client;
 
 namespace Booking.API.Infrastructure.Caching.Models;
 
@@ -28,5 +29,4 @@ public class RedisSeatData
         return UserId == userId;
     }
 }
-
-
+#endif

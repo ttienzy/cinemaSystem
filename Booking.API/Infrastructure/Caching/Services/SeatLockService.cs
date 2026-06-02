@@ -1,3 +1,4 @@
+#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text;
 
@@ -168,5 +169,4 @@ public class SeatLockService : ISeatLockService
         return $"seat-lock:{showtimeId}:{seatId}";
     }
 }
-
-
+#endif

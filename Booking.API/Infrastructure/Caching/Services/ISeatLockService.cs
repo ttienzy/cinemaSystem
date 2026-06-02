@@ -1,7 +1,7 @@
 namespace Booking.API.Infrastructure.Caching.Services;
 
 /// <summary>
-/// Service for managing temporary seat locks using Redis
+/// Service for managing temporary seat locks.
 /// </summary>
 public interface ISeatLockService
 {

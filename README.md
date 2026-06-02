@@ -1,6 +1,6 @@
 # Cinema System
 
-Cinema System is a microservices-based movie ticket booking application. It includes a customer/admin frontend, an API Gateway, independent backend services, real-time seat updates, and SePay payment integration.
+Cinema System is a microservices-based movie ticket booking application built with .NET Aspire. The current local flow uses an Aspire AppHost, PostgreSQL, a YARP Gateway, JWT authentication, Cloudinary for movie posters, and SePay payment callbacks through ngrok.
 
 ## Architecture
 
@@ -10,110 +10,173 @@ Cinema System is a microservices-based movie ticket booking application. It incl
 
 | Project | Responsibility |
 |---|---|
-| `Cinema.UI` | React frontend for customers and admins |
-| `Gateway.API` | API Gateway powered by Ocelot |
-| `Identity.API` | Registration, login, JWT authentication, authorization |
+| `Cys.AppHost` | Aspire orchestration for services, PostgreSQL, Gateway, and ngrok |
+| `Gateway` | YARP API Gateway |
+| `Identity.API` | Registration, login, JWT authentication, users, passkeys |
 | `Cinema.API` | Cinema, hall, and seat management |
 | `Movie.API` | Movie, genre, showtime, and Cloudinary poster management |
-| `Booking.API` | Booking, temporary seat locking, and SignalR real-time updates |
-| `Payment.API` | Payment creation and SePay IPN handling |
-| `Notification.API` | Email notifications |
-| `Cinema.Shared` | Shared code for auth, models, helpers, and migrations |
-| `Cinema.Contracts` | RabbitMQ event contracts |
+| `Booking.API` | Booking, seat locking, ticket operations, dashboards |
+| `Payment.API` | Payment creation, checkout, and SePay IPN handling |
+| `*.API.Client` | Typed HTTP clients; defaults point to `gateway` |
+| `Cys.ServiceDefaults` | Shared Aspire service defaults |
+| `Cinema.UI` | React frontend |
 
-## Tech Stack
+## Current Notes
 
-**Frontend**
+- Gateway routes are configured in `Gateway/appsettings.json`.
+- API clients call `https+http://gateway` by default.
+- PostgreSQL uses the Docker volume `cinema-postgres-data`, so database files survive AppHost restarts.
+- Redis, RabbitMQ/MassTransit, SignalR hubs, and background event publishers are currently disabled in Booking/Payment refactor paths.
+- Booking uses in-memory seat locks for now. This is OK for local/single instance, but not for multi-instance production.
+- ngrok is managed by AppHost as `ngrok-gateway` and forwards to Gateway, not directly to Payment.
 
-- React 19, TypeScript, Vite
-- Ant Design, Ant Design Charts
-- React Router, TanStack React Query
-- Axios, Zustand, React Hook Form, Zod
-- SignalR client
+## Prerequisites
 
-**Backend**
+- .NET SDK matching the solution target, currently `net10.0`
+- Docker Desktop, for Aspire-managed PostgreSQL
+- `dotnet-ef`
+- ngrok, only if testing SePay IPN locally
 
-- .NET 8, ASP.NET Core Minimal APIs
-- Entity Framework Core, SQL Server
-- Ocelot API Gateway
-- Redis for caching, seat locking, and SignalR backplane
-- RabbitMQ + MassTransit for event-driven communication
-- SignalR for real-time updates
-- JWT Bearer Authentication
-- Swagger/OpenAPI
-- Serilog in the Gateway
-
-**External / Infrastructure**
-
-- SePay payment gateway
-- Cloudinary image storage
-- SMTP email
-- Docker, Docker Compose
-- ngrok for local SePay IPN testing
-
-## Main Flow
-
-1. A user signs in through `Identity.API` and receives a JWT.
-2. The frontend calls backend services through `Gateway.API`.
-3. The user selects seats, and `Booking.API` locks them in Redis and broadcasts updates through SignalR.
-4. A booking is created, and `Payment.API` prepares the SePay payment.
-5. SePay calls the IPN endpoint in `Payment.API`.
-6. `Payment.API` publishes an event through RabbitMQ.
-7. `Booking.API` updates the booking status and sends real-time updates.
-8. `Notification.API` can send an email when it receives a successful payment event.
-
-## Run Locally
-
-### 1. Start infrastructure
+Install `dotnet-ef` if needed:
 
 ```powershell
-docker compose up -d sqlserver redis rabbitmq
+dotnet tool install --global dotnet-ef
+dotnet tool update --global dotnet-ef
 ```
 
-Ports:
+## AppHost Configuration
 
-- SQL Server: `localhost:11433`
-- Redis: `localhost:6379`
-- RabbitMQ: `localhost:5672`
-- RabbitMQ UI: `http://localhost:15672`
+AppHost parameters are defined in `Cys.AppHost/AppHost.cs`:
 
-### 2. Create config files
+- `jwt-key`
+- `jwt-issuer`
+- `jwt-audience`
+- `cloudinary-cloud-name`
+- `cloudinary-api-key`
+- `cloudinary-api-secret`
+- `sepay-merchant-id`
+- `sepay-secret-key`
+
+For local development, store secrets with AppHost user-secrets:
 
 ```powershell
-Copy-Item .env.example .env
-Copy-Item Identity.API\appsettings.Example.json Identity.API\appsettings.json
-Copy-Item Cinema.API\appsettings.Example.json Cinema.API\appsettings.json
-Copy-Item Movie.API\appsettings.Example.json Movie.API\appsettings.json
-Copy-Item Booking.API\appsettings.Example.json Booking.API\appsettings.json
-Copy-Item Payment.API\appsettings.Example.json Payment.API\appsettings.json
-Copy-Item Gateway.API\appsettings.Example.json Gateway.API\appsettings.json
-Copy-Item Notification.API\appsettings.Example.json Notification.API\appsettings.json
+dotnet user-secrets set "Parameters:jwt-key" "<base64-encoded-32-byte-key>" --project Cys.AppHost
+dotnet user-secrets set "Parameters:jwt-issuer" "CinemaSystem" --project Cys.AppHost
+dotnet user-secrets set "Parameters:jwt-audience" "CinemaSystem.Client" --project Cys.AppHost
+
+dotnet user-secrets set "Parameters:cloudinary-cloud-name" "<cloud-name>" --project Cys.AppHost
+dotnet user-secrets set "Parameters:cloudinary-api-key" "<api-key>" --project Cys.AppHost
+dotnet user-secrets set "Parameters:cloudinary-api-secret" "<api-secret>" --project Cys.AppHost
+
+dotnet user-secrets set "Parameters:sepay-merchant-id" "<merchant-id>" --project Cys.AppHost
+dotnet user-secrets set "Parameters:sepay-secret-key" "<secret-key>" --project Cys.AppHost
 ```
 
-Then fill in the required values in the root `.env`: SQL Server password, JWT secret, frontend URLs, Cloudinary, SePay, SMTP, and optional ngrok settings. `Cinema.UI` reads Vite environment variables from the root `.env`.
-
-### 3. Run migrations
+Optional static ngrok domain:
 
 ```powershell
-.\scripts\run-migrations.ps1
+dotnet user-secrets set "Ngrok:Domain" "your-domain.ngrok-free.app" --project Cys.AppHost
 ```
 
-### 4. Run backend services
+## Entity Framework Commands
+
+All design-time factories support these environment variables:
+
+- `ConnectionStrings__identitydb`
+- `ConnectionStrings__cinemadb`
+- `ConnectionStrings__moviedb`
+- `ConnectionStrings__bookingdb`
+- `ConnectionStrings__paymentdb`
+
+If not set, they fall back to:
+
+```text
+Host=localhost;Database=<db-name>;Username=postgres;Password=postgres
+```
+
+If your PostgreSQL uses another port/password, set connection strings first:
 
 ```powershell
-.\scripts\run-all-services.ps1
+$env:ConnectionStrings__identitydb = "Host=localhost;Port=5432;Database=identitydb;Username=postgres;Password=postgres"
+$env:ConnectionStrings__cinemadb = "Host=localhost;Port=5432;Database=cinemadb;Username=postgres;Password=postgres"
+$env:ConnectionStrings__moviedb = "Host=localhost;Port=5432;Database=moviedb;Username=postgres;Password=postgres"
+$env:ConnectionStrings__bookingdb = "Host=localhost;Port=5432;Database=bookingdb;Username=postgres;Password=postgres"
+$env:ConnectionStrings__paymentdb = "Host=localhost;Port=5432;Database=paymentdb;Username=postgres;Password=postgres"
 ```
 
-Local Swagger endpoints:
+Create migrations:
 
-- Identity: `https://localhost:7012/swagger`
-- Cinema: `https://localhost:7251/swagger`
-- Movie: `https://localhost:7295/swagger`
-- Booking: `https://localhost:7043/swagger`
-- Payment: `https://localhost:7252/swagger`
-- Gateway: `https://localhost:7100`
+```powershell
+dotnet ef migrations add InitialCreate --project Identity.API --startup-project Identity.API --context IdentityDbContext --output-dir Data/Migrations
+dotnet ef migrations add InitialCreate --project Cinema.API --startup-project Cinema.API --context CinemaDbContext --output-dir Data/Migrations
+dotnet ef migrations add InitialCreate --project Movie.API --startup-project Movie.API --context MovieDbContext --output-dir Data/Migrations
+dotnet ef migrations add InitialCreate --project Booking.API --startup-project Booking.API --context BookingDbContext --output-dir Data/Migrations
+dotnet ef migrations add InitialCreate --project Payment.API --startup-project Payment.API --context PaymentDbContext --output-dir Data/Migrations
+```
 
-### 5. Run frontend
+Apply migrations:
+
+```powershell
+dotnet ef database update --project Identity.API --startup-project Identity.API --context IdentityDbContext
+dotnet ef database update --project Cinema.API --startup-project Cinema.API --context CinemaDbContext
+dotnet ef database update --project Movie.API --startup-project Movie.API --context MovieDbContext
+dotnet ef database update --project Booking.API --startup-project Booking.API --context BookingDbContext
+dotnet ef database update --project Payment.API --startup-project Payment.API --context PaymentDbContext
+```
+
+Useful remove commands if a new migration has not been applied yet:
+
+```powershell
+dotnet ef migrations remove --project Identity.API --startup-project Identity.API --context IdentityDbContext
+dotnet ef migrations remove --project Cinema.API --startup-project Cinema.API --context CinemaDbContext
+dotnet ef migrations remove --project Movie.API --startup-project Movie.API --context MovieDbContext
+dotnet ef migrations remove --project Booking.API --startup-project Booking.API --context BookingDbContext
+dotnet ef migrations remove --project Payment.API --startup-project Payment.API --context PaymentDbContext
+```
+
+## Run AppHost
+
+```powershell
+dotnet run --project Cys.AppHost
+```
+
+AppHost starts:
+
+- PostgreSQL with persistent data volume `cinema-postgres-data`
+- databases: `identitydb`, `cinemadb`, `moviedb`, `bookingdb`, `paymentdb`
+- `identity`
+- `cinema`
+- `movie`
+- `booking`
+- `payment`
+- `gateway`
+- `ngrok-gateway`
+
+Gateway local URLs from launch settings:
+
+- HTTPS: `https://localhost:55000`
+- HTTP: `http://localhost:55001`
+
+## SePay And Ngrok
+
+ngrok should forward to Gateway. The IPN URL should use the Gateway route:
+
+```text
+https://<ngrok-domain>/api/payments/sepay/ipn
+```
+
+`Gateway/appsettings.json` supports both:
+
+- `/api/v1/payments/sepay/ipn`
+- `/api/payments/sepay/ipn`
+
+The fallback script also forwards to Gateway:
+
+```powershell
+.\scripts\start-ngrok-payment.ps1
+```
+
+## Run Frontend
 
 ```powershell
 cd Cinema.UI
@@ -121,64 +184,37 @@ npm install
 npm run dev
 ```
 
-Frontend URL: `http://localhost:5173`
+Frontend URL:
 
-## Run With Docker Compose
-
-```powershell
-docker compose up -d --build
+```text
+http://localhost:5173
 ```
-
-Docker Compose starts infrastructure first, runs one-shot database migrators, and then starts the APIs and gateway.
-
-Gateway is exposed at:
-
-```env
-VITE_API_GATEWAY_URL=http://localhost:5200
-```
-
-To test SePay IPN locally through ngrok, fill these values in `.env`:
-
-```env
-NGROK_AUTHTOKEN=your-ngrok-authtoken
-NGROK_DOMAIN=your-domain.ngrok-free.dev
-SEPAY_MERCHANT_ID=your-sepay-merchant-id
-SEPAY_SECRET_KEY=your-sepay-secret-key
-SEPAY_ENVIRONMENT=sandbox
-SEPAY_IPN_URL=https://your-domain.ngrok-free.dev/api/payments/sepay/ipn
-PAYMENT_PUBLIC_BASE_URL=https://your-domain.ngrok-free.dev
-```
-
-Then run:
-
-```powershell
-docker compose -f docker-compose.yml -f docker-compose.sepay.yml --profile sepay up -d --build
-```
-
-Configure the same `SEPAY_IPN_URL` in the SePay dashboard.
 
 ## Demo Accounts
 
+Identity seeding creates local users/roles when the service starts.
+
 | Role | Email | Password |
 |---|---|---|
-| Admin | `admin@cinema.com` | `Admin@123` |
-| Staff | `staff@cinema.com` | `Staff@123` |
-| Customer | `customer1@example.com` | `Customer@123` |
+| Admin | `admin@123.local` | `Admin123!` |
+| Customer | `demo@123.local` | `Demo123!` |
 
-## Useful Scripts
+## Verification
 
-| Script | Purpose |
-|---|---|
-| `scripts/run-all-services.ps1` | Run backend services locally |
-| `scripts/run-migrations.ps1` | Create/apply database migrations |
-| `scripts/start-ngrok-payment.ps1` | Open a tunnel for SePay IPN testing |
-| `scripts/check-ngrok-status.ps1` | Check the ngrok tunnel |
-| `scripts/test-auth-flow.ps1` | Test the authentication flow |
-| `scripts/test-email.ps1` | Test email sending |
-| `scripts/test-ipn-endpoint.ps1` | Test the Payment IPN endpoint |
+Before running the full AppHost, these builds should pass:
+
+```powershell
+dotnet build Gateway/Gateway.csproj
+dotnet build Identity.API/Identity.API.csproj
+dotnet build Cinema.API/Cinema.API.csproj
+dotnet build Movie.API/Movie.API.csproj
+dotnet build Booking.API/Booking.API.csproj
+dotnet build Payment.API/Payment.API.csproj
+dotnet build Cys.AppHost/Cys.AppHost.csproj
+```
 
 ## Notes
 
-- Do not commit `.env`, `appsettings.json`, or `appsettings.Development.json` files that contain real secrets.
-- Only commit template files such as `*.Example.json`.
-- The frontend is not containerized in `docker-compose.yml`.
+- Do not commit real secrets in `appsettings.json`, `appsettings.Development.json`, or user-specific scripts.
+- If `dotnet ef database update` cannot connect, confirm which PostgreSQL port Aspire allocated in the Aspire dashboard, then set the matching `ConnectionStrings__...` environment variable.
+- All API database owners now call `MigrateAsync` on startup. Identity/Cinema/Movie also seed demo data, but seeders skip insertion when existing data is already present.

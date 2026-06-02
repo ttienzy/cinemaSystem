@@ -1,0 +1,28 @@
+﻿using Identity.API.Client.Client;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Identity.API.Client.Extentions
+{
+    public static class IdentityApiClientExtensions
+    {
+        /// <summary>
+        /// Registers a typed <see cref="IIdentityApiClient"/> resolved through Aspire service discovery.
+        /// The <paramref name="serviceName"/> must match the name used in AppHost.cs (default: "gateway" — the API gateway).
+        /// </summary>
+        public static IHttpClientBuilder AddIdentityApiClient(
+            this IHostApplicationBuilder builder,
+            string serviceName = "gateway")
+        {
+            return builder.Services.AddHttpClient<IIdentityApiClient, IdentityApiClient>(client =>
+            {
+                // "https+http://" lets Aspire prefer HTTPS and fall back to HTTP.
+                client.BaseAddress = new Uri($"https+http://{serviceName}");
+            });
+        }
+    }
+
+}

@@ -1,20 +1,20 @@
-using Booking.API.Application.DTOs.Responses;
+using Booking.API.Client;
 
 namespace Booking.API.Infrastructure.Caching.Services;
 
 /// <summary>
-/// Service for managing seat status in Redis for showtimes
+/// Service for managing seat status for showtimes.
 /// This is the core service that handles seat availability, locking, and booking
 /// </summary>
 public interface ISeatStatusService
 {
     /// <summary>
-    /// Get seat availability for a showtime (aggregates data from Cinema.API + Redis)
+    /// Get seat availability for a showtime.
     /// </summary>
     Task<SeatAvailabilityResponse> GetSeatAvailabilityAsync(Guid showtimeId);
 
     /// <summary>
-    /// Initialize seat map in Redis for a showtime (first time access)
+    /// Initialize seat map for a showtime.
     /// </summary>
     Task InitializeSeatMapAsync(Guid showtimeId, Guid cinemaHallId);
 
@@ -63,53 +63,6 @@ public interface ISeatStatusService
     /// Clean up expired locks for a showtime
     /// </summary>
     Task CleanupExpiredLocksAsync(Guid showtimeId);
-}
-
-/// <summary>
-/// Result of seat locking operation
-/// </summary>
-public class SeatLockResult
-{
-    public bool Success { get; set; }
-    public List<Guid> LockedSeats { get; set; } = new();
-    public List<Guid> AlreadyLockedSeats { get; set; } = new();
-    public string? Message { get; set; }
-}
-
-/// <summary>
-/// Result of verify and mark as booked operation
-/// </summary>
-public class SeatBookingResult
-{
-    public bool Success { get; set; }
-    public List<Guid> BookedSeats { get; set; } = new();
-    public List<Guid> FailedSeats { get; set; } = new();
-    public string? Message { get; set; }
-    public SeatBookingFailureReason? FailureReason { get; set; }
-}
-
-/// <summary>
-/// Reasons why seat booking verification failed
-/// </summary>
-public enum SeatBookingFailureReason
-{
-    NotLocked,          // Seat is not locked at all
-    LockExpired,        // Lock has expired
-    WrongUser,          // Locked by different user
-    AlreadyBooked,      // Seat is already booked
-    Unavailable         // Seat doesn't exist or other error
-}
-
-/// <summary>
-/// Detailed seat status information
-/// </summary>
-public class SeatStatusInfo
-{
-    public Guid SeatId { get; set; }
-    public SeatStatus Status { get; set; }
-    public string? UserId { get; set; }
-    public Guid? BookingId { get; set; }
-    public DateTime? LockedUntil { get; set; }
 }
 
 

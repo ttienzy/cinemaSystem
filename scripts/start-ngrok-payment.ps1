@@ -1,10 +1,10 @@
 # ========================================
-# Start ngrok tunnel for Payment.API IPN
-# Payment.API runs on https://localhost:7252
+# Start ngrok tunnel for Payment IPN through Gateway
+# Gateway runs on https://localhost:55000
 # ========================================
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host " Starting ngrok for Payment.API IPN" -ForegroundColor Cyan
+Write-Host " Starting ngrok for Payment IPN through Gateway" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -26,11 +26,11 @@ if (-not $ngrokInstalled) {
 Write-Host "ngrok is installed" -ForegroundColor Green
 Write-Host ""
 
-# Payment.API port
-$paymentApiPort = 7252
+# Gateway HTTPS port
+$gatewayPort = 55000
 
 Write-Host "Starting ngrok tunnel..." -ForegroundColor Yellow
-Write-Host ("Local: https://localhost:{0}" -f $paymentApiPort)
+Write-Host ("Local: https://localhost:{0}" -f $gatewayPort)
 Write-Host ""
 
 Write-Host "IMPORTANT NOTES:" -ForegroundColor Yellow
@@ -46,7 +46,7 @@ Write-Host "1. Sign up at https://ngrok.com"
 Write-Host "2. Get your authtoken:"
 Write-Host "   ngrok config add-authtoken YOUR_TOKEN"
 Write-Host "3. Use command:"
-Write-Host ("   ngrok http {0} --domain=your-name.ngrok-free.app" -f $paymentApiPort)
+Write-Host ("   ngrok http https://localhost:{0} --domain=your-name.ngrok-free.app" -f $gatewayPort)
 Write-Host ""
 
 Write-Host "Press Ctrl+C to stop ngrok" -ForegroundColor Yellow
@@ -54,4 +54,4 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Start ngrok with HTTPS upstream
-ngrok http https://localhost:$paymentApiPort
+ngrok http https://localhost:$gatewayPort

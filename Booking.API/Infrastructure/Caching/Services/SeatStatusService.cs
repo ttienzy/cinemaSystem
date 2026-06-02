@@ -1,7 +1,8 @@
-using Booking.API.Application.DTOs.External;
-using Booking.API.Application.DTOs.Responses;
+#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
+using Booking.API.Client;
+using Booking.API.Clients;
+using Booking.API.Hubs.Services;
 using Booking.API.Infrastructure.Caching.Models;
-using Booking.API.Infrastructure.Hubs.Services;
 using Microsoft.Extensions.Caching.Distributed;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -828,5 +829,4 @@ public class SeatStatusService : ISeatStatusService
         await db.HashSetAsync(seatMapKey, seatKey, JsonSerializer.Serialize(seatData));
     }
 }
-
-
+#endif

@@ -1,8 +1,8 @@
-using Booking.API.Clients;
 using Booking.API.Entities;
 using Booking.API.Exceptions;
 using Booking.API.Repositories;
 using Booking.API.Client;
+using IPaymentApiClient = Payment.API.Client.Client.IPaymentApiClient;
 using DomainBookingStatus = Booking.API.Entities.BookingStatus;
 
 namespace Booking.API.Services;
@@ -10,14 +10,14 @@ namespace Booking.API.Services;
 public class TicketOperationsService : ITicketOperationsService
 {
     private readonly IBookingRepository _bookingRepository;
-    private readonly PaymentApiClient _paymentApiClient;
+    private readonly IPaymentApiClient _paymentApiClient;
     private readonly ITicketOperationResponseFactory _ticketOperationResponseFactory;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<TicketOperationsService> _logger;
 
     public TicketOperationsService(
         IBookingRepository bookingRepository,
-        PaymentApiClient paymentApiClient,
+        IPaymentApiClient paymentApiClient,
         ITicketOperationResponseFactory ticketOperationResponseFactory,
         IUnitOfWork unitOfWork,
         ILogger<TicketOperationsService> logger)
@@ -34,7 +34,22 @@ public class TicketOperationsService : ITicketOperationsService
         int pageNumber,
         int pageSize)
     {
-        var paymentPage = await _paymentApiClient.SearchPaymentsAsync(query, pageNumber, pageSize);
+        var paymentSearchResponse = await _paymentApiClient.SearchPaymentsAsync(query, pageNumber, pageSize);
+        if (!paymentSearchResponse.Success || paymentSearchResponse.Data is null)
+        {
+            return ApiResponse<PaginatedResponse<TicketOperationResponse>>.FailureResponse(
+                paymentSearchResponse.Message,
+                paymentSearchResponse.StatusCode);
+        }
+
+        var paymentPage = PaginatedResponse<PaymentLookupDto>.Create(
+            paymentSearchResponse.Data.Items
+                .Select(ExternalClientDtoMapper.ToBookingPayment)
+                .ToList(),
+            paymentSearchResponse.Data.TotalCount,
+            paymentSearchResponse.Data.PageNumber,
+            paymentSearchResponse.Data.PageSize);
+
         var bookingIds = paymentPage.Items
             .Select(payment => payment.BookingId)
             .Distinct()
@@ -70,7 +85,11 @@ public class TicketOperationsService : ITicketOperationsService
             return ApiResponse<TicketOperationResponse>.NotFoundResponse($"Booking {bookingId} not found");
         }
 
-        var payment = await _paymentApiClient.GetPaymentByBookingIdAsync(bookingId);
+        var paymentResponse = await _paymentApiClient.GetPaymentByBookingIdAsync(bookingId);
+        var payment = paymentResponse.Success && paymentResponse.Data is not null
+            ? ExternalClientDtoMapper.ToBookingPayment(paymentResponse.Data)
+            : null;
+
         var validationResult = ValidateCheckInEligibility(booking, payment);
         if (validationResult != null)
         {

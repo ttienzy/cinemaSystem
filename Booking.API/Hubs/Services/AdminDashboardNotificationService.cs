@@ -4,23 +4,24 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Booking.API.Entities;
 using Booking.API.Data;
-using Booking.API.Clients;
 using Booking.API.Hubs;
 using Booking.API.Hubs.Builders;
 using Booking.API.Hubs.Interfaces;
+using Booking.API.Services;
+using IMovieApiClient = Movie.API.Client.Client.IMovieApiClient;
 
 namespace Booking.API.Hubs.Services;
 
 public class AdminDashboardNotificationService : IAdminDashboardNotificationService
 {
     private readonly BookingDbContext _dbContext;
-    private readonly MovieApiClient _movieApiClient;
+    private readonly IMovieApiClient _movieApiClient;
     private readonly IHubContext<AdminDashboardHub, IAdminDashboardHubClient> _hubContext;
     private readonly ILogger<AdminDashboardNotificationService> _logger;
 
     public AdminDashboardNotificationService(
         BookingDbContext dbContext,
-        MovieApiClient movieApiClient,
+        IMovieApiClient movieApiClient,
         IHubContext<AdminDashboardHub, IAdminDashboardHubClient> hubContext,
         ILogger<AdminDashboardNotificationService> logger)
     {
@@ -56,8 +57,14 @@ public class AdminDashboardNotificationService : IAdminDashboardNotificationServ
             return;
         }
 
-        var showtimeLookup = (await _movieApiClient.GetShowtimeLookupsByIdsAsync([booking.ShowtimeId]))
-            .FirstOrDefault();
+        var showtimeLookupResponse = await _movieApiClient.LookupShowtimesAsync(
+            new Movie.API.Client.ShowtimeLookupRequest { ShowtimeIds = [booking.ShowtimeId] },
+            cancellationToken);
+        var showtimeLookup = showtimeLookupResponse.Success && showtimeLookupResponse.Data is not null
+            ? showtimeLookupResponse.Data
+                .Select(ExternalClientDtoMapper.ToBookingShowtimeLookup)
+                .FirstOrDefault()
+            : null;
 
         if (showtimeLookup is null)
         {

@@ -1,19 +1,19 @@
 using Booking.API.Client;
-using Booking.API.Clients;
 using Booking.API.Models;
 using Booking.API.Repositories;
 using BookingEntity = Booking.API.Entities.Booking;
+using IPaymentApiClient = Payment.API.Client.Client.IPaymentApiClient;
 
 namespace Booking.API.Services;
 
 public class DashboardInsightFactory : IDashboardInsightFactory
 {
     private readonly IBookingRepository _bookingRepository;
-    private readonly PaymentApiClient _paymentApiClient;
+    private readonly IPaymentApiClient _paymentApiClient;
 
     public DashboardInsightFactory(
         IBookingRepository bookingRepository,
-        PaymentApiClient paymentApiClient)
+        IPaymentApiClient paymentApiClient)
     {
         _bookingRepository = bookingRepository ?? throw new ArgumentNullException(nameof(bookingRepository));
         _paymentApiClient = paymentApiClient ?? throw new ArgumentNullException(nameof(paymentApiClient));
@@ -115,7 +115,7 @@ public class DashboardInsightFactory : IDashboardInsightFactory
     {
         var paymentLookupTasks = recentBookings.ToDictionary(
             booking => booking.Id,
-            booking => _paymentApiClient.GetPaymentByBookingIdAsync(booking.Id));
+            booking => GetPaymentLookupAsync(booking.Id));
 
         await Task.WhenAll(paymentLookupTasks.Values);
 
@@ -142,6 +142,14 @@ public class DashboardInsightFactory : IDashboardInsightFactory
             .OrderByDescending(item => item.OccurredAtUtc)
             .Take(10)
             .ToList();
+    }
+
+    private async Task<PaymentLookupDto?> GetPaymentLookupAsync(Guid bookingId)
+    {
+        var response = await _paymentApiClient.GetPaymentByBookingIdAsync(bookingId);
+        return response.Success && response.Data is not null
+            ? ExternalClientDtoMapper.ToBookingPayment(response.Data)
+            : null;
     }
 
     private static DashboardHotMovieDto? BuildHotMovie(

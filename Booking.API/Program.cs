@@ -1,4 +1,6 @@
-using Booking.API.Clients;
+using Cinema.API.Client.Extentions;
+using Movie.API.Client.Extentions;
+using Payment.API.Client.Extentions;
 using Booking.API.Data;
 using Booking.API.Endpoints;
 using Booking.API.Infrastructure.Caching.Services;
@@ -29,20 +31,10 @@ builder.Services.AddScoped<ITicketOperationsService, TicketOperationsService>();
 builder.Services.AddScoped<ITicketOperationResponseFactory, TicketOperationResponseFactory>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IDashboardInsightFactory, DashboardInsightFactory>();
-builder.Services.AddScoped<IExternalServiceClient, ExternalServiceClient>();
 builder.Services.AddScoped<ISeatStatusService, InMemorySeatStatusService>();
-builder.Services.AddHttpClient<CinemaApiClient>(client =>
-{
-    client.BaseAddress = new Uri("https+http://cinema");
-});
-builder.Services.AddHttpClient<MovieApiClient>(client =>
-{
-    client.BaseAddress = new Uri("https+http://movie");
-});
-builder.Services.AddHttpClient<PaymentApiClient>(client =>
-{
-    client.BaseAddress = new Uri("https+http://payment");
-});
+builder.AddCinemaApiClient();
+builder.AddMovieApiClient();
+builder.AddPaymentApiClient();
 
 
 

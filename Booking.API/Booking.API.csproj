@@ -33,7 +33,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Booking.API.Client\Booking.API.Client.csproj" />
+    <ProjectReference Include="..\Cinema.API.Client\Cinema.API.Client.csproj" />
     <ProjectReference Include="..\Cys.ServiceDefaults\Cys.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Movie.API.Client\Movie.API.Client.csproj" />
+    <ProjectReference Include="..\Payment.API.Client\Payment.API.Client.csproj" />
   </ItemGroup>
 
 </Project>

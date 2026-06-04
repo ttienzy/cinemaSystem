@@ -1,4 +1,3 @@
-using Booking.API.Clients;
 using Booking.API.Hubs.Builders;
 using Booking.API.Hubs.Constants;
 using Booking.API.Hubs.Extensions;
@@ -6,6 +5,7 @@ using Booking.API.Hubs.Interfaces;
 using Booking.API.Hubs.Models;
 using Booking.API.Hubs.Services;
 using Booking.API.Infrastructure.Hubs.Models;
+using IMovieApiClient = Movie.API.Client.Client.IMovieApiClient;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -18,16 +18,16 @@ namespace Booking.API.Hubs;
 [Authorize]
 public class SeatHub : Hub<ISeatHubClient>
 {
-    private readonly IExternalServiceClient _externalClient;
+    private readonly IMovieApiClient _movieApiClient;
     private readonly ILogger<SeatHub> _logger;
     private readonly IConnectionTracker _connectionTracker;
 
     public SeatHub(
-        IExternalServiceClient externalClient,
+        IMovieApiClient movieApiClient,
         ILogger<SeatHub> logger,
         IConnectionTracker connectionTracker)
     {
-        _externalClient = externalClient ?? throw new ArgumentNullException(nameof(externalClient));
+        _movieApiClient = movieApiClient ?? throw new ArgumentNullException(nameof(movieApiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _connectionTracker = connectionTracker ?? throw new ArgumentNullException(nameof(connectionTracker));
     }
@@ -48,8 +48,8 @@ public class SeatHub : Hub<ISeatHubClient>
         try
         {
             // Validate showtime exists and is active
-            var showtime = await _externalClient.GetShowtimeByIdAsync(showtimeId);
-            if (showtime == null)
+            var showtimeResponse = await _movieApiClient.GetShowtimeByIdAsync(showtimeId);
+            if (!showtimeResponse.Success || showtimeResponse.Data is null)
             {
                 _logger.LogWarning(
                     "User {UserId} attempted to join non-existent showtime {ShowtimeId}",
@@ -57,16 +57,6 @@ public class SeatHub : Hub<ISeatHubClient>
                 return HubOperationResult.Fail(
                     HubOperationErrorCodes.ShowtimeNotFound,
                     $"Showtime {showtimeId} not found");
-            }
-
-            if (!showtime.IsActive)
-            {
-                _logger.LogWarning(
-                    "User {UserId} attempted to join inactive showtime {ShowtimeId}",
-                    userId, showtimeId);
-                return HubOperationResult.Fail(
-                    HubOperationErrorCodes.ShowtimeInactive,
-                    $"Showtime {showtimeId} is not active");
             }
 
             // Add to SignalR group

@@ -1,11 +1,11 @@
 using CloudinaryDotNet;
+using Booking.API.Client.Extentions;
 using Cinema.API.Client.Extentions;
 using Cys.ServiceDefaults;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Movie.API.Clients;
 using Movie.API.Data;
 using Movie.API.Endpoints;
 using Movie.API.Repositories;
@@ -39,10 +39,7 @@ builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<IFileStorageService, CloudinaryFileStorageService>();
 builder.AddCinemaApiClient();
-builder.Services.AddHttpClient<IBookingApiClient, BookingApiClient>(client =>
-{
-    client.BaseAddress = new Uri("https+http://booking");
-});
+builder.AddBookingApiClient();
 
 
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? string.Empty;

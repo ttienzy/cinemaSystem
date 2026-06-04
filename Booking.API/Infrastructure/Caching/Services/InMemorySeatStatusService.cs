@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using Booking.API.Client;
-using Booking.API.Clients;
 using Booking.API.Entities;
 using Booking.API.Repositories;
+using Booking.API.Services;
+using ICinemaApiClient = Cinema.API.Client.Client.ICinemaApiClient;
+using IMovieApiClient = Movie.API.Client.Client.IMovieApiClient;
 using DomainBookingStatus = Booking.API.Entities.BookingStatus;
 
 namespace Booking.API.Infrastructure.Caching.Services;
@@ -15,18 +17,21 @@ public class InMemorySeatStatusService : ISeatStatusService
     private const int DefaultLockMinutes = 10;
     private static readonly ConcurrentDictionary<(Guid ShowtimeId, Guid SeatId), SeatState> SeatStates = new();
 
-    private readonly IExternalServiceClient _externalClient;
+    private readonly IMovieApiClient _movieApiClient;
+    private readonly ICinemaApiClient _cinemaApiClient;
     private readonly IBookingRepository _bookingRepository;
     private readonly IConfiguration _configuration;
     private readonly ILogger<InMemorySeatStatusService> _logger;
 
     public InMemorySeatStatusService(
-        IExternalServiceClient externalClient,
+        IMovieApiClient movieApiClient,
+        ICinemaApiClient cinemaApiClient,
         IBookingRepository bookingRepository,
         IConfiguration configuration,
         ILogger<InMemorySeatStatusService> logger)
     {
-        _externalClient = externalClient ?? throw new ArgumentNullException(nameof(externalClient));
+        _movieApiClient = movieApiClient ?? throw new ArgumentNullException(nameof(movieApiClient));
+        _cinemaApiClient = cinemaApiClient ?? throw new ArgumentNullException(nameof(cinemaApiClient));
         _bookingRepository = bookingRepository ?? throw new ArgumentNullException(nameof(bookingRepository));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -34,13 +39,20 @@ public class InMemorySeatStatusService : ISeatStatusService
 
     public async Task<SeatAvailabilityResponse> GetSeatAvailabilityAsync(Guid showtimeId)
     {
-        var showtime = await _externalClient.GetShowtimeByIdAsync(showtimeId)
-            ?? throw new InvalidOperationException($"Showtime {showtimeId} not found");
+        var showtimeResponse = await _movieApiClient.GetShowtimeByIdAsync(showtimeId);
+        var showtime = showtimeResponse.Success && showtimeResponse.Data is not null
+            ? ExternalClientDtoMapper.ToBookingShowtime(showtimeResponse.Data)
+            : throw new InvalidOperationException($"Showtime {showtimeId} not found");
 
-        var hall = await _externalClient.GetCinemaHallByIdAsync(showtime.CinemaHallId)
-            ?? throw new InvalidOperationException($"Cinema hall {showtime.CinemaHallId} not found");
+        var hallResponse = await _cinemaApiClient.GetHallByIdAsync(showtime.CinemaHallId);
+        var hall = hallResponse.Success && hallResponse.Data is not null
+            ? ExternalClientDtoMapper.ToBookingCinemaHall(hallResponse.Data)
+            : throw new InvalidOperationException($"Cinema hall {showtime.CinemaHallId} not found");
 
-        var seats = await _externalClient.GetSeatsByCinemaHallIdAsync(showtime.CinemaHallId);
+        var seatResponse = await _cinemaApiClient.GetHallSeatsAsync(showtime.CinemaHallId);
+        var seats = seatResponse.Success && seatResponse.Data is not null
+            ? seatResponse.Data.Select(ExternalClientDtoMapper.ToBookingSeat).ToList()
+            : [];
         var bookedSeatIds = await GetBookedSeatIdsAsync(showtimeId);
         CleanupExpiredLocks(showtimeId);
 

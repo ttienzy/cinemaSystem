@@ -1,9 +1,10 @@
 using Cinema.API.Client.Client;
+using GetShowtimeOccupancyRequest = Booking.API.Client.GetShowtimeOccupancyRequest;
+using IBookingApiClient = Booking.API.Client.Client.IBookingApiClient;
 using CinemaDetailDto = Cinema.API.Client.CinemaDetailDto;
 using CinemaHallDetailDto = Cinema.API.Client.CinemaHallDetailDto;
 using CinemaHallDto = Cinema.API.Client.CinemaHallDto;
 using Movie.API.Client;
-using Movie.API.Clients;
 using Movie.API.Entities;
 using Movie.API.Exceptions;
 using Movie.API.Mappers;
@@ -403,8 +404,12 @@ public class ShowtimeService : IShowtimeService
 
     private async Task<int> GetBookedSeatsAsync(Guid showtimeId)
     {
-        var occupancyMap = await _bookingApiClient.GetShowtimeOccupancyAsync([showtimeId]);
-        return occupancyMap.GetValueOrDefault(showtimeId);
+        var response = await _bookingApiClient.GetShowtimeOccupancyAsync(
+            new GetShowtimeOccupancyRequest { ShowtimeIds = [showtimeId] });
+
+        return response.Success && response.Data is not null
+            ? response.Data.Items.FirstOrDefault(item => item.ShowtimeId == showtimeId)?.BookedSeats ?? 0
+            : 0;
     }
 
     private async Task<List<ShowtimeDto>> MapShowtimeDtosAsync(IEnumerable<Showtime> showtimes)

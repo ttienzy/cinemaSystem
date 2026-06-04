@@ -1,10 +1,11 @@
 using Booking.API.Client;
-using Booking.API.Clients;
 using Booking.API.Data;
 using Booking.API.Entities;
 using Booking.API.Exceptions;
 using Booking.API.Models;
 using Microsoft.EntityFrameworkCore;
+using ICinemaApiClient = Cinema.API.Client.Client.ICinemaApiClient;
+using IMovieApiClient = Movie.API.Client.Client.IMovieApiClient;
 using DomainBookingStatus = Booking.API.Entities.BookingStatus;
 using BookingEntity = Booking.API.Entities.Booking;
 
@@ -19,14 +20,14 @@ public class DashboardService : IDashboardService
     ];
 
     private readonly BookingDbContext _dbContext;
-    private readonly MovieApiClient _movieApiClient;
-    private readonly CinemaApiClient _cinemaApiClient;
+    private readonly IMovieApiClient _movieApiClient;
+    private readonly ICinemaApiClient _cinemaApiClient;
     private readonly IDashboardInsightFactory _dashboardInsightFactory;
 
     public DashboardService(
         BookingDbContext dbContext,
-        MovieApiClient movieApiClient,
-        CinemaApiClient cinemaApiClient,
+        IMovieApiClient movieApiClient,
+        ICinemaApiClient cinemaApiClient,
         IDashboardInsightFactory dashboardInsightFactory)
     {
         _dbContext = dbContext;
@@ -98,7 +99,7 @@ public class DashboardService : IDashboardService
     {
         var monthlyBookings = await GetSuccessfulBookingsAsync(context.MonthlyStartUtc, context.TodayEndUtc);
         var recentBookings = await GetRecentSuccessfulBookingsAsync(10);
-        var todayShowtimes = await _movieApiClient.GetShowtimesByRangeAsync(context.TodayStartUtc, context.TodayEndUtc);
+        var todayShowtimes = await GetShowtimesByRangeAsync(context.TodayStartUtc, context.TodayEndUtc);
 
         var showtimeLookupMap = await LoadShowtimeLookupMapAsync(monthlyBookings, recentBookings);
         var hallLookupMap = await LoadHallLookupMapAsync(todayShowtimes);
@@ -116,7 +117,7 @@ public class DashboardService : IDashboardService
     private async Task<DashboardSnapshotData> LoadSnapshotDataAsync(DashboardTimeContext context)
     {
         var monthlyBookings = await GetSuccessfulBookingsAsync(context.MonthlyStartUtc, context.TodayEndUtc);
-        var todayShowtimes = await _movieApiClient.GetShowtimesByRangeAsync(context.TodayStartUtc, context.TodayEndUtc);
+        var todayShowtimes = await GetShowtimesByRangeAsync(context.TodayStartUtc, context.TodayEndUtc);
 
         var showtimeLookupMap = await LoadShowtimeLookupMapAsync(monthlyBookings);
         var hallLookupMap = await LoadHallLookupMapAsync(todayShowtimes);
@@ -145,8 +146,17 @@ public class DashboardService : IDashboardService
             return new Dictionary<Guid, ShowtimeLookupDto>();
         }
 
-        var lookups = await _movieApiClient.GetShowtimeLookupsByIdsAsync(showtimeIds);
-        return lookups.ToDictionary(item => item.ShowtimeId);
+        var response = await _movieApiClient.LookupShowtimesAsync(
+            new Movie.API.Client.ShowtimeLookupRequest { ShowtimeIds = showtimeIds });
+
+        if (!response.Success || response.Data is null)
+        {
+            return new Dictionary<Guid, ShowtimeLookupDto>();
+        }
+
+        return response.Data
+            .Select(ExternalClientDtoMapper.ToBookingShowtimeLookup)
+            .ToDictionary(item => item.ShowtimeId);
     }
 
     private async Task<IReadOnlyDictionary<Guid, CinemaHallDto>> LoadHallLookupMapAsync(
@@ -162,8 +172,25 @@ public class DashboardService : IDashboardService
             return new Dictionary<Guid, CinemaHallDto>();
         }
 
-        var halls = await _cinemaApiClient.GetCinemaHallsByIdsAsync(hallIds);
-        return halls.ToDictionary(item => item.Id);
+        var response = await _cinemaApiClient.LookupHallsAsync(
+            new Cinema.API.Client.CinemaHallLookupRequest { CinemaHallIds = hallIds });
+
+        if (!response.Success || response.Data is null)
+        {
+            return new Dictionary<Guid, CinemaHallDto>();
+        }
+
+        return response.Data
+            .Select(ExternalClientDtoMapper.ToBookingCinemaHall)
+            .ToDictionary(item => item.Id);
+    }
+
+    private async Task<List<ShowtimeLookupDto>> GetShowtimesByRangeAsync(DateTime fromUtc, DateTime toUtc)
+    {
+        var response = await _movieApiClient.GetShowtimesByRangeAsync(fromUtc, toUtc);
+        return response.Success && response.Data is not null
+            ? response.Data.Select(ExternalClientDtoMapper.ToBookingShowtimeLookup).ToList()
+            : [];
     }
 
     private async Task<List<BookingEntity>> GetSuccessfulBookingsAsync(DateTime fromUtc, DateTime toUtc)

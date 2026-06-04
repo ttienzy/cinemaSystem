@@ -1,20 +1,24 @@
-using Booking.API.Clients;
 using Booking.API.Exceptions;
 using Booking.API.Models;
 using Booking.API.Client;
+using ICinemaApiClient = Cinema.API.Client.Client.ICinemaApiClient;
+using IMovieApiClient = Movie.API.Client.Client.IMovieApiClient;
 
 namespace Booking.API.Services;
 
 public class BookingCreationPreparationService : IBookingCreationPreparationService
 {
-    private readonly IExternalServiceClient _externalClient;
+    private readonly IMovieApiClient _movieApiClient;
+    private readonly ICinemaApiClient _cinemaApiClient;
     private readonly IConfiguration _configuration;
 
     public BookingCreationPreparationService(
-        IExternalServiceClient externalClient,
+        IMovieApiClient movieApiClient,
+        ICinemaApiClient cinemaApiClient,
         IConfiguration configuration)
     {
-        _externalClient = externalClient ?? throw new ArgumentNullException(nameof(externalClient));
+        _movieApiClient = movieApiClient ?? throw new ArgumentNullException(nameof(movieApiClient));
+        _cinemaApiClient = cinemaApiClient ?? throw new ArgumentNullException(nameof(cinemaApiClient));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
@@ -31,7 +35,11 @@ public class BookingCreationPreparationService : IBookingCreationPreparationServ
             };
         }
 
-        var showtime = await _externalClient.GetShowtimeByIdAsync(request.ShowtimeId);
+        var showtimeResponse = await _movieApiClient.GetShowtimeByIdAsync(request.ShowtimeId);
+        var showtime = showtimeResponse.Success && showtimeResponse.Data is not null
+            ? ExternalClientDtoMapper.ToBookingShowtime(showtimeResponse.Data)
+            : null;
+
         if (showtime == null)
         {
             return new BookingCreationPreparationResult
@@ -64,7 +72,11 @@ public class BookingCreationPreparationService : IBookingCreationPreparationServ
             };
         }
 
-        var seats = await _externalClient.GetSeatsByCinemaHallIdAsync(showtime.CinemaHallId);
+        var seatResponse = await _cinemaApiClient.GetHallSeatsAsync(showtime.CinemaHallId);
+        var seats = seatResponse.Success && seatResponse.Data is not null
+            ? seatResponse.Data.Select(ExternalClientDtoMapper.ToBookingSeat).ToList()
+            : [];
+
         var selectedSeats = seats
             .Where(seat => request.SeatIds.Contains(seat.Id))
             .ToList();

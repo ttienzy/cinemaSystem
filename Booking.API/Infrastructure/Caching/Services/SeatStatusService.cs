@@ -1,8 +1,10 @@
 #if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 using Booking.API.Client;
-using Booking.API.Clients;
 using Booking.API.Hubs.Services;
 using Booking.API.Infrastructure.Caching.Models;
+using Booking.API.Services;
+using ICinemaApiClient = Cinema.API.Client.Client.ICinemaApiClient;
+using IMovieApiClient = Movie.API.Client.Client.IMovieApiClient;
 using Microsoft.Extensions.Caching.Distributed;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -16,7 +18,8 @@ namespace Booking.API.Infrastructure.Caching.Services;
 public class SeatStatusService : ISeatStatusService
 {
     private readonly IConnectionMultiplexer _redis;
-    private readonly IExternalServiceClient _externalClient;
+    private readonly IMovieApiClient _movieApiClient;
+    private readonly ICinemaApiClient _cinemaApiClient;
     private readonly ILogger<SeatStatusService> _logger;
     private readonly IConfiguration _configuration;
     private readonly ISeatNotificationService _notificationService;
@@ -27,13 +30,15 @@ public class SeatStatusService : ISeatStatusService
 
     public SeatStatusService(
         IConnectionMultiplexer redis,
-        IExternalServiceClient externalClient,
+        IMovieApiClient movieApiClient,
+        ICinemaApiClient cinemaApiClient,
         ILogger<SeatStatusService> logger,
         IConfiguration configuration,
         ISeatNotificationService notificationService)
     {
         _redis = redis ?? throw new ArgumentNullException(nameof(redis));
-        _externalClient = externalClient ?? throw new ArgumentNullException(nameof(externalClient));
+        _movieApiClient = movieApiClient ?? throw new ArgumentNullException(nameof(movieApiClient));
+        _cinemaApiClient = cinemaApiClient ?? throw new ArgumentNullException(nameof(cinemaApiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
@@ -51,21 +56,29 @@ public class SeatStatusService : ISeatStatusService
         _logger.LogInformation("Getting seat availability for showtime {ShowtimeId}", showtimeId);
 
         // 1. Get showtime info from Movie.API
-        var showtime = await _externalClient.GetShowtimeByIdAsync(showtimeId);
-        if (showtime == null)
+        var showtimeResponse = await _movieApiClient.GetShowtimeByIdAsync(showtimeId);
+        if (!showtimeResponse.Success || showtimeResponse.Data is null)
         {
             throw new InvalidOperationException($"Showtime {showtimeId} not found");
         }
 
+        var showtime = ExternalClientDtoMapper.ToBookingShowtime(showtimeResponse.Data);
+
         // 2. Get cinema hall info
-        var cinemaHall = await _externalClient.GetCinemaHallByIdAsync(showtime.CinemaHallId);
-        if (cinemaHall == null)
+        var cinemaHallResponse = await _cinemaApiClient.GetHallByIdAsync(showtime.CinemaHallId);
+        if (!cinemaHallResponse.Success || cinemaHallResponse.Data is null)
         {
             throw new InvalidOperationException($"Cinema hall {showtime.CinemaHallId} not found");
         }
 
+        var cinemaHall = ExternalClientDtoMapper.ToBookingCinemaHall(cinemaHallResponse.Data);
+
         // 3. Get physical seats from Cinema.API
-        var seats = await _externalClient.GetSeatsByCinemaHallIdAsync(showtime.CinemaHallId);
+        var seatResponse = await _cinemaApiClient.GetHallSeatsAsync(showtime.CinemaHallId);
+        var seats = seatResponse.Success && seatResponse.Data is not null
+            ? seatResponse.Data.Select(ExternalClientDtoMapper.ToBookingSeat).ToList()
+            : [];
+
         if (!seats.Any())
         {
             _logger.LogWarning("No seats found for cinema hall {HallId}", showtime.CinemaHallId);
@@ -171,7 +184,11 @@ public class SeatStatusService : ISeatStatusService
         _logger.LogInformation("Initializing seat map for showtime {ShowtimeId}", showtimeId);
 
         // Get seats from Cinema.API
-        var seats = await _externalClient.GetSeatsByCinemaHallIdAsync(cinemaHallId);
+        var seatResponse = await _cinemaApiClient.GetHallSeatsAsync(cinemaHallId);
+        var seats = seatResponse.Success && seatResponse.Data is not null
+            ? seatResponse.Data.Select(ExternalClientDtoMapper.ToBookingSeat).ToList()
+            : [];
+
         if (!seats.Any())
         {
             _logger.LogWarning("No seats to initialize for showtime {ShowtimeId}", showtimeId);

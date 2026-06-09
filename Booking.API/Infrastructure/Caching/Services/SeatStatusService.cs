@@ -1,256 +1,171 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
-using Booking.API.Client;
-using Booking.API.Hubs.Services;
 using Booking.API.Infrastructure.Caching.Models;
-using Booking.API.Services;
-using ICinemaApiClient = Cinema.API.Client.Client.ICinemaApiClient;
-using IMovieApiClient = Movie.API.Client.Client.IMovieApiClient;
-using Microsoft.Extensions.Caching.Distributed;
 using StackExchange.Redis;
 using System.Text.Json;
 
 namespace Booking.API.Infrastructure.Caching.Services;
 
 /// <summary>
-/// Redis-based implementation of seat status management
-/// Uses Redis Hash for atomic operations and efficient storage
+/// Redis-only implementation of seat status management.
+/// Upstream application services must seed showtime seat data before reading or mutating it.
 /// </summary>
 public class SeatStatusService : ISeatStatusService
 {
     private readonly IConnectionMultiplexer _redis;
-    private readonly IMovieApiClient _movieApiClient;
-    private readonly ICinemaApiClient _cinemaApiClient;
     private readonly ILogger<SeatStatusService> _logger;
-    private readonly IConfiguration _configuration;
-    private readonly ISeatNotificationService _notificationService;
     private readonly TimeSpan _lockDuration;
-
-    // Redis key patterns (configurable prefix)
-    private readonly string _keyPrefix = "cinema"; // Default value
+    private readonly TimeSpan _seatMapExpiration;
+    private readonly string _keyPrefix;
 
     public SeatStatusService(
         IConnectionMultiplexer redis,
-        IMovieApiClient movieApiClient,
-        ICinemaApiClient cinemaApiClient,
         ILogger<SeatStatusService> logger,
-        IConfiguration configuration,
-        ISeatNotificationService notificationService)
+        IConfiguration configuration)
     {
         _redis = redis ?? throw new ArgumentNullException(nameof(redis));
-        _movieApiClient = movieApiClient ?? throw new ArgumentNullException(nameof(movieApiClient));
-        _cinemaApiClient = cinemaApiClient ?? throw new ArgumentNullException(nameof(cinemaApiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
 
-        // Get configuration values (no hardcoding!)
-        var lockMinutes = _configuration.GetValue<int>("SeatLock:LockDurationMinutes", 10);
+        var lockMinutes = configuration.GetValue<int>("SeatLock:LockDurationMinutes", 10);
+        var expirationHours = configuration.GetValue<int>("Redis:SeatMapExpirationHours", 24);
+
         _lockDuration = TimeSpan.FromMinutes(lockMinutes);
-        _keyPrefix = _configuration.GetValue<string>("Redis:KeyPrefix") ?? "cinema";
-
-        _logger.LogInformation("SeatStatusService initialized with lock duration: {Duration} minutes", lockMinutes);
+        _seatMapExpiration = TimeSpan.FromHours(expirationHours);
+        _keyPrefix = configuration.GetValue<string>("Redis:KeyPrefix") ?? "cinema";
     }
 
     public async Task<SeatAvailabilityResponse> GetSeatAvailabilityAsync(Guid showtimeId)
     {
-        _logger.LogInformation("Getting seat availability for showtime {ShowtimeId}", showtimeId);
+        var db = _redis.GetDatabase();
+        var seatMapKey = GetSeatMapKey(showtimeId);
+        var metadata = await GetMetadataAsync(db, showtimeId);
 
-        // 1. Get showtime info from Movie.API
-        var showtimeResponse = await _movieApiClient.GetShowtimeByIdAsync(showtimeId);
-        if (!showtimeResponse.Success || showtimeResponse.Data is null)
+        if (!await db.KeyExistsAsync(seatMapKey))
         {
-            throw new InvalidOperationException($"Showtime {showtimeId} not found");
-        }
-
-        var showtime = ExternalClientDtoMapper.ToBookingShowtime(showtimeResponse.Data);
-
-        // 2. Get cinema hall info
-        var cinemaHallResponse = await _cinemaApiClient.GetHallByIdAsync(showtime.CinemaHallId);
-        if (!cinemaHallResponse.Success || cinemaHallResponse.Data is null)
-        {
-            throw new InvalidOperationException($"Cinema hall {showtime.CinemaHallId} not found");
-        }
-
-        var cinemaHall = ExternalClientDtoMapper.ToBookingCinemaHall(cinemaHallResponse.Data);
-
-        // 3. Get physical seats from Cinema.API
-        var seatResponse = await _cinemaApiClient.GetHallSeatsAsync(showtime.CinemaHallId);
-        var seats = seatResponse.Success && seatResponse.Data is not null
-            ? seatResponse.Data.Select(ExternalClientDtoMapper.ToBookingSeat).ToList()
-            : [];
-
-        if (!seats.Any())
-        {
-            _logger.LogWarning("No seats found for cinema hall {HallId}", showtime.CinemaHallId);
             return new SeatAvailabilityResponse
             {
                 ShowtimeId = showtimeId,
-                CinemaHallId = showtime.CinemaHallId,
-                CinemaHallName = cinemaHall.Name,
-                Seats = new List<SeatStatusDto>(),
+                CinemaHallId = metadata?.CinemaHallId ?? Guid.Empty,
+                CinemaHallName = metadata?.CinemaHallName ?? string.Empty,
+                Seats = [],
                 Summary = new SeatAvailabilitySummary()
             };
         }
 
-        // 4. Initialize seat map in Redis if not exists
-        await InitializeSeatMapAsync(showtimeId, showtime.CinemaHallId);
+        var entries = await db.HashGetAllAsync(seatMapKey);
+        var seats = new List<SeatStatusDto>(entries.Length);
 
-        // 5. Get seat status from Redis
-        var db = _redis.GetDatabase();
-        var seatMapKey = GetSeatMapKey(showtimeId);
-
-        var seatStatuses = new List<SeatStatusDto>();
-        var summary = new SeatAvailabilitySummary { TotalSeats = seats.Count };
-
-        foreach (var seat in seats)
+        foreach (var entry in entries)
         {
-            var seatKey = GetSeatFieldKey(seat.Id);
-            var seatDataJson = await db.HashGetAsync(seatMapKey, seatKey);
-
-            SeatStatus status = SeatStatus.Available;
-            string? lockedBy = null;
-            DateTime? lockedUntil = null;
-
-            if (!seatDataJson.IsNullOrEmpty)
+            var seatData = DeserializeSeat(entry.Value);
+            if (seatData is null)
             {
-                var seatData = JsonSerializer.Deserialize<RedisSeatData>(seatDataJson!);
-                if (seatData != null)
-                {
-                    // Check if lock expired
-                    if (seatData.IsLockExpired())
-                    {
-                        // Auto-release expired lock
-                        await UnlockSeatInternalAsync(db, showtimeId, seat.Id);
-                        status = SeatStatus.Available;
-                    }
-                    else
-                    {
-                        status = seatData.Status;
-                        lockedBy = seatData.UserId;
-                        lockedUntil = seatData.LockedUntil;
-                    }
-                }
+                continue;
             }
 
-            seatStatuses.Add(new SeatStatusDto
+            if (seatData.IsLockExpired())
             {
-                SeatId = seat.Id,
-                Row = seat.Row,
-                Number = seat.Number,
-                Status = status,
-                Price = showtime.Price,
-                LockedBy = lockedBy,
-                LockedUntil = lockedUntil
-            });
-
-            // Update summarys
-            switch (status)
-            {
-                case SeatStatus.Available:
-                    summary.AvailableSeats++;
-                    break;
-                case SeatStatus.Locked:
-                    summary.LockedSeats++;
-                    break;
-                case SeatStatus.Booked:
-                    summary.BookedSeats++;
-                    break;
+                seatData.ReleaseLock();
+                await SaveSeatAsync(db, seatMapKey, entry.Name!, seatData);
             }
+
+            seats.Add(ToSeatStatusDto(seatData));
         }
+
+        seats = seats
+            .OrderBy(seat => seat.Row, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(seat => seat.Number)
+            .ToList();
 
         return new SeatAvailabilityResponse
         {
             ShowtimeId = showtimeId,
-            CinemaHallId = showtime.CinemaHallId,
-            CinemaHallName = cinemaHall.Name,
-            Seats = seatStatuses,
-            Summary = summary
+            CinemaHallId = metadata?.CinemaHallId ?? Guid.Empty,
+            CinemaHallName = metadata?.CinemaHallName ?? string.Empty,
+            Seats = seats,
+            Summary = BuildSummary(seats)
         };
     }
 
     public async Task InitializeSeatMapAsync(Guid showtimeId, Guid cinemaHallId)
     {
         var db = _redis.GetDatabase();
+        var metadata = await GetMetadataAsync(db, showtimeId) ?? new SeatMapMetadata
+        {
+            ShowtimeId = showtimeId,
+            CinemaHallId = cinemaHallId
+        };
+
+        metadata.CinemaHallId = cinemaHallId;
+        await SaveMetadataAsync(db, metadata);
+        await RefreshExpirationAsync(db, showtimeId);
+    }
+
+    public async Task InitializeSeatMapAsync(
+        Guid showtimeId,
+        Guid cinemaHallId,
+        string cinemaHallName,
+        IReadOnlyCollection<SeatStatusDto> seats)
+    {
+        var db = _redis.GetDatabase();
         var seatMapKey = GetSeatMapKey(showtimeId);
 
-        // Check if already initialized
-        var exists = await db.KeyExistsAsync(seatMapKey);
-        if (exists)
+        var hashEntries = seats
+            .Select(seat => new HashEntry(
+                GetSeatFieldKey(seat.SeatId),
+                JsonSerializer.Serialize(new RedisSeatData
+                {
+                    SeatId = seat.SeatId,
+                    Row = seat.Row,
+                    Number = seat.Number,
+                    Price = seat.Price,
+                    Status = seat.Status,
+                    UserId = seat.LockedBy,
+                    LockedUntil = seat.LockedUntil
+                })))
+            .ToArray();
+
+        if (hashEntries.Length > 0)
         {
-            _logger.LogDebug("Seat map for showtime {ShowtimeId} already initialized", showtimeId);
-            return;
+            await db.HashSetAsync(seatMapKey, hashEntries);
         }
 
-        _logger.LogInformation("Initializing seat map for showtime {ShowtimeId}", showtimeId);
-
-        // Get seats from Cinema.API
-        var seatResponse = await _cinemaApiClient.GetHallSeatsAsync(cinemaHallId);
-        var seats = seatResponse.Success && seatResponse.Data is not null
-            ? seatResponse.Data.Select(ExternalClientDtoMapper.ToBookingSeat).ToList()
-            : [];
-
-        if (!seats.Any())
+        await SaveMetadataAsync(db, new SeatMapMetadata
         {
-            _logger.LogWarning("No seats to initialize for showtime {ShowtimeId}", showtimeId);
-            return;
-        }
+            ShowtimeId = showtimeId,
+            CinemaHallId = cinemaHallId,
+            CinemaHallName = cinemaHallName
+        });
 
-        // Initialize all seats as Available
-        var hashEntries = seats.Select(seat =>
-        {
-            var seatData = new RedisSeatData
-            {
-                Status = SeatStatus.Available,
-                UserId = null,
-                BookingId = null,
-                LockedAt = null,
-                LockedUntil = null,
-                BookedAt = null
-            };
+        await RefreshExpirationAsync(db, showtimeId);
 
-            return new HashEntry(
-                GetSeatFieldKey(seat.Id),
-                JsonSerializer.Serialize(seatData)
-            );
-        }).ToArray();
-
-        await db.HashSetAsync(seatMapKey, hashEntries);
-
-        // Set expiration (showtime end time + buffer)
-        var expirationHours = _configuration.GetValue<int>("Redis:SeatMapExpirationHours", 24);
-        await db.KeyExpireAsync(seatMapKey, TimeSpan.FromHours(expirationHours));
-
-        _logger.LogInformation("Initialized {Count} seats for showtime {ShowtimeId}", seats.Count, showtimeId);
+        _logger.LogInformation(
+            "Initialized Redis seat map for showtime {ShowtimeId} with {Count} seats",
+            showtimeId,
+            seats.Count);
     }
 
     public async Task<SeatLockResult> LockSeatsAsync(Guid showtimeId, List<Guid> seatIds, string userId)
     {
-        _logger.LogInformation("Attempting to lock {Count} seats for user {UserId} in showtime {ShowtimeId}",
-            seatIds.Count, userId, showtimeId);
-
         var db = _redis.GetDatabase();
         var seatMapKey = GetSeatMapKey(showtimeId);
 
-        // Ensure seat map exists
         if (!await db.KeyExistsAsync(seatMapKey))
         {
-            throw new InvalidOperationException($"Seat map not initialized for showtime {showtimeId}");
+            return new SeatLockResult
+            {
+                Success = false,
+                Message = "Seat map not initialized",
+                AlreadyLockedSeats = seatIds
+            };
         }
 
-        var result = new SeatLockResult { Success = true };
         var lockedUntil = DateTime.UtcNow.Add(_lockDuration);
-
-        // Use Lua script for atomic multi-seat locking
-        // Return flattened array: [lockedCount, ...lockedSeats, ...alreadyLocked]
-        // This avoids nested array casting issues
         var script = @"
             local seatMapKey = KEYS[1]
             local userId = ARGV[1]
             local lockedUntil = ARGV[2]
             local now = ARGV[3]
-
             local lockedSeats = {}
-            local alreadyLocked = {}
+            local failedSeats = {}
 
             for i = 4, #ARGV do
                 local seatKey = ARGV[i]
@@ -259,38 +174,34 @@ public class SeatStatusService : ISeatStatusService
                 if seatDataJson then
                     local seatData = cjson.decode(seatDataJson)
 
-                    -- Check if available or lock expired or owned by same user
                     if seatData.Status == 0 or
                        (seatData.Status == 1 and seatData.LockedUntil and seatData.LockedUntil < now) or
                        (seatData.Status == 1 and seatData.UserId == userId) then
-
-                        -- Lock the seat
                         seatData.Status = 1
                         seatData.UserId = userId
                         seatData.LockedAt = now
                         seatData.LockedUntil = lockedUntil
+                        seatData.BookingId = cjson.null
+                        seatData.BookedAt = cjson.null
 
                         redis.call('HSET', seatMapKey, seatKey, cjson.encode(seatData))
                         table.insert(lockedSeats, seatKey)
                     else
-                        table.insert(alreadyLocked, seatKey)
+                        table.insert(failedSeats, seatKey)
                     end
                 else
-                    -- Seat not found in seat map — treat as failure
-                    table.insert(alreadyLocked, seatKey)
+                    table.insert(failedSeats, seatKey)
                 end
             end
 
-            -- Return flattened array: [lockedCount, ...lockedSeats, ...alreadyLocked]
-            -- This avoids nested array casting issues in C#
             local result = {}
-            table.insert(result, #lockedSeats)  -- First element is count
+            table.insert(result, #lockedSeats)
 
             for _, seat in ipairs(lockedSeats) do
                 table.insert(result, seat)
             end
 
-            for _, seat in ipairs(alreadyLocked) do
+            for _, seat in ipairs(failedSeats) do
                 table.insert(result, seat)
             end
 
@@ -299,7 +210,6 @@ public class SeatStatusService : ISeatStatusService
 
         try
         {
-            var keys = new RedisKey[] { seatMapKey };
             var values = new RedisValue[]
             {
                 userId,
@@ -307,120 +217,70 @@ public class SeatStatusService : ISeatStatusService
                 DateTime.UtcNow.ToString("O")
             }.Concat(seatIds.Select(id => (RedisValue)GetSeatFieldKey(id))).ToArray();
 
-            var scriptResult = await db.ScriptEvaluateAsync(script, keys, values);
+            var resultArray = (RedisValue[])(await db.ScriptEvaluateAsync(
+                script,
+                [seatMapKey],
+                values))!;
 
-            // Parse flattened array: [lockedCount, ...lockedSeats, ...alreadyLocked]
-            var resultArray = (RedisValue[])scriptResult!;
-
-            if (resultArray.Length == 0)
-            {
-                _logger.LogWarning("Script returned empty array");
-                result.Success = false;
-                result.Message = "Failed to lock seats - script returned no data";
-                return result;
-            }
-
-            // First element is the count of locked seats
-            var lockedCount = (int)resultArray[0];
-
-            // Extract locked seats (from index 1 to lockedCount)
-            var lockedSeatKeys = resultArray
+            var lockedCount = resultArray.Length > 0 ? (int)resultArray[0] : 0;
+            var lockedSeats = resultArray
                 .Skip(1)
                 .Take(lockedCount)
-                .Where(rv => !rv.IsNullOrEmpty)
-                .Select(rv => (string)rv!)
+                .Where(value => !value.IsNullOrEmpty)
+                .Select(value => ExtractSeatIdFromKey((string)value!))
                 .ToList();
-
-            // Extract already locked seats (remaining elements after locked seats)
-            var alreadyLockedKeys = resultArray
+            var failedSeats = resultArray
                 .Skip(1 + lockedCount)
-                .Where(rv => !rv.IsNullOrEmpty)
-                .Select(rv => (string)rv!)
+                .Where(value => !value.IsNullOrEmpty)
+                .Select(value => ExtractSeatIdFromKey((string)value!))
                 .ToList();
 
-            _logger.LogDebug("Lua script returned - lockedSeats: {LockedCount}, alreadyLocked: {AlreadyLockedCount}",
-                lockedSeatKeys.Count, alreadyLockedKeys.Count);
-
-            result.LockedSeats = lockedSeatKeys.Select(ExtractSeatIdFromKey).ToList();
-            result.AlreadyLockedSeats = alreadyLockedKeys.Select(ExtractSeatIdFromKey).ToList();
-
-            if (result.AlreadyLockedSeats.Any())
+            return new SeatLockResult
             {
-                result.Success = false;
-                result.Message = $"{result.AlreadyLockedSeats.Count} seat(s) are already locked or booked";
-                _logger.LogWarning("Failed to lock some seats for user {UserId}: {Count} already locked",
-                    userId, result.AlreadyLockedSeats.Count);
-            }
-            else
-            {
-                result.Message = $"Successfully locked {result.LockedSeats.Count} seat(s)";
-                _logger.LogInformation("Successfully locked {Count} seats for user {UserId}",
-                    result.LockedSeats.Count, userId);
-
-                // Broadcast seat locked notification to all clients watching this showtime
-                await _notificationService.NotifySeatLockedAsync(
-                    showtimeId,
-                    result.LockedSeats,
-                    userId,
-                    lockedUntil);
-            }
+                Success = failedSeats.Count == 0,
+                Message = failedSeats.Count == 0
+                    ? $"Successfully locked {lockedSeats.Count} seat(s)"
+                    : $"{failedSeats.Count} seat(s) are unavailable",
+                LockedSeats = lockedSeats,
+                AlreadyLockedSeats = failedSeats
+            };
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error locking seats for user {UserId}", userId);
-            result.Success = false;
-            result.Message = "Failed to lock seats due to system error";
+            return new SeatLockResult
+            {
+                Success = false,
+                Message = "Failed to lock seats due to Redis error"
+            };
         }
-
-        return result;
     }
 
     public async Task<bool> UnlockSeatsAsync(Guid showtimeId, List<Guid> seatIds, string userId)
     {
-        _logger.LogInformation("Unlocking {Count} seats for user {UserId} in showtime {ShowtimeId}",
-            seatIds.Count, userId, showtimeId);
-
         var db = _redis.GetDatabase();
         var seatMapKey = GetSeatMapKey(showtimeId);
-
         var allUnlocked = true;
-        var unlockedSeats = new List<Guid>();
 
         foreach (var seatId in seatIds)
         {
             var seatKey = GetSeatFieldKey(seatId);
-            var seatDataJson = await db.HashGetAsync(seatMapKey, seatKey);
+            var seatData = DeserializeSeat(await db.HashGetAsync(seatMapKey, seatKey));
 
-            if (seatDataJson.IsNullOrEmpty)
-                continue;
-
-            var seatData = JsonSerializer.Deserialize<RedisSeatData>(seatDataJson!);
-            if (seatData == null)
-                continue;
-
-            // Only unlock if owned by this user and status is Locked
-            if (seatData.Status == SeatStatus.Locked && seatData.IsOwnedBy(userId))
+            if (seatData is null)
             {
-                seatData.Status = SeatStatus.Available;
-                seatData.UserId = null;
-                seatData.LockedAt = null;
-                seatData.LockedUntil = null;
-
-                await db.HashSetAsync(seatMapKey, seatKey, JsonSerializer.Serialize(seatData));
-                unlockedSeats.Add(seatId);
-            }
-            else
-            {
-                _logger.LogWarning("Cannot unlock seat {SeatId} - not owned by user {UserId} or not locked",
-                    seatId, userId);
                 allUnlocked = false;
+                continue;
             }
-        }
 
-        // Broadcast seat unlocked notification if any seats were unlocked
-        if (unlockedSeats.Any())
-        {
-            await _notificationService.NotifySeatUnlockedAsync(showtimeId, unlockedSeats);
+            if (seatData.Status != SeatStatus.Locked || !seatData.IsOwnedBy(userId))
+            {
+                allUnlocked = false;
+                continue;
+            }
+
+            seatData.ReleaseLock();
+            await SaveSeatAsync(db, seatMapKey, seatKey, seatData);
         }
 
         return allUnlocked;
@@ -428,74 +288,50 @@ public class SeatStatusService : ISeatStatusService
 
     public async Task<bool> MarkSeatsAsBookedAsync(Guid showtimeId, List<Guid> seatIds, Guid bookingId)
     {
-        _logger.LogInformation("Marking {Count} seats as booked for booking {BookingId}",
-            seatIds.Count, bookingId);
-
         var db = _redis.GetDatabase();
         var seatMapKey = GetSeatMapKey(showtimeId);
+        var allBooked = true;
 
         foreach (var seatId in seatIds)
         {
             var seatKey = GetSeatFieldKey(seatId);
-            var seatDataJson = await db.HashGetAsync(seatMapKey, seatKey);
+            var seatData = DeserializeSeat(await db.HashGetAsync(seatMapKey, seatKey));
 
-            if (seatDataJson.IsNullOrEmpty)
+            if (seatData is null)
+            {
+                allBooked = false;
                 continue;
+            }
 
-            var seatData = JsonSerializer.Deserialize<RedisSeatData>(seatDataJson!);
-            if (seatData == null)
-                continue;
-
-            seatData.Status = SeatStatus.Booked;
-            seatData.BookingId = bookingId;
-            seatData.BookedAt = DateTime.UtcNow;
-            seatData.LockedAt = null;
-            seatData.LockedUntil = null;
-
-            await db.HashSetAsync(seatMapKey, seatKey, JsonSerializer.Serialize(seatData));
+            seatData.MarkBooked(bookingId);
+            await SaveSeatAsync(db, seatMapKey, seatKey, seatData);
         }
 
-        _logger.LogInformation("Marked {Count} seats as booked", seatIds.Count);
-
-        // Broadcast seat booked notification
-        await _notificationService.NotifySeatBookedAsync(showtimeId, seatIds);
-
-        return true;
+        return allBooked;
     }
 
     public async Task<bool> ReleaseBookedSeatsAsync(Guid showtimeId, List<Guid> seatIds)
     {
-        _logger.LogInformation("Releasing {Count} booked seats for showtime {ShowtimeId}",
-            seatIds.Count, showtimeId);
-
         var db = _redis.GetDatabase();
         var seatMapKey = GetSeatMapKey(showtimeId);
+        var allReleased = true;
 
         foreach (var seatId in seatIds)
         {
             var seatKey = GetSeatFieldKey(seatId);
-            var seatDataJson = await db.HashGetAsync(seatMapKey, seatKey);
+            var seatData = DeserializeSeat(await db.HashGetAsync(seatMapKey, seatKey));
 
-            if (seatDataJson.IsNullOrEmpty)
+            if (seatData is null || seatData.Status != SeatStatus.Booked)
+            {
+                allReleased = false;
                 continue;
+            }
 
-            var seatData = JsonSerializer.Deserialize<RedisSeatData>(seatDataJson!);
-            if (seatData == null)
-                continue;
-
-            seatData.Status = SeatStatus.Available;
-            seatData.UserId = null;
-            seatData.BookingId = null;
-            seatData.BookedAt = null;
-
-            await db.HashSetAsync(seatMapKey, seatKey, JsonSerializer.Serialize(seatData));
+            seatData.ReleaseBooking();
+            await SaveSeatAsync(db, seatMapKey, seatKey, seatData);
         }
 
-        _logger.LogInformation("Released {Count} seats", seatIds.Count);
-
-        // Broadcast seat released notification
-        await _notificationService.NotifySeatReleasedAsync(showtimeId, seatIds);
-        return true;
+        return allReleased;
     }
 
     public async Task<bool> AreSeatsAvailableAsync(Guid showtimeId, List<Guid> seatIds)
@@ -506,24 +342,23 @@ public class SeatStatusService : ISeatStatusService
         foreach (var seatId in seatIds)
         {
             var seatKey = GetSeatFieldKey(seatId);
-            var seatDataJson = await db.HashGetAsync(seatMapKey, seatKey);
+            var seatData = DeserializeSeat(await db.HashGetAsync(seatMapKey, seatKey));
 
-            if (seatDataJson.IsNullOrEmpty)
+            if (seatData is null)
+            {
                 return false;
+            }
 
-            var seatData = JsonSerializer.Deserialize<RedisSeatData>(seatDataJson!);
-            if (seatData == null)
-                return false;
-
-            // Check if locked and expired
             if (seatData.IsLockExpired())
             {
-                await UnlockSeatInternalAsync(db, showtimeId, seatId);
-                continue;
+                seatData.ReleaseLock();
+                await SaveSeatAsync(db, seatMapKey, seatKey, seatData);
             }
 
             if (seatData.Status != SeatStatus.Available)
+            {
                 return false;
+            }
         }
 
         return true;
@@ -534,10 +369,9 @@ public class SeatStatusService : ISeatStatusService
         var db = _redis.GetDatabase();
         var seatMapKey = GetSeatMapKey(showtimeId);
         var seatKey = GetSeatFieldKey(seatId);
+        var seatData = DeserializeSeat(await db.HashGetAsync(seatMapKey, seatKey));
 
-        var seatDataJson = await db.HashGetAsync(seatMapKey, seatKey);
-
-        if (seatDataJson.IsNullOrEmpty)
+        if (seatData is null)
         {
             return new SeatStatusInfo
             {
@@ -546,25 +380,10 @@ public class SeatStatusService : ISeatStatusService
             };
         }
 
-        var seatData = JsonSerializer.Deserialize<RedisSeatData>(seatDataJson!);
-        if (seatData == null)
-        {
-            return new SeatStatusInfo
-            {
-                SeatId = seatId,
-                Status = SeatStatus.Unavailable
-            };
-        }
-
-        // Auto-release expired lock
         if (seatData.IsLockExpired())
         {
-            await UnlockSeatInternalAsync(db, showtimeId, seatId);
-            return new SeatStatusInfo
-            {
-                SeatId = seatId,
-                Status = SeatStatus.Available
-            };
+            seatData.ReleaseLock();
+            await SaveSeatAsync(db, seatMapKey, seatKey, seatData);
         }
 
         return new SeatStatusInfo
@@ -579,60 +398,56 @@ public class SeatStatusService : ISeatStatusService
 
     public async Task<bool> ExtendSeatLocksAsync(Guid showtimeId, List<Guid> seatIds, string userId)
     {
-        _logger.LogInformation("Extending locks for {Count} seats for user {UserId}",
-            seatIds.Count, userId);
-
         var db = _redis.GetDatabase();
         var seatMapKey = GetSeatMapKey(showtimeId);
         var newLockedUntil = DateTime.UtcNow.Add(_lockDuration);
+        var allExtended = true;
 
         foreach (var seatId in seatIds)
         {
             var seatKey = GetSeatFieldKey(seatId);
-            var seatDataJson = await db.HashGetAsync(seatMapKey, seatKey);
+            var seatData = DeserializeSeat(await db.HashGetAsync(seatMapKey, seatKey));
 
-            if (seatDataJson.IsNullOrEmpty)
+            if (seatData is null ||
+                seatData.Status != SeatStatus.Locked ||
+                !seatData.IsOwnedBy(userId) ||
+                seatData.IsLockExpired())
+            {
+                allExtended = false;
                 continue;
-
-            var seatData = JsonSerializer.Deserialize<RedisSeatData>(seatDataJson!);
-            if (seatData == null || !seatData.IsOwnedBy(userId) || seatData.Status != SeatStatus.Locked)
-                continue;
+            }
 
             seatData.LockedUntil = newLockedUntil;
-            await db.HashSetAsync(seatMapKey, seatKey, JsonSerializer.Serialize(seatData));
+            await SaveSeatAsync(db, seatMapKey, seatKey, seatData);
         }
 
-        return true;
+        return allExtended;
     }
 
     public async Task CleanupExpiredLocksAsync(Guid showtimeId)
     {
-        _logger.LogInformation("Cleaning up expired locks for showtime {ShowtimeId}", showtimeId);
-
         var db = _redis.GetDatabase();
         var seatMapKey = GetSeatMapKey(showtimeId);
-
         var allSeats = await db.HashGetAllAsync(seatMapKey);
-        var now = DateTime.UtcNow;
         var cleanedCount = 0;
 
         foreach (var entry in allSeats)
         {
-            var seatData = JsonSerializer.Deserialize<RedisSeatData>(entry.Value!);
-            if (seatData != null && seatData.IsLockExpired())
+            var seatData = DeserializeSeat(entry.Value);
+            if (seatData is null || !seatData.IsLockExpired())
             {
-                seatData.Status = SeatStatus.Available;
-                seatData.UserId = null;
-                seatData.LockedAt = null;
-                seatData.LockedUntil = null;
-
-                await db.HashSetAsync(seatMapKey, entry.Name, JsonSerializer.Serialize(seatData));
-                cleanedCount++;
+                continue;
             }
+
+            seatData.ReleaseLock();
+            await SaveSeatAsync(db, seatMapKey, entry.Name!, seatData);
+            cleanedCount++;
         }
 
-        _logger.LogInformation("Cleaned up {Count} expired locks for showtime {ShowtimeId}",
-            cleanedCount, showtimeId);
+        _logger.LogInformation(
+            "Cleaned up {Count} expired seat locks for showtime {ShowtimeId}",
+            cleanedCount,
+            showtimeId);
     }
 
     public async Task<SeatBookingResult> VerifyAndMarkAsBookedAsync(
@@ -641,104 +456,82 @@ public class SeatStatusService : ISeatStatusService
         string userId,
         Guid bookingId)
     {
-        _logger.LogInformation(
-            "Verifying and marking {Count} seats as booked for user {UserId}, booking {BookingId}",
-            seatIds.Count, userId, bookingId);
-
         var db = _redis.GetDatabase();
         var seatMapKey = GetSeatMapKey(showtimeId);
 
-        // Ensure seat map exists
         if (!await db.KeyExistsAsync(seatMapKey))
         {
-            _logger.LogWarning("Seat map not found for showtime {ShowtimeId}", showtimeId);
             return new SeatBookingResult
             {
                 Success = false,
                 Message = "Seat map not initialized",
-                FailureReason = SeatBookingFailureReason.Unavailable
+                FailureReason = SeatBookingFailureReason.Unavailable,
+                FailedSeats = seatIds
             };
         }
 
-        var result = new SeatBookingResult { Success = true };
         var now = DateTime.UtcNow;
-
-        // Use Lua script for atomic verification and booking
-        // Return flattened array: [bookedCount, failureReason, ...bookedSeats, ...failedSeats]
         var script = @"
             local seatMapKey = KEYS[1]
             local userId = ARGV[1]
             local bookingId = ARGV[2]
             local now = ARGV[3]
-            
             local bookedSeats = {}
             local failedSeats = {}
-            local failureReason = 0  -- 0=success, 1=NotLocked, 2=LockExpired, 3=WrongUser, 4=AlreadyBooked
-            
+            local failureReason = 0
+
             for i = 4, #ARGV do
                 local seatKey = ARGV[i]
                 local seatDataJson = redis.call('HGET', seatMapKey, seatKey)
-                
+
                 if not seatDataJson then
-                    -- Seat doesn't exist
                     table.insert(failedSeats, seatKey)
-                    if failureReason == 0 then failureReason = 1 end  -- NotLocked
+                    if failureReason == 0 then failureReason = 5 end
                 else
                     local seatData = cjson.decode(seatDataJson)
-                    
-                    -- Check 1: Is seat already booked?
+
                     if seatData.Status == 2 then
                         table.insert(failedSeats, seatKey)
-                        if failureReason == 0 then failureReason = 4 end  -- AlreadyBooked
-                    
-                    -- Check 2: Is seat locked?
+                        if failureReason == 0 then failureReason = 4 end
                     elseif seatData.Status ~= 1 then
                         table.insert(failedSeats, seatKey)
-                        if failureReason == 0 then failureReason = 1 end  -- NotLocked
-                    
-                    -- Check 3: Is lock expired?
+                        if failureReason == 0 then failureReason = 1 end
                     elseif seatData.LockedUntil and seatData.LockedUntil < now then
                         table.insert(failedSeats, seatKey)
-                        if failureReason == 0 then failureReason = 2 end  -- LockExpired
-                    
-                    -- Check 4: Is locked by same user?
+                        if failureReason == 0 then failureReason = 2 end
                     elseif seatData.UserId ~= userId then
                         table.insert(failedSeats, seatKey)
-                        if failureReason == 0 then failureReason = 3 end  -- WrongUser
-                    
-                    -- All checks passed - mark as booked
+                        if failureReason == 0 then failureReason = 3 end
                     else
-                        seatData.Status = 2  -- Booked
+                        seatData.Status = 2
                         seatData.BookingId = bookingId
                         seatData.BookedAt = now
                         seatData.LockedAt = cjson.null
                         seatData.LockedUntil = cjson.null
-                        
+
                         redis.call('HSET', seatMapKey, seatKey, cjson.encode(seatData))
                         table.insert(bookedSeats, seatKey)
                     end
                 end
             end
-            
-            -- Return flattened array: [bookedCount, failureReason, ...bookedSeats, ...failedSeats]
+
             local result = {}
             table.insert(result, #bookedSeats)
             table.insert(result, failureReason)
-            
+
             for _, seat in ipairs(bookedSeats) do
                 table.insert(result, seat)
             end
-            
+
             for _, seat in ipairs(failedSeats) do
                 table.insert(result, seat)
             end
-            
+
             return result
         ";
 
         try
         {
-            var keys = new RedisKey[] { seatMapKey };
             var values = new RedisValue[]
             {
                 userId,
@@ -746,104 +539,123 @@ public class SeatStatusService : ISeatStatusService
                 now.ToString("O")
             }.Concat(seatIds.Select(id => (RedisValue)GetSeatFieldKey(id))).ToArray();
 
-            var scriptResult = await db.ScriptEvaluateAsync(script, keys, values);
-
-            // Parse flattened array: [bookedCount, failureReason, ...bookedSeats, ...failedSeats]
-            var resultArray = (RedisValue[])scriptResult!;
+            var resultArray = (RedisValue[])(await db.ScriptEvaluateAsync(
+                script,
+                [seatMapKey],
+                values))!;
 
             if (resultArray.Length < 2)
             {
-                _logger.LogWarning("Script returned unexpected array length: {Length}", resultArray.Length);
-                result.Success = false;
-                result.Message = "Failed to verify seats - unexpected script result";
-                result.FailureReason = SeatBookingFailureReason.Unavailable;
-                return result;
+                return new SeatBookingResult
+                {
+                    Success = false,
+                    Message = "Unexpected Redis booking result",
+                    FailureReason = SeatBookingFailureReason.Unavailable
+                };
             }
 
             var bookedCount = (int)resultArray[0];
-            var failureReasonCode = (int)resultArray[1];
-
-            // Extract booked seats
-            var bookedSeatKeys = resultArray
+            var failureReason = (SeatBookingFailureReason)(int)resultArray[1];
+            var bookedSeats = resultArray
                 .Skip(2)
                 .Take(bookedCount)
-                .Where(rv => !rv.IsNullOrEmpty)
-                .Select(rv => (string)rv!)
+                .Where(value => !value.IsNullOrEmpty)
+                .Select(value => ExtractSeatIdFromKey((string)value!))
                 .ToList();
-
-            // Extract failed seats
-            var failedSeatKeys = resultArray
+            var failedSeats = resultArray
                 .Skip(2 + bookedCount)
-                .Where(rv => !rv.IsNullOrEmpty)
-                .Select(rv => (string)rv!)
+                .Where(value => !value.IsNullOrEmpty)
+                .Select(value => ExtractSeatIdFromKey((string)value!))
                 .ToList();
 
-            result.BookedSeats = bookedSeatKeys.Select(ExtractSeatIdFromKey).ToList();
-            result.FailedSeats = failedSeatKeys.Select(ExtractSeatIdFromKey).ToList();
-
-            if (result.FailedSeats.Any())
+            return new SeatBookingResult
             {
-                result.Success = false;
-                result.FailureReason = (SeatBookingFailureReason)failureReasonCode;
-
-                result.Message = result.FailureReason switch
-                {
-                    SeatBookingFailureReason.NotLocked =>
-                        $"{result.FailedSeats.Count} seat(s) are not locked. Please lock seats before booking.",
-                    SeatBookingFailureReason.LockExpired =>
-                        $"{result.FailedSeats.Count} seat(s) lock has expired. Please select seats again.",
-                    SeatBookingFailureReason.WrongUser =>
-                        $"{result.FailedSeats.Count} seat(s) are locked by another user.",
-                    SeatBookingFailureReason.AlreadyBooked =>
-                        $"{result.FailedSeats.Count} seat(s) are already booked.",
-                    _ => $"{result.FailedSeats.Count} seat(s) cannot be booked."
-                };
-
-                _logger.LogWarning(
-                    "Failed to book some seats for user {UserId}: {Reason} - {Count} failed",
-                    userId, result.FailureReason, result.FailedSeats.Count);
-            }
-            else
-            {
-                result.Message = $"Successfully booked {result.BookedSeats.Count} seat(s)";
-                _logger.LogInformation(
-                    "Successfully booked {Count} seats for user {UserId}, booking {BookingId}",
-                    result.BookedSeats.Count, userId, bookingId);
-
-                // Broadcast seat booked notification
-                await _notificationService.NotifySeatBookedAsync(showtimeId, result.BookedSeats);
-            }
+                Success = failedSeats.Count == 0,
+                Message = failedSeats.Count == 0
+                    ? $"Successfully booked {bookedSeats.Count} seat(s)"
+                    : GetBookingFailureMessage(failureReason, failedSeats.Count),
+                BookedSeats = bookedSeats,
+                FailedSeats = failedSeats,
+                FailureReason = failedSeats.Count == 0 ? SeatBookingFailureReason.None : failureReason
+            };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error verifying and booking seats for user {UserId}", userId);
-            result.Success = false;
-            result.Message = "Failed to book seats due to system error";
-            result.FailureReason = SeatBookingFailureReason.Unavailable;
+            _logger.LogError(ex, "Error booking seats for user {UserId}", userId);
+            return new SeatBookingResult
+            {
+                Success = false,
+                Message = "Failed to book seats due to Redis error",
+                FailureReason = SeatBookingFailureReason.Unavailable
+            };
         }
-
-        return result;
     }
 
-    // Private helper methods
     private string GetSeatMapKey(Guid showtimeId) => $"{_keyPrefix}:showtime:{showtimeId}:seats";
-    private string GetSeatFieldKey(Guid seatId) => $"seat:{seatId}";
-    private Guid ExtractSeatIdFromKey(string key) => Guid.Parse(key.Replace("seat:", ""));
+    private string GetSeatMetadataKey(Guid showtimeId) => $"{_keyPrefix}:showtime:{showtimeId}:metadata";
+    private static string GetSeatFieldKey(Guid seatId) => $"seat:{seatId}";
+    private static Guid ExtractSeatIdFromKey(string key) => Guid.Parse(key.Replace("seat:", ""));
 
-    private async Task UnlockSeatInternalAsync(IDatabase db, Guid showtimeId, Guid seatId)
+    private async Task<SeatMapMetadata?> GetMetadataAsync(IDatabase db, Guid showtimeId)
     {
-        var seatMapKey = GetSeatMapKey(showtimeId);
-        var seatKey = GetSeatFieldKey(seatId);
+        var value = await db.StringGetAsync(GetSeatMetadataKey(showtimeId));
+        return value.IsNullOrEmpty ? null : JsonSerializer.Deserialize<SeatMapMetadata>((string)value!);
+    }
 
-        var seatData = new RedisSeatData
-        {
-            Status = SeatStatus.Available,
-            UserId = null,
-            LockedAt = null,
-            LockedUntil = null
-        };
+    private async Task SaveMetadataAsync(IDatabase db, SeatMapMetadata metadata)
+    {
+        await db.StringSetAsync(
+            GetSeatMetadataKey(metadata.ShowtimeId),
+            JsonSerializer.Serialize(metadata),
+            _seatMapExpiration);
+    }
 
+    private async Task RefreshExpirationAsync(IDatabase db, Guid showtimeId)
+    {
+        await db.KeyExpireAsync(GetSeatMapKey(showtimeId), _seatMapExpiration);
+        await db.KeyExpireAsync(GetSeatMetadataKey(showtimeId), _seatMapExpiration);
+    }
+
+    private static RedisSeatData? DeserializeSeat(RedisValue value)
+        => value.IsNullOrEmpty ? null : JsonSerializer.Deserialize<RedisSeatData>((string)value!);
+
+    private static async Task SaveSeatAsync(IDatabase db, RedisKey seatMapKey, RedisValue seatKey, RedisSeatData seatData)
+    {
         await db.HashSetAsync(seatMapKey, seatKey, JsonSerializer.Serialize(seatData));
     }
+
+    private static SeatStatusDto ToSeatStatusDto(RedisSeatData seatData)
+        => new()
+        {
+            SeatId = seatData.SeatId,
+            Row = seatData.Row,
+            Number = seatData.Number,
+            Status = seatData.Status,
+            Price = seatData.Price,
+            LockedBy = seatData.UserId,
+            LockedUntil = seatData.LockedUntil
+        };
+
+    private static SeatAvailabilitySummary BuildSummary(IReadOnlyCollection<SeatStatusDto> seats)
+        => new()
+        {
+            TotalSeats = seats.Count,
+            AvailableSeats = seats.Count(seat => seat.Status == SeatStatus.Available),
+            LockedSeats = seats.Count(seat => seat.Status == SeatStatus.Locked),
+            BookedSeats = seats.Count(seat => seat.Status == SeatStatus.Booked)
+        };
+
+    private static string GetBookingFailureMessage(SeatBookingFailureReason reason, int failedCount)
+        => reason switch
+        {
+            SeatBookingFailureReason.NotLocked =>
+                $"{failedCount} seat(s) are not locked. Please lock seats before booking.",
+            SeatBookingFailureReason.LockExpired =>
+                $"{failedCount} seat(s) lock has expired. Please select seats again.",
+            SeatBookingFailureReason.WrongUser =>
+                $"{failedCount} seat(s) are locked by another user.",
+            SeatBookingFailureReason.AlreadyBooked =>
+                $"{failedCount} seat(s) are already booked.",
+            _ => $"{failedCount} seat(s) cannot be booked."
+        };
 }
-#endif

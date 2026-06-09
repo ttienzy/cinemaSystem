@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Redis-backed seat services are disabled for now; InMemorySeatStatusService is registered in Program.cs. -->
-    <Compile Remove="Infrastructure\Caching\Models\RedisSeatData.cs" />
-    <Compile Remove="Infrastructure\Caching\Services\SeatLockService.cs" />
-    <Compile Remove="Infrastructure\Caching\Services\SeatStatusService.cs" />
     <!-- SignalR hubs are disabled for now. Keep the files for the later realtime pass. -->
     <Compile Remove="Hubs\**\*.cs" />
     <!-- RabbitMQ/MassTransit consumers and cleanup publisher are disabled for now. -->
@@ -29,6 +25,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.8" />
+    <PackageReference Include="StackExchange.Redis" Version="2.13.17" />
   </ItemGroup>
 
   <ItemGroup>

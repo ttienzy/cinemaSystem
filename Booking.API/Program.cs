@@ -10,11 +10,13 @@ using Cys.ServiceDefaults;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.AddNpgsqlDbContext<BookingDbContext>("bookingdb");
+
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -31,7 +33,15 @@ builder.Services.AddScoped<ITicketOperationsService, TicketOperationsService>();
 builder.Services.AddScoped<ITicketOperationResponseFactory, TicketOperationResponseFactory>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IDashboardInsightFactory, DashboardInsightFactory>();
-builder.Services.AddScoped<ISeatStatusService, InMemorySeatStatusService>();
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+{
+    var redisConnectionString = builder.Configuration.GetConnectionString("redis")
+        ?? throw new InvalidOperationException("Redis connection string 'redis' is not configured.");
+
+    return ConnectionMultiplexer.Connect(redisConnectionString);
+});
+builder.Services.AddScoped<ISeatStatusService, SeatStatusService>();
+builder.Services.AddScoped<ISeatLockService, SeatLockService>();
 builder.AddCinemaApiClient();
 builder.AddMovieApiClient();
 builder.AddPaymentApiClient();
@@ -69,7 +79,6 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CustomerOrAdmin", policy => policy.RequireAuthenticatedUser().RequireRole("Customer", "Admin"));
 });
 
-// Redis is intentionally disabled in this refactor. Booking uses InMemorySeatStatusService for now.
 // SignalR hubs are intentionally disabled; hub files are excluded in Booking.API.csproj.
 // RabbitMQ/MassTransit consumers and background event publishing are intentionally disabled.
 

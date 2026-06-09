@@ -1,6 +1,5 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
-using Microsoft.Extensions.Caching.Distributed;
-using System.Text;
+using Booking.API.Infrastructure.Caching.Helpers;
+using StackExchange.Redis;
 
 namespace Booking.API.Infrastructure.Caching.Services;
 
@@ -9,52 +8,57 @@ namespace Booking.API.Infrastructure.Caching.Services;
 /// </summary>
 public class SeatLockService : ISeatLockService
 {
-    private readonly IDistributedCache _cache;
+    private readonly IDatabase _redis;
     private readonly ILogger<SeatLockService> _logger;
 
     public SeatLockService(
-        IDistributedCache cache,
+        IConnectionMultiplexer redis,
         ILogger<SeatLockService> logger)
     {
-        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+        _redis = redis.GetDatabase();
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<bool> TryLockSeatAsync(Guid showtimeId, Guid seatId, string userId, TimeSpan lockDuration)
     {
-        var lockKey = GetLockKey(showtimeId, seatId);
+        var lockKey = RedisHelper.GetLockKey(showtimeId, seatId);
 
         // Check if already locked
-        var existingLock = await _cache.GetStringAsync(lockKey);
-        if (!string.IsNullOrEmpty(existingLock))
-        {
-            // If locked by same user, extend the lock
-            if (existingLock == userId)
-            {
-                await _cache.SetStringAsync(lockKey, userId, new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = lockDuration
-                });
-                _logger.LogInformation("Extended lock for seat {SeatId} in showtime {ShowtimeId} for user {UserId}",
-                    seatId, showtimeId, userId);
-                return true;
-            }
+        var acquired = await _redis.StringSetAsync(
+            key: lockKey,
+            value: userId,
+            expiry: lockDuration,
+            when: When.NotExists
+        );
 
-            _logger.LogWarning("Seat {SeatId} in showtime {ShowtimeId} is already locked by another user",
-                seatId, showtimeId);
-            return false;
+        if (acquired)
+        {
+            _logger.LogInformation(
+                "Locked seat {SeatId} in showtime {ShowtimeId} for user {UserId}",
+                seatId, showtimeId, userId);
+
+            return true;
         }
 
-        // Try to acquire lock
-        await _cache.SetStringAsync(lockKey, userId, new DistributedCacheEntryOptions
+
+        var existingLock = await _redis.StringGetAsync(lockKey);
+
+        if (existingLock == userId)
         {
-            AbsoluteExpirationRelativeToNow = lockDuration
-        });
+            await _redis.KeyExpireAsync(lockKey, lockDuration);
 
-        _logger.LogInformation("Locked seat {SeatId} in showtime {ShowtimeId} for user {UserId} for {Duration} minutes",
-            seatId, showtimeId, userId, lockDuration.TotalMinutes);
+            _logger.LogInformation(
+                "Extended lock for seat {SeatId} in showtime {ShowtimeId} for user {UserId}",
+                seatId, showtimeId, userId);
 
-        return true;
+            return true;
+        }
+
+        _logger.LogWarning(
+            "Seat {SeatId} in showtime {ShowtimeId} is already locked by another user",
+            seatId, showtimeId);
+
+        return false;
     }
 
     public async Task<bool> TryLockSeatsAsync(Guid showtimeId, List<Guid> seatIds, string userId, TimeSpan lockDuration)
@@ -62,10 +66,10 @@ public class SeatLockService : ISeatLockService
         // Check all seats first
         foreach (var seatId in seatIds)
         {
-            var lockKey = GetLockKey(showtimeId, seatId);
-            var existingLock = await _cache.GetStringAsync(lockKey);
+            var lockKey = RedisHelper.GetLockKey(showtimeId, seatId);
+            var existingLock = await _redis.StringGetAsync(lockKey);
 
-            if (!string.IsNullOrEmpty(existingLock) && existingLock != userId)
+            if (existingLock.HasValue && existingLock != userId)
             {
                 _logger.LogWarning("Cannot lock seats - seat {SeatId} is already locked by another user", seatId);
                 return false;
@@ -86,11 +90,11 @@ public class SeatLockService : ISeatLockService
 
     public async Task<bool> UnlockSeatAsync(Guid showtimeId, Guid seatId, string userId)
     {
-        var lockKey = GetLockKey(showtimeId, seatId);
+        var lockKey = RedisHelper.GetLockKey(showtimeId, seatId);
 
         // Verify ownership before unlock
-        var currentLock = await _cache.GetStringAsync(lockKey);
-        if (string.IsNullOrEmpty(currentLock))
+        var currentLock = await _redis.StringGetAsync(lockKey);
+        if (!currentLock.HasValue)
         {
             _logger.LogWarning("Seat {SeatId} in showtime {ShowtimeId} is not locked", seatId, showtimeId);
             return false;
@@ -103,7 +107,7 @@ public class SeatLockService : ISeatLockService
             return false;
         }
 
-        await _cache.RemoveAsync(lockKey);
+        await _redis.KeyDeleteAsync(lockKey);
         _logger.LogInformation("Unlocked seat {SeatId} in showtime {ShowtimeId} for user {UserId}",
             seatId, showtimeId, userId);
 
@@ -128,23 +132,24 @@ public class SeatLockService : ISeatLockService
 
     public async Task<bool> IsSeatLockedAsync(Guid showtimeId, Guid seatId)
     {
-        var lockKey = GetLockKey(showtimeId, seatId);
-        var lockValue = await _cache.GetStringAsync(lockKey);
-        return !string.IsNullOrEmpty(lockValue);
+        var lockKey = RedisHelper.GetLockKey(showtimeId, seatId);
+        var lockValue = await _redis.StringGetAsync(lockKey);
+        return lockValue.HasValue;
     }
 
     public async Task<string?> GetSeatLockOwnerAsync(Guid showtimeId, Guid seatId)
     {
-        var lockKey = GetLockKey(showtimeId, seatId);
-        return await _cache.GetStringAsync(lockKey);
+        var lockKey = RedisHelper.GetLockKey(showtimeId, seatId);
+        var lockValue = await _redis.StringGetAsync(lockKey);
+        return lockValue.HasValue ? lockValue.ToString() : null;
     }
 
     public async Task<bool> ExtendLockAsync(Guid showtimeId, List<Guid> seatIds, string userId, TimeSpan additionalTime)
     {
         foreach (var seatId in seatIds)
         {
-            var lockKey = GetLockKey(showtimeId, seatId);
-            var currentLock = await _cache.GetStringAsync(lockKey);
+            var lockKey = RedisHelper.GetLockKey(showtimeId, seatId);
+            var currentLock = await _redis.StringGetAsync(lockKey);
 
             if (currentLock != userId)
             {
@@ -152,10 +157,7 @@ public class SeatLockService : ISeatLockService
                 return false;
             }
 
-            await _cache.SetStringAsync(lockKey, userId, new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = additionalTime
-            });
+            await _redis.KeyExpireAsync(lockKey, additionalTime);
         }
 
         _logger.LogInformation("Extended lock for {Count} seats in showtime {ShowtimeId} for user {UserId}",
@@ -164,9 +166,4 @@ public class SeatLockService : ISeatLockService
         return true;
     }
 
-    private static string GetLockKey(Guid showtimeId, Guid seatId)
-    {
-        return $"seat-lock:{showtimeId}:{seatId}";
-    }
 }
-#endif

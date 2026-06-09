@@ -6,6 +6,9 @@ var postgres = builder.AddPostgres("postgres")
     .WithDataVolume("cinema-postgres-data")
     .WithPgWeb();
 
+var redis = builder.AddRedis("redis")
+    .WithRedisInsight();
+
 var identityDb = postgres.AddDatabase("identitydb");
 var cinemaDb = postgres.AddDatabase("cinemadb");
 var movieDb = postgres.AddDatabase("moviedb");
@@ -52,10 +55,12 @@ var movie = builder.AddProject<Projects.Movie_API>("movie")
 
 var booking = builder.AddProject<Projects.Booking_API>("booking")
     .WithReference(bookingDb)
+    .WithReference(redis)
     .WithEnvironment("Jwt__Key", jwtKey)
     .WithEnvironment("Jwt__Issuer", jwtIssuer)
     .WithEnvironment("Jwt__Audience", jwtAudience)
-    .WaitFor(bookingDb);
+    .WaitFor(bookingDb)
+    .WaitFor(redis);
 
 var payment = builder.AddProject<Payment_API>("payment")
     .WithReference(paymentDb)

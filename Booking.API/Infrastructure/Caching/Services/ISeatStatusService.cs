@@ -1,4 +1,5 @@
-using Booking.API.Client;
+
+using Booking.API.Infrastructure.Caching.Models;
 
 namespace Booking.API.Infrastructure.Caching.Services;
 
@@ -17,6 +18,11 @@ public interface ISeatStatusService
     /// Initialize seat map for a showtime.
     /// </summary>
     Task InitializeSeatMapAsync(Guid showtimeId, Guid cinemaHallId);
+
+    /// <summary>
+    /// Seed Redis with seat map data prepared by the application layer.
+    /// </summary>
+    Task InitializeSeatMapAsync(Guid showtimeId, Guid cinemaHallId, string cinemaHallName, IReadOnlyCollection<SeatStatusDto> seats);
 
     /// <summary>
     /// Lock seats temporarily for a user (atomic operation)

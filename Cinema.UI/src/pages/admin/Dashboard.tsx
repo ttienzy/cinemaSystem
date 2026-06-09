@@ -4,10 +4,9 @@
 // Trang tổng quan giúp Admin nắm bắt "sức khỏe" của hệ thống.
 // Sử dụng getSummary 1 lần khi load.
 // Polling getKpiSnapshot mỗi 60s để update số liệu nhanh.
-// Kết nối SignalR để nhận real-time hoạt động gần đây (NewBooking).
 // ============================================================
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import {
   Card,
   Row,
@@ -19,7 +18,6 @@ import {
   Timeline,
   Typography,
   Space,
-  Badge,
   Progress,
   Tooltip,
   Spin,
@@ -37,13 +35,10 @@ import {
 } from '@ant-design/icons';
 import { Line, Pie } from '@ant-design/charts';
 import { useQuery } from '@tanstack/react-query';
-import { HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr';
 import dayjs from '../../utils/dayjs';
 import { toLocalDateTime } from '../../utils/dateTime';
-import { dashboardApi, type NewBookingPayload, type RecentActivity, type TopMovie } from '../../api/dashboardApi';
+import { dashboardApi, type TopMovie } from '../../api/dashboardApi';
 import { useAuth } from '../../hooks/useAuth';
-import { getApiGatewayBaseUrl } from '../../utils/apiConfig';
-import { getAccessToken } from '../../utils/tokenStorage';
 
 const { Title, Text } = Typography;
 
@@ -53,19 +48,6 @@ const asNumber = (value: unknown, fallback = 0) => {
 
 const formatMoney = (value: unknown) => `${asNumber(value).toLocaleString('vi-VN')} đ`;
 
-const normalizeRecentActivity = (activity: NewBookingPayload): RecentActivity => {
-  return {
-    bookingId: activity.bookingId ?? activity.BookingId ?? crypto.randomUUID(),
-    showtimeId: activity.showtimeId ?? activity.ShowtimeId ?? '',
-    movieId: activity.movieId ?? activity.MovieId ?? '',
-    movieTitle: activity.movieTitle ?? activity.MovieTitle ?? 'Không rõ phim',
-    customerName: activity.customerName ?? activity.CustomerName ?? 'Khách hàng',
-    amount: asNumber(activity.amount ?? activity.Amount),
-    seatsCount: asNumber(activity.seatsCount ?? activity.SeatsCount),
-    status: activity.status ?? activity.Status ?? 'Completed',
-    occurredAtUtc: activity.occurredAtUtc ?? activity.OccurredAtUtc ?? new Date().toISOString(),
-  };
-};
 
 type RevenueTooltipDatum = {
   revenue?: number;
@@ -78,6 +60,7 @@ const Dashboard: React.FC = () => {
   const { data: summaryRes, isLoading } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: () => dashboardApi.getSummary(),
+    refetchInterval: 60000,
   });
 
   // 2. Polling KPI snapshot mỗi 60s
@@ -90,84 +73,10 @@ const Dashboard: React.FC = () => {
   const summary = summaryRes?.data;
   // Ưu tiên dùng KPI từ snapshot (vì nó được polling), fallback về KPI của summary
   const kpi = kpiSnapshotRes?.data || summary?.kpi;
-
-  // 3. Quản lý trạng thái Real-time (Recent Activities)
-  const [realtimeActivities, setRealtimeActivities] = useState<RecentActivity[]>([]);
-  const [isSignalRConnected, setIsSignalRConnected] = useState(false);
   const summaryActivities = useMemo(() => summary?.recentActivities ?? [], [summary?.recentActivities]);
-  const summaryActivitiesRef = useRef<RecentActivity[]>([]);
-  const displayedActivities = realtimeActivities.length > 0 ? realtimeActivities : summaryActivities;
+  const displayedActivities = summaryActivities;
 
-  useEffect(() => {
-    summaryActivitiesRef.current = summaryActivities;
-  }, [summaryActivities]);
 
-  // 4. Kết nối SignalR
-  useEffect(() => {
-    const gatewayUrl = getApiGatewayBaseUrl();
-    const hubUrl = `${gatewayUrl}/hubs/admin-dashboard`;
-    
-    const connection = new HubConnectionBuilder()
-      .withUrl(hubUrl, {
-        accessTokenFactory: () => getAccessToken() || '',
-      })
-      .withAutomaticReconnect()
-      .configureLogging(LogLevel.Information)
-      .build();
-
-    connection.on('NewBooking', (activity: NewBookingPayload) => {
-      console.log('🔔 Mới có booking:', activity);
-      setRealtimeActivities((prev) => {
-        const currentActivities = prev.length > 0 ? prev : summaryActivitiesRef.current;
-        const normalizedActivity = normalizeRecentActivity(activity);
-        if (normalizedActivity.status !== 'Completed') {
-          return currentActivities;
-        }
-
-        const newActivities = [normalizedActivity, ...currentActivities];
-        return newActivities.slice(0, 10);
-      });
-    });
-
-    connection.onreconnecting((error) => {
-      console.warn('SignalR reconnecting...', error);
-      setIsSignalRConnected(false);
-    });
-
-    connection.onreconnected(async () => {
-      try {
-        await connection.invoke('JoinDashboard');
-        setIsSignalRConnected(true);
-      } catch (error) {
-        console.error('Failed to rejoin dashboard group', error);
-        setIsSignalRConnected(false);
-      }
-    });
-
-    connection.onclose((error) => {
-      console.error('Admin dashboard SignalR closed', error);
-      setIsSignalRConnected(false);
-    });
-
-    connection.start()
-      .then(async () => {
-        console.log('✅ Connected to Admin Dashboard SignalR Hub');
-        await connection.invoke('JoinDashboard');
-        setIsSignalRConnected(true);
-      })
-      .catch((err) => {
-        console.error('❌ SignalR Connection Error: ', err);
-        setIsSignalRConnected(false);
-      });
-
-    return () => {
-      connection.off('NewBooking');
-      if (connection.state === HubConnectionState.Connected) {
-        connection.invoke('LeaveDashboard').catch(e => console.error(e));
-      }
-      connection.stop();
-    };
-  }, []);
 
   // ---- Dữ liệu Biểu đồ ----
   
@@ -281,10 +190,6 @@ const Dashboard: React.FC = () => {
         </div>
         <div>
           <Space size="large">
-            <Badge
-              status={isSignalRConnected ? 'processing' : 'default'}
-              text={isSignalRConnected ? 'SignalR: Connected' : 'SignalR: Disconnected'}
-            />
             <Text type="secondary">Xin chào, <strong>{user?.fullName || user?.email}</strong>!</Text>
           </Space>
         </div>

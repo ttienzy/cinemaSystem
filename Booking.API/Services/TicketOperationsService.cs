@@ -4,6 +4,7 @@ using Booking.API.Repositories;
 using Booking.API.Client;
 using IPaymentApiClient = Payment.API.Client.Client.IPaymentApiClient;
 using DomainBookingStatus = Booking.API.Entities.BookingStatus;
+using Booking.API.Mappers;
 
 namespace Booking.API.Services;
 

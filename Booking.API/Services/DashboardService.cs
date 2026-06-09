@@ -8,6 +8,7 @@ using ICinemaApiClient = Cinema.API.Client.Client.ICinemaApiClient;
 using IMovieApiClient = Movie.API.Client.Client.IMovieApiClient;
 using DomainBookingStatus = Booking.API.Entities.BookingStatus;
 using BookingEntity = Booking.API.Entities.Booking;
+using Booking.API.Mappers;
 
 namespace Booking.API.Services;
 

@@ -3,6 +3,7 @@ using Booking.API.Models;
 using Booking.API.Client;
 using ICinemaApiClient = Cinema.API.Client.Client.ICinemaApiClient;
 using IMovieApiClient = Movie.API.Client.Client.IMovieApiClient;
+using Booking.API.Mappers;
 
 namespace Booking.API.Services;
 

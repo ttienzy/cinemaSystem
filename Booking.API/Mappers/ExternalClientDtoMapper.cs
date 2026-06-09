@@ -7,7 +7,7 @@ using PaymentSearchClientDto = Payment.API.Client.PaymentSearchItemResponse;
 using SeatClientDto = Cinema.API.Client.SeatDto;
 using ShowtimeClientDto = Movie.API.Client.ShowtimeDto;
 
-namespace Booking.API.Services;
+namespace Booking.API.Mappers;
 
 internal static class ExternalClientDtoMapper
 {

@@ -1,4 +1,5 @@
 using Booking.API.Client;
+using Booking.API.Mappers;
 using Booking.API.Models;
 using Booking.API.Repositories;
 using BookingEntity = Booking.API.Entities.Booking;

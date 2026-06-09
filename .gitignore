@@ -22,13 +22,63 @@ bld/
 # Visual Studio cache/options directory
 .vs/
 
+# VS Code workspace settings
+.vscode/
+
+# JetBrains/Rider IDE files
+.idea/
+*.sln.iml
+
 # .NET and NuGet cache
 .dotnet-home/
+
+# Node/Vite dependencies and build output
+node_modules/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # Environment variables
 .env
 .env.local
 .env.*.local
+
+# Local app configuration and secrets
+
+secrets.json
+*.secrets.json
+
+
+# Publish profiles and deployment secrets
+*.pubxml
+*.pubxml.user
+*.publishsettings
+
+# Certificates, private keys, and credential files
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+*.cer
+*.jks
+*.keystore
+credentials.json
+*credentials*.json
+*service-account*.json
+firebase-adminsdk*.json
+google-services.json
+
+# Tunnels and local service config
+ngrok.yml
+ngrok.yaml
 
 
 

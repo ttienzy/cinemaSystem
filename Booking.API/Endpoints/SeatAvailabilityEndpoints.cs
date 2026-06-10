@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Booking.API.Client;
 using Booking.API.Infrastructure.Caching.Services;
+using Booking.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Booking.API.Endpoints;
@@ -38,12 +39,12 @@ public static class SeatAvailabilityEndpoints
 
     private static async Task<IResult> GetSeatAvailability(
         Guid showtimeId,
-        [FromServices] ISeatStatusService seatStatusService,
+        [FromServices] ISeatAvailabilityService seatAvailabilityService,
         [FromServices] ILogger<Program> logger)
     {
         try
         {
-            var availability = await seatStatusService.GetSeatAvailabilityAsync(showtimeId);
+            var availability = await seatAvailabilityService.GetSeatAvailabilityAsync(showtimeId);
 
             return ApiResponse<SeatAvailabilityResponse>
                 .SuccessResponse(availability, "Seat availability retrieved successfully")

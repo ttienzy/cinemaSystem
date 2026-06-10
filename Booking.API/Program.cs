@@ -32,6 +32,7 @@ builder.Services.AddScoped<IBookingCreationPreparationService, BookingCreationPr
 builder.Services.AddScoped<IBookingResponseFactory, BookingResponseFactory>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IBookingAnalyticsService, BookingAnalyticsService>();
+builder.Services.AddScoped<ISeatAvailabilityService, SeatAvailabilityService>();
 builder.Services.AddScoped<ITicketOperationsService, TicketOperationsService>();
 builder.Services.AddScoped<ITicketOperationResponseFactory, TicketOperationResponseFactory>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
@@ -44,7 +45,6 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
     return ConnectionMultiplexer.Connect(redisConnectionString);
 });
 builder.Services.AddScoped<ISeatStatusService, SeatStatusService>();
-builder.Services.AddScoped<ISeatLockService, SeatLockService>();
 builder.Services.AddHostedService<SeatLockCleanupService>();
 builder.Services.AddHostedService<ExpiredBookingCleanupService>();
 builder.AddCinemaApiClient();

@@ -6,7 +6,7 @@ namespace Booking.API.Infrastructure.Caching.Services;
 
 /// <summary>
 /// Redis-only implementation of seat status management.
-/// Upstream application services must seed showtime seat data before reading or mutating it.
+/// Upstream application services own the full availability response and source seat layout from API/DB.
 /// </summary>
 public class SeatStatusService : ISeatStatusService
 {
@@ -32,22 +32,14 @@ public class SeatStatusService : ISeatStatusService
         _keyPrefix = configuration.GetValue<string>("Redis:KeyPrefix") ?? "cinema";
     }
 
-    public async Task<SeatAvailabilityResponse> GetSeatAvailabilityAsync(Guid showtimeId)
+    public async Task<List<SeatStatusDto>> GetCachedSeatStatusesAsync(Guid showtimeId)
     {
         var db = _redis.GetDatabase();
         var seatMapKey = GetSeatMapKey(showtimeId);
-        var metadata = await GetMetadataAsync(db, showtimeId);
 
         if (!await db.KeyExistsAsync(seatMapKey))
         {
-            return new SeatAvailabilityResponse
-            {
-                ShowtimeId = showtimeId,
-                CinemaHallId = metadata?.CinemaHallId ?? Guid.Empty,
-                CinemaHallName = metadata?.CinemaHallName ?? string.Empty,
-                Seats = [],
-                Summary = new SeatAvailabilitySummary()
-            };
+            return [];
         }
 
         var entries = await db.HashGetAllAsync(seatMapKey);
@@ -75,14 +67,7 @@ public class SeatStatusService : ISeatStatusService
             .ThenBy(seat => seat.Number)
             .ToList();
 
-        return new SeatAvailabilityResponse
-        {
-            ShowtimeId = showtimeId,
-            CinemaHallId = metadata?.CinemaHallId ?? Guid.Empty,
-            CinemaHallName = metadata?.CinemaHallName ?? string.Empty,
-            Seats = seats,
-            Summary = BuildSummary(seats)
-        };
+        return seats;
     }
 
     public async Task InitializeSeatMapAsync(Guid showtimeId, Guid cinemaHallId)
@@ -658,15 +643,6 @@ public class SeatStatusService : ISeatStatusService
             Price = seatData.Price,
             LockedBy = seatData.UserId,
             LockedUntil = seatData.LockedUntil
-        };
-
-    private static SeatAvailabilitySummary BuildSummary(IReadOnlyCollection<SeatStatusDto> seats)
-        => new()
-        {
-            TotalSeats = seats.Count,
-            AvailableSeats = seats.Count(seat => seat.Status == SeatStatus.Available),
-            LockedSeats = seats.Count(seat => seat.Status == SeatStatus.Locked),
-            BookedSeats = seats.Count(seat => seat.Status == SeatStatus.Booked)
         };
 
     private static string GetBookingFailureMessage(SeatBookingFailureReason reason, int failedCount)

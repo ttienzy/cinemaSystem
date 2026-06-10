@@ -10,9 +10,10 @@ namespace Booking.API.Infrastructure.Caching.Services;
 public interface ISeatStatusService
 {
     /// <summary>
-    /// Get seat availability for a showtime.
+    /// Get cached Redis seat states for a showtime.
+    /// Application services are responsible for building the full seat availability response.
     /// </summary>
-    Task<SeatAvailabilityResponse> GetSeatAvailabilityAsync(Guid showtimeId);
+    Task<List<SeatStatusDto>> GetCachedSeatStatusesAsync(Guid showtimeId);
 
     /// <summary>
     /// Initialize seat map for a showtime.

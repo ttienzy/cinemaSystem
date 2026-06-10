@@ -407,40 +407,17 @@ public class BookingService : IBookingService
 
     private async Task ExecuteInTransactionAsync(string operationName, Func<Task> action)
     {
-        var transactionStarted = false;
-
         try
         {
-            await _unitOfWork.BeginTransactionAsync();
-            transactionStarted = true;
-
-            await action();
-            await _unitOfWork.SaveChangesAsync();
-            await _unitOfWork.CommitAsync();
+            await _unitOfWork.ExecuteInTransactionAsync(action);
         }
-        catch
-        {
-            if (transactionStarted)
-            {
-                await TryRollbackAsync(operationName);
-            }
-
-            throw;
-        }
-    }
-
-    private async Task TryRollbackAsync(string operationName)
-    {
-        try
-        {
-            await _unitOfWork.RollbackAsync();
-        }
-        catch (Exception rollbackException)
+        catch (Exception exception)
         {
             _logger.LogError(
-                rollbackException,
-                "Rollback failed for booking operation {OperationName}",
+                exception,
+                "Transaction failed for booking operation {OperationName}",
                 operationName);
+            throw;
         }
     }
 

@@ -62,8 +62,9 @@ var payment = builder.AddProject<Payment_API>("payment")
     .WithEnvironment("Jwt__Key", jwtKey)
     .WithEnvironment("Jwt__Issuer", jwtIssuer)
     .WithEnvironment("Jwt__Audience", jwtAudience)
-    .WithEnvironment("Sepay__Merchant__Id", sepayMerchantId)
-    .WithEnvironment("Sepay__Secret__Key", sepayApiKey)
+    .WithEnvironment("SePay__MerchantId", sepayMerchantId)
+    .WithEnvironment("SePay__SecretKey", sepayApiKey)
+    .WithEnvironment("Frontend__BaseUrl", "http://localhost:19877")
     .WaitFor(paymentDb)
     .WaitFor(rabbitmq);
 

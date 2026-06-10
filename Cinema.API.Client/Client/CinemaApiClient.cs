@@ -6,7 +6,7 @@ namespace Cinema.API.Client.Client;
 
 public class CinemaApiClient : ICinemaApiClient
 {
-    private const string ApiPrefix = "api/v1";
+    private const string ApiPrefix = "api";
     private readonly HttpClient _http;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

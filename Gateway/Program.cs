@@ -6,6 +6,27 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+const string CorsPolicyName = "CinemaWebCors";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicyName, policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:19876",
+                "https://localhost:19876",
+                "http://127.0.0.1:19876",
+                "https://127.0.0.1:19876",
+                "http://localhost:5000",
+                "https://localhost:5000",
+                "http://127.0.0.1:5000",
+                "https://127.0.0.1:5000")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // Shared JWT config (Jwt__Key / Jwt__Issuer / Jwt__Audience env vars are injected by AppHost).
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? string.Empty;
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? string.Empty;
@@ -53,6 +74,7 @@ var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
+app.UseCors(CorsPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 

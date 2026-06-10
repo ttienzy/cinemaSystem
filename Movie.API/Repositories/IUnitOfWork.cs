@@ -6,4 +6,5 @@ public interface IUnitOfWork
     Task CommitAsync();
     Task RollbackAsync();
     Task<int> SaveChangesAsync();
+    Task ExecuteInTransactionAsync(Func<Task> action);
 }

@@ -56,17 +56,6 @@ var movie = builder.AddProject<Projects.Movie_API>("movie")
     .WithEnvironment("Cloudinary__ApiSecret", cloudinaryApiSecret)
     .WaitFor(movieDb);
 
-var booking = builder.AddProject<Projects.Booking_API>("booking")
-    .WithReference(bookingDb)
-    .WithReference(redis)
-    .WithReference(rabbitmq)
-    .WithEnvironment("Jwt__Key", jwtKey)
-    .WithEnvironment("Jwt__Issuer", jwtIssuer)
-    .WithEnvironment("Jwt__Audience", jwtAudience)
-    .WaitFor(bookingDb)
-    .WaitFor(redis)
-    .WaitFor(rabbitmq);
-
 var payment = builder.AddProject<Payment_API>("payment")
     .WithReference(paymentDb)
     .WithReference(rabbitmq)
@@ -76,6 +65,20 @@ var payment = builder.AddProject<Payment_API>("payment")
     .WithEnvironment("Sepay__Merchant__Id", sepayMerchantId)
     .WithEnvironment("Sepay__Secret__Key", sepayApiKey)
     .WaitFor(paymentDb)
+    .WaitFor(rabbitmq);
+
+var booking = builder.AddProject<Projects.Booking_API>("booking")
+    .WithReference(bookingDb)
+    .WithReference(cinema)
+    .WithReference(movie)
+    .WithReference(payment)
+    .WithReference(redis)
+    .WithReference(rabbitmq)
+    .WithEnvironment("Jwt__Key", jwtKey)
+    .WithEnvironment("Jwt__Issuer", jwtIssuer)
+    .WithEnvironment("Jwt__Audience", jwtAudience)
+    .WaitFor(bookingDb)
+    .WaitFor(redis)
     .WaitFor(rabbitmq);
 
 var gateway = builder.AddProject<Projects.Gateway>("gateway")
@@ -92,6 +95,10 @@ var gateway = builder.AddProject<Projects.Gateway>("gateway")
     .WaitFor(movie)
     .WaitFor(booking)
     .WaitFor(payment);
+
+movie
+    .WithReference(cinema)
+    .WithReference(booking);
 
 var ngrokDomain = builder.Configuration["Ngrok:Domain"];
 var ngrokGatewayArgs = string.IsNullOrWhiteSpace(ngrokDomain)

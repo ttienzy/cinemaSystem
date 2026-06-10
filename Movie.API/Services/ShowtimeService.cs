@@ -459,24 +459,13 @@ public class ShowtimeService : IShowtimeService
 
     private async Task ExecuteInTransactionAsync(string operationName, Func<Task> action)
     {
-        var transactionStarted = false;
-
         try
         {
-            await _unitOfWork.BeginTransactionAsync();
-            transactionStarted = true;
-
-            await action();
-            await _unitOfWork.SaveChangesAsync();
-            await _unitOfWork.CommitAsync();
+            await _unitOfWork.ExecuteInTransactionAsync(action);
         }
-        catch
+        catch (Exception exception)
         {
-            if (transactionStarted)
-            {
-                await TryRollbackAsync(operationName);
-            }
-
+            _logger.LogError(exception, "Transaction failed for showtime operation {OperationName}", operationName);
             throw;
         }
     }
@@ -494,18 +483,4 @@ public class ShowtimeService : IShowtimeService
         }
     }
 
-    private async Task TryRollbackAsync(string operationName)
-    {
-        try
-        {
-            await _unitOfWork.RollbackAsync();
-        }
-        catch (Exception rollbackException)
-        {
-            _logger.LogError(
-                rollbackException,
-                "Rollback failed for showtime operation {OperationName}",
-                operationName);
-        }
-    }
 }

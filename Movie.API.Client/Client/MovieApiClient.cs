@@ -8,7 +8,7 @@ namespace Movie.API.Client.Client;
 
 public class MovieApiClient : IMovieApiClient
 {
-    private const string ApiPrefix = "api/v1";
+    private const string ApiPrefix = "api";
     private readonly HttpClient _http;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

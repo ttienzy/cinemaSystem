@@ -7,7 +7,7 @@ namespace Booking.API.Client.Client;
 
 public class BookingApiClient : IBookingApiClient
 {
-    private const string ApiPrefix = "api/v1";
+    private const string ApiPrefix = "api";
     private readonly HttpClient _http;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

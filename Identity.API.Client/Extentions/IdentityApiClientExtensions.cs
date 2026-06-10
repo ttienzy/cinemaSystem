@@ -11,17 +11,27 @@ namespace Identity.API.Client.Extentions
     {
         /// <summary>
         /// Registers a typed <see cref="IIdentityApiClient"/> resolved through Aspire service discovery.
-        /// The <paramref name="serviceName"/> must match the name used in AppHost.cs (default: "gateway" — the API gateway).
+        /// The <paramref name="serviceName"/> must match the name used in AppHost.cs (default: "identity").
         /// </summary>
         public static IHttpClientBuilder AddIdentityApiClient(
             this IHostApplicationBuilder builder,
-            string serviceName = "gateway")
+            string serviceName = "identity")
         {
             return builder.Services.AddHttpClient<IIdentityApiClient, IdentityApiClient>(client =>
             {
-                // "https+http://" lets Aspire prefer HTTPS and fall back to HTTP.
-                client.BaseAddress = new Uri($"https+http://{serviceName}");
+                client.BaseAddress = ResolveBaseAddress(builder, serviceName);
             });
+        }
+
+        private static Uri ResolveBaseAddress(IHostApplicationBuilder builder, string serviceName)
+        {
+            var configKey = char.ToUpperInvariant(serviceName[0]) + serviceName[1..];
+            var configuredUrl = builder.Configuration[$"ServiceUrls:{configKey}"]
+                ?? builder.Configuration[$"ServiceUrls:{serviceName}"];
+
+            return new Uri(string.IsNullOrWhiteSpace(configuredUrl)
+                ? $"https+http://{serviceName}"
+                : configuredUrl.TrimEnd('/') + "/");
         }
     }
 

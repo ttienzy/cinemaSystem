@@ -1,7 +1,7 @@
-#if false // Disabled during Payment refactor: RabbitMQ/MassTransit integration is paused.
 using Cinema.Contracts.Events;
 using Payment.API.Client;
 using MassTransit;
+using Payment.API.Services;
 
 namespace Payment.API.Messaging.Consumers;
 
@@ -88,4 +88,3 @@ public class BookingCreatedConsumer : IConsumer<BookingCreatedEvent>
         return "https://localhost:7252";
     }
 }
-#endif

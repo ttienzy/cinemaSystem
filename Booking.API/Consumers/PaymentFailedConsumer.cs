@@ -1,8 +1,9 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
-using Cinema.Contracts.Events;
+
 using Booking.API.Client;
-using MassTransit;
 using Booking.API.Repositories;
+using Booking.API.Services;
+using Cinema.Contracts.Events;
+using MassTransit;
 
 namespace Booking.API.Consumers;
 
@@ -106,4 +107,3 @@ public class PaymentFailedConsumer : IConsumer<PaymentFailedEvent>
         }
     }
 }
-#endif

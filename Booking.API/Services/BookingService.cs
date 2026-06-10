@@ -1,6 +1,8 @@
 using Booking.API.Client;
 using Booking.API.Exceptions;
 using Booking.API.Repositories;
+using Cinema.Contracts.Events;
+using MassTransit;
 using BookingEntity = Booking.API.Entities.Booking;
 
 namespace Booking.API.Services;
@@ -18,6 +20,7 @@ public class BookingService : IBookingService
     private readonly IBookingResponseFactory _bookingResponseFactory;
     private readonly ISeatStatusService _seatStatusService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPublishEndpoint _publishEndpoint;
     private readonly ILogger<BookingService> _logger;
     private readonly IConfiguration _configuration;
 
@@ -27,6 +30,7 @@ public class BookingService : IBookingService
         IBookingResponseFactory bookingResponseFactory,
         ISeatStatusService seatStatusService,
         IUnitOfWork unitOfWork,
+        IPublishEndpoint publishEndpoint,
         ILogger<BookingService> logger,
         IConfiguration configuration)
     {
@@ -35,6 +39,7 @@ public class BookingService : IBookingService
         _bookingResponseFactory = bookingResponseFactory ?? throw new ArgumentNullException(nameof(bookingResponseFactory));
         _seatStatusService = seatStatusService ?? throw new ArgumentNullException(nameof(seatStatusService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
@@ -265,7 +270,6 @@ public class BookingService : IBookingService
             return ApiResponse.InternalServerErrorResponse(BookingException.BOOKING_EXPIRATION_FAILED);
         }
 
-        await TryReleaseSeatsAsync(booking.ShowtimeId, seatIds, nameof(ExpireBookingAsync));
         await TryPublishBookingExpiredEventAsync(booking, seatIds);
 
         _logger.LogInformation("Booking {BookingId} expired successfully", bookingId);
@@ -319,10 +323,22 @@ public class BookingService : IBookingService
         BookingEntity booking,
         CreateBookingRequest request)
     {
-        // RabbitMQ/MassTransit publishing is disabled for the current Booking refactor.
-        // Keep this hook so the event can be restored without changing the service flow.
-        _logger.LogDebug("BookingCreatedEvent publishing skipped for booking {BookingId}", booking.Id);
-        await Task.CompletedTask;
+        _logger.LogInformation("Publishing BookingCreatedEvent for booking {BookingId}", booking.Id);
+
+        await _publishEndpoint.Publish(new BookingCreatedEvent
+        {
+            CorrelationId = booking.Id,
+            BookingId = booking.Id,
+            UserId = booking.UserId,
+            ShowtimeId = booking.ShowtimeId,
+            SeatIds = booking.GetSeatIds(),
+            TotalPrice = booking.TotalPrice,
+            CustomerEmail = request.ContactEmail,
+            CustomerPhone = request.ContactPhone,
+            CustomerName = request.ContactName,
+            CreatedAt = booking.BookingDate,
+            ExpiresAt = booking.ExpiresAt
+        });
     }
 
     private async Task TryReleaseSeatsAsync(
@@ -357,16 +373,36 @@ public class BookingService : IBookingService
         bool needsRefund,
         string reason)
     {
-        // RabbitMQ/MassTransit publishing is disabled for the current Booking refactor.
-        _logger.LogDebug("BookingCancelledEvent publishing skipped for booking {BookingId}", booking.Id);
-        await Task.CompletedTask;
+        _logger.LogInformation("Publishing BookingCancelledEvent for booking {BookingId}", booking.Id);
+
+        await _publishEndpoint.Publish(new BookingCancelledEvent
+        {
+            CorrelationId = booking.Id,
+            BookingId = booking.Id,
+            UserId = booking.UserId,
+            ShowtimeId = booking.ShowtimeId,
+            SeatIds = seatIds,
+            TotalPrice = booking.TotalPrice,
+            NeedsRefund = needsRefund,
+            Reason = reason,
+            CancelledAt = booking.UpdatedAt ?? DateTime.UtcNow
+        });
     }
 
     private async Task TryPublishBookingExpiredEventAsync(BookingEntity booking, List<Guid> seatIds)
     {
-        // RabbitMQ/MassTransit publishing is disabled for the current Booking refactor.
-        _logger.LogDebug("BookingExpiredEvent publishing skipped for booking {BookingId}", booking.Id);
-        await Task.CompletedTask;
+        _logger.LogInformation("Publishing BookingExpiredEvent for booking {BookingId}", booking.Id);
+
+        await _publishEndpoint.Publish(new BookingExpiredEvent
+        {
+            CorrelationId = booking.Id,
+            BookingId = booking.Id,
+            UserId = booking.UserId,
+            ShowtimeId = booking.ShowtimeId,
+            SeatIds = seatIds,
+            TotalPrice = booking.TotalPrice,
+            ExpiredAt = booking.UpdatedAt ?? DateTime.UtcNow
+        });
     }
 
     private async Task ExecuteInTransactionAsync(string operationName, Func<Task> action)

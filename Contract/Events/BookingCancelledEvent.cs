@@ -1,0 +1,14 @@
+namespace Cinema.Contracts.Events;
+
+public class BookingCancelledEvent
+{
+    public Guid CorrelationId { get; set; }
+    public Guid BookingId { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    public Guid ShowtimeId { get; set; }
+    public List<Guid> SeatIds { get; set; } = [];
+    public decimal TotalPrice { get; set; }
+    public bool NeedsRefund { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public DateTime CancelledAt { get; set; }
+}

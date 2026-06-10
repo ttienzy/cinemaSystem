@@ -45,6 +45,11 @@ public interface ISeatStatusService
     Task<bool> ReleaseBookedSeatsAsync(Guid showtimeId, List<Guid> seatIds);
 
     /// <summary>
+    /// Release seats held by a specific booking.
+    /// </summary>
+    Task<bool> ReleaseSeatsForBookingAsync(Guid showtimeId, List<Guid> seatIds, Guid bookingId);
+
+    /// <summary>
     /// Check if seats are available for booking
     /// </summary>
     Task<bool> AreSeatsAvailableAsync(Guid showtimeId, List<Guid> seatIds);

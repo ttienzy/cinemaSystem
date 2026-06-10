@@ -1,7 +1,7 @@
-#if false // Disabled during Payment refactor: RabbitMQ/MassTransit integration is paused.
 using Cinema.Contracts.Events;
 using MassTransit;
 using Payment.API.Entities;
+using Payment.API.Services;
 
 namespace Payment.API.Messaging.Consumers;
 
@@ -75,4 +75,3 @@ public class BookingCancelledConsumer : IConsumer<BookingCancelledEvent>
             message.BookingId);
     }
 }
-#endif

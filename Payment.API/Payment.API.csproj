@@ -6,14 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- RabbitMQ/MassTransit consumers and publisher are disabled for now. -->
-    <Compile Remove="Messaging\Consumers\**\*.cs" />
-    <Compile Remove="Messaging\EventPublishers\PaymentIntegrationEventPublisher.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.3.3" />
+    <PackageReference Include="MassTransit" Version="9.1.2" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="9.1.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
       <PrivateAssets>all</PrivateAssets>
@@ -28,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Cys.ServiceDefaults\Cys.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Payment.API.Client\Payment.API.Client.csproj" />
+    <ProjectReference Include="..\Contract\Contract.csproj" />
   </ItemGroup>
 
 </Project>

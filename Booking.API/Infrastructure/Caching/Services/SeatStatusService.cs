@@ -334,6 +334,30 @@ public class SeatStatusService : ISeatStatusService
         return allReleased;
     }
 
+    public async Task<bool> ReleaseSeatsForBookingAsync(Guid showtimeId, List<Guid> seatIds, Guid bookingId)
+    {
+        var db = _redis.GetDatabase();
+        var seatMapKey = GetSeatMapKey(showtimeId);
+        var allReleased = true;
+
+        foreach (var seatId in seatIds)
+        {
+            var seatKey = GetSeatFieldKey(seatId);
+            var seatData = DeserializeSeat(await db.HashGetAsync(seatMapKey, seatKey));
+
+            if (seatData is null || seatData.BookingId != bookingId)
+            {
+                allReleased = false;
+                continue;
+            }
+
+            seatData.ReleaseBooking();
+            await SaveSeatAsync(db, seatMapKey, seatKey, seatData);
+        }
+
+        return allReleased;
+    }
+
     public async Task<bool> AreSeatsAvailableAsync(Guid showtimeId, List<Guid> seatIds)
     {
         var db = _redis.GetDatabase();

@@ -1,4 +1,3 @@
-#if false // Disabled during Payment refactor: RabbitMQ/MassTransit integration is paused.
 using Cinema.Contracts.Events;
 using MassTransit;
 using Payment.API.Entities;
@@ -36,6 +35,7 @@ public class PaymentIntegrationEventPublisher : IPaymentIntegrationEventPublishe
             Amount = payment.Amount,
             CompletedAt = completedAt,
             CustomerEmail = payment.CustomerEmail,
+            CustomerPhone = payment.CustomerPhone,
             CustomerName = payment.CustomerName
         });
     }
@@ -51,9 +51,12 @@ public class PaymentIntegrationEventPublisher : IPaymentIntegrationEventPublishe
             CorrelationId = payment.BookingId,
             BookingId = payment.BookingId,
             PaymentId = payment.Id,
+            Amount = payment.Amount,
+            CustomerEmail = payment.CustomerEmail,
+            CustomerPhone = payment.CustomerPhone,
+            CustomerName = payment.CustomerName,
             Reason = reason,
             FailedAt = failedAt
         });
     }
 }
-#endif

@@ -1,12 +1,15 @@
 using Cinema.API.Client.Extentions;
 using Movie.API.Client.Extentions;
 using Payment.API.Client.Extentions;
+using Booking.API.Consumers;
 using Booking.API.Data;
 using Booking.API.Endpoints;
+using Booking.API.Infrastructure.BackgroundServices;
 using Booking.API.Infrastructure.Caching.Services;
 using Booking.API.Repositories;
 using Booking.API.Services;
 using Cys.ServiceDefaults;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -42,9 +45,41 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
 });
 builder.Services.AddScoped<ISeatStatusService, SeatStatusService>();
 builder.Services.AddScoped<ISeatLockService, SeatLockService>();
+builder.Services.AddHostedService<SeatLockCleanupService>();
+builder.Services.AddHostedService<ExpiredBookingCleanupService>();
 builder.AddCinemaApiClient();
 builder.AddMovieApiClient();
 builder.AddPaymentApiClient();
+
+builder.Services.AddMassTransit(bus =>
+{
+    bus.AddConsumer<PaymentCompletedConsumer>();
+    bus.AddConsumer<PaymentFailedConsumer>();
+    bus.AddConsumer<BookingExpiredConsumer>();
+
+    bus.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("booking", false));
+
+    bus.AddConfigureEndpointsCallback((_, _, endpoint) =>
+    {
+        endpoint.UseMessageRetry(retry => retry.Interval(3, TimeSpan.FromSeconds(2)));
+
+        if (endpoint is IRabbitMqReceiveEndpointConfigurator rabbitEndpoint)
+        {
+            rabbitEndpoint.Durable = true;
+            rabbitEndpoint.AutoDelete = false;
+        }
+    });
+
+    bus.UsingRabbitMq((context, rabbit) =>
+    {
+        var rabbitMqConnectionString = builder.Configuration.GetConnectionString("rabbitmq")
+            ?? throw new InvalidOperationException("RabbitMQ connection string 'rabbitmq' is not configured.");
+
+        rabbit.Host(new Uri(rabbitMqConnectionString));
+        rabbit.UseMessageRetry(retry => retry.Interval(3, TimeSpan.FromSeconds(2)));
+        rabbit.ConfigureEndpoints(context);
+    });
+});
 
 
 
@@ -80,7 +115,6 @@ builder.Services.AddAuthorization(options =>
 });
 
 // SignalR hubs are intentionally disabled; hub files are excluded in Booking.API.csproj.
-// RabbitMQ/MassTransit consumers and background event publishing are intentionally disabled.
 
 var app = builder.Build();
 

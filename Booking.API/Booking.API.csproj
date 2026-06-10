@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -7,15 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- SignalR hubs are disabled for now. Keep the files for the later realtime pass. -->
+    <!-- SignalR hubs stay disabled for the later realtime pass. -->
     <Compile Remove="Hubs\**\*.cs" />
-    <!-- RabbitMQ/MassTransit consumers and cleanup publisher are disabled for now. -->
-    <Compile Remove="Consumers\**\*.cs" />
-    <Compile Remove="Infrastructure\BackgroundServices\ExpiredBookingCleanupService.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.3.3" />
+    <PackageReference Include="MassTransit" Version="9.1.2" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="9.1.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
       <PrivateAssets>all</PrivateAssets>
@@ -32,6 +31,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Booking.API.Client\Booking.API.Client.csproj" />
     <ProjectReference Include="..\Cinema.API.Client\Cinema.API.Client.csproj" />
+    <ProjectReference Include="..\Contract\Contract.csproj" />
     <ProjectReference Include="..\Cys.ServiceDefaults\Cys.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Movie.API.Client\Movie.API.Client.csproj" />
     <ProjectReference Include="..\Payment.API.Client\Payment.API.Client.csproj" />

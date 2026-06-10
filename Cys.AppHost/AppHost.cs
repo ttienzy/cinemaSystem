@@ -9,6 +9,9 @@ var postgres = builder.AddPostgres("postgres")
 var redis = builder.AddRedis("redis")
     .WithRedisInsight();
 
+var rabbitmq = builder.AddRabbitMQ("rabbitmq")
+    .WithManagementPlugin();
+
 var identityDb = postgres.AddDatabase("identitydb");
 var cinemaDb = postgres.AddDatabase("cinemadb");
 var movieDb = postgres.AddDatabase("moviedb");
@@ -56,20 +59,24 @@ var movie = builder.AddProject<Projects.Movie_API>("movie")
 var booking = builder.AddProject<Projects.Booking_API>("booking")
     .WithReference(bookingDb)
     .WithReference(redis)
+    .WithReference(rabbitmq)
     .WithEnvironment("Jwt__Key", jwtKey)
     .WithEnvironment("Jwt__Issuer", jwtIssuer)
     .WithEnvironment("Jwt__Audience", jwtAudience)
     .WaitFor(bookingDb)
-    .WaitFor(redis);
+    .WaitFor(redis)
+    .WaitFor(rabbitmq);
 
 var payment = builder.AddProject<Payment_API>("payment")
     .WithReference(paymentDb)
+    .WithReference(rabbitmq)
     .WithEnvironment("Jwt__Key", jwtKey)
     .WithEnvironment("Jwt__Issuer", jwtIssuer)
     .WithEnvironment("Jwt__Audience", jwtAudience)
     .WithEnvironment("Sepay__Merchant__Id", sepayMerchantId)
     .WithEnvironment("Sepay__Secret__Key", sepayApiKey)
-    .WaitFor(paymentDb);
+    .WaitFor(paymentDb)
+    .WaitFor(rabbitmq);
 
 var gateway = builder.AddProject<Projects.Gateway>("gateway")
     .WithReference(identity)

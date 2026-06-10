@@ -1,31 +1,30 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
+
+using Booking.API.Services;
 using Cinema.Contracts.Events;
-using Booking.API.Client;
 using MassTransit;
-using Booking.API.Hubs.Services;
 
 namespace Booking.API.Consumers;
 
 public class PaymentCompletedConsumer : IConsumer<PaymentCompletedEvent>
 {
     private readonly IBookingService _bookingService;
-    private readonly IAdminDashboardNotificationService _adminDashboardNotificationService;
+    //private readonly IAdminDashboardNotificationService _adminDashboardNotificationService;
     private readonly ILogger<PaymentCompletedConsumer> _logger;
 
     public PaymentCompletedConsumer(
         IBookingService bookingService,
-        IAdminDashboardNotificationService adminDashboardNotificationService,
+        //IAdminDashboardNotificationService adminDashboardNotificationService,
         ILogger<PaymentCompletedConsumer> logger)
     {
         _bookingService = bookingService;
-        _adminDashboardNotificationService = adminDashboardNotificationService;
+        //_adminDashboardNotificationService = adminDashboardNotificationService;
         _logger = logger;
     }
 
     public async Task Consume(ConsumeContext<PaymentCompletedEvent> context)
     {
         var message = context.Message;
-        
+
         _logger.LogInformation(
             "MassTransit consumed PaymentCompletedEvent for booking {BookingId}, transaction {TransactionId}",
             message.BookingId,
@@ -74,11 +73,21 @@ public class PaymentCompletedConsumer : IConsumer<PaymentCompletedEvent>
     {
         try
         {
-            await _adminDashboardNotificationService.PublishBookingCompletedAsync(
+            // SignalR dashboard notification is intentionally skipped in the RabbitMQ phase.
+            //await _adminDashboardNotificationService.PublishBookingCompletedAsync(
+            //    message.BookingId,
+            //    message.Amount,
+            //    message.CustomerName,
+            //    message.CompletedAt);
+
+            _logger.LogInformation(
+                "Dashboard activity skipped for completed booking {BookingId}, customer {CustomerName}, amount {Amount}, completed at {CompletedAt}",
                 message.BookingId,
-                message.Amount,
                 message.CustomerName,
+                message.Amount,
                 message.CompletedAt);
+
+            await Task.CompletedTask;
         }
         catch (Exception ex)
         {
@@ -88,4 +97,3 @@ public class PaymentCompletedConsumer : IConsumer<PaymentCompletedEvent>
         }
     }
 }
-#endif

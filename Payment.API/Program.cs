@@ -1,4 +1,5 @@
 using Cys.ServiceDefaults;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -6,6 +7,7 @@ using Payment.API.Configuration;
 using Payment.API.Data;
 using Payment.API.Endpoints;
 using Payment.API.Integrations.SePay;
+using Payment.API.Messaging.Consumers;
 using Payment.API.Messaging.EventPublishers;
 using Payment.API.Services;
 
@@ -20,7 +22,37 @@ builder.Services.Configure<SePayOptions>(
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ISePayService, SePayService>();
 builder.Services.AddScoped<ISePayIpnProcessor, SePayIpnProcessor>();
-builder.Services.AddScoped<IPaymentIntegrationEventPublisher, NoOpPaymentIntegrationEventPublisher>();
+builder.Services.AddScoped<IPaymentIntegrationEventPublisher, PaymentIntegrationEventPublisher>();
+
+builder.Services.AddMassTransit(bus =>
+{
+    bus.AddConsumer<BookingCreatedConsumer>();
+    bus.AddConsumer<BookingCancelledConsumer>();
+    bus.AddConsumer<BookingExpiredConsumer>();
+
+    bus.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("payment", false));
+
+    bus.AddConfigureEndpointsCallback((_, _, endpoint) =>
+    {
+        endpoint.UseMessageRetry(retry => retry.Interval(3, TimeSpan.FromSeconds(2)));
+
+        if (endpoint is IRabbitMqReceiveEndpointConfigurator rabbitEndpoint)
+        {
+            rabbitEndpoint.Durable = true;
+            rabbitEndpoint.AutoDelete = false;
+        }
+    });
+
+    bus.UsingRabbitMq((context, rabbit) =>
+    {
+        var rabbitMqConnectionString = builder.Configuration.GetConnectionString("rabbitmq")
+            ?? throw new InvalidOperationException("RabbitMQ connection string 'rabbitmq' is not configured.");
+
+        rabbit.Host(new Uri(rabbitMqConnectionString));
+        rabbit.UseMessageRetry(retry => retry.Interval(3, TimeSpan.FromSeconds(2)));
+        rabbit.ConfigureEndpoints(context);
+    });
+});
 
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? string.Empty;
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? string.Empty;
@@ -51,9 +83,6 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy => policy.RequireAuthenticatedUser().RequireRole("Admin"));
 });
-
-// RabbitMQ/MassTransit is intentionally disabled in this refactor.
-// Consumers and the MassTransit publisher are excluded in Payment.API.csproj.
 
 var app = builder.Build();
 

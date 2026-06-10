@@ -4,8 +4,11 @@ using Payment.API.Client.Extentions;
 using Booking.API.Consumers;
 using Booking.API.Data;
 using Booking.API.Endpoints;
+using Booking.API.Hubs;
+using Booking.API.Hubs.Services;
 using Booking.API.Infrastructure.BackgroundServices;
 using Booking.API.Infrastructure.Caching.Services;
+using Booking.API.Notifications.Email;
 using Booking.API.Repositories;
 using Booking.API.Services;
 using Cys.ServiceDefaults;
@@ -13,9 +16,11 @@ using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.SignalR;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
+const string SignalRCorsPolicy = "SignalRClients";
 
 builder.AddServiceDefaults();
 builder.AddNpgsqlDbContext<BookingDbContext>("bookingdb");
@@ -25,7 +30,34 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
 });
+builder.Services.Configure<EmailOptions>(
+    builder.Configuration.GetSection(EmailOptions.SectionName));
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(SignalRCorsPolicy, policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:19876",
+                "https://localhost:19876",
+                "http://127.0.0.1:19876",
+                "https://127.0.0.1:19876",
+                "http://localhost:19877",
+                "https://localhost:19877",
+                "http://127.0.0.1:19877",
+                "https://127.0.0.1:19877",
+                "http://localhost:5000",
+                "https://localhost:5000",
+                "http://127.0.0.1:5000",
+                "https://127.0.0.1:5000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
+builder.Services.AddSignalR();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IBookingCreationPreparationService, BookingCreationPreparationService>();
@@ -37,6 +69,12 @@ builder.Services.AddScoped<ITicketOperationsService, TicketOperationsService>();
 builder.Services.AddScoped<ITicketOperationResponseFactory, TicketOperationResponseFactory>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IDashboardInsightFactory, DashboardInsightFactory>();
+builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+builder.Services.AddScoped<IBookingConfirmationEmailService, BookingConfirmationEmailService>();
+builder.Services.AddScoped<IConnectionTracker, RedisConnectionTracker>();
+builder.Services.AddSingleton<ISeatNotificationService, SeatNotificationService>();
+builder.Services.AddScoped<IAdminDashboardNotificationService, AdminDashboardNotificationService>();
+builder.Services.AddSingleton<IUserIdProvider, ClaimBasedUserIdProvider>();
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
 {
     var redisConnectionString = builder.Configuration.GetConnectionString("redis")
@@ -106,6 +144,22 @@ builder.Services
             NameClaimType = "sub",
             RoleClaimType = "role"
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrWhiteSpace(accessToken) &&
+                    path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -114,12 +168,11 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CustomerOrAdmin", policy => policy.RequireAuthenticatedUser().RequireRole("Customer", "Admin"));
 });
 
-// SignalR hubs are intentionally disabled; hub files are excluded in Booking.API.csproj.
-
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
+app.UseCors(SignalRCorsPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -128,16 +181,14 @@ app.MapBookingEndpoints();
 app.MapBookingAnalyticsEndpoints();
 app.MapBookingOperationsEndpoints();
 app.MapDashboardEndpoints();
+app.MapHub<SeatHub>("/hubs/seats");
+app.MapHub<BookingHub>("/hubs/booking");
+app.MapHub<AdminDashboardHub>("/hubs/admin-dashboard");
 
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
     await context.Database.MigrateAsync();
 }
-
-// SignalR hub mappings are commented out until realtime dependencies are restored.
-// app.MapHub<SeatHub>("/hubs/seats");
-// app.MapHub<AdminDashboardHub>("/hubs/admin-dashboard");
-// app.MapHub<BookingHub>("/hubs/booking");
 
 app.Run();

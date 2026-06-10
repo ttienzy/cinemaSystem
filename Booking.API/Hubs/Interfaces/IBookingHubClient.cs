@@ -1,4 +1,3 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 namespace Booking.API.Hubs.Interfaces;
 
 /// <summary>
@@ -16,4 +15,3 @@ public interface IBookingHubClient
     /// </summary>
     Task BookingFailed(Guid bookingId, string reason);
 }
-#endif

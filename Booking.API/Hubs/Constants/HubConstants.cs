@@ -1,4 +1,3 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 namespace Booking.API.Hubs.Constants;
 
 public static class HubConstants
@@ -12,4 +11,3 @@ public static class HubConstants
 
     public static readonly TimeSpan DefaultConnectionTrackingTtl = TimeSpan.FromHours(2);
 }
-#endif

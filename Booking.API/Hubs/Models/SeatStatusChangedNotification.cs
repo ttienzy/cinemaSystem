@@ -1,4 +1,3 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 namespace Booking.API.Hubs.Models;
 
 /// <summary>
@@ -13,4 +12,3 @@ public class SeatStatusChangedNotification
     public DateTime? LockedUntil { get; set; }
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }
-#endif

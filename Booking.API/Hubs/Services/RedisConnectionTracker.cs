@@ -1,4 +1,3 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 using Booking.API.Hubs.Builders;
 using Booking.API.Hubs.Constants;
 using StackExchange.Redis;
@@ -104,7 +103,7 @@ public class RedisConnectionTracker : IConnectionTracker
             // Remove connection from all showtime sets
             foreach (var showtimeIdValue in showtimeIds)
             {
-                if (Guid.TryParse(showtimeIdValue, out var showtimeId))
+                if (Guid.TryParse(showtimeIdValue.ToString(), out var showtimeId))
                 {
                     var showtimeKey = RedisHubKeyBuilder.ForShowtimeConnections(_keyPrefix, showtimeId);
                     await db.SetRemoveAsync(showtimeKey, connectionId);
@@ -158,7 +157,7 @@ public class RedisConnectionTracker : IConnectionTracker
             var result = new List<Guid>();
             foreach (var showtimeIdValue in showtimeIds)
             {
-                if (Guid.TryParse(showtimeIdValue, out var showtimeId))
+                if (Guid.TryParse(showtimeIdValue.ToString(), out var showtimeId))
                 {
                     result.Add(showtimeId);
                 }
@@ -175,4 +174,3 @@ public class RedisConnectionTracker : IConnectionTracker
         }
     }
 }
-#endif

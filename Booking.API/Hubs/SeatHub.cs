@@ -4,7 +4,6 @@ using Booking.API.Hubs.Extensions;
 using Booking.API.Hubs.Interfaces;
 using Booking.API.Hubs.Models;
 using Booking.API.Hubs.Services;
-using Booking.API.Infrastructure.Hubs.Models;
 using IMovieApiClient = Movie.API.Client.Client.IMovieApiClient;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;

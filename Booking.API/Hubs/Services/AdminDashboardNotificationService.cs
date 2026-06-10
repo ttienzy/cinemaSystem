@@ -1,14 +1,14 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 using Booking.API.Client;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Booking.API.Entities;
 using Booking.API.Data;
 using Booking.API.Hubs;
 using Booking.API.Hubs.Builders;
 using Booking.API.Hubs.Interfaces;
+using Booking.API.Mappers;
 using Booking.API.Services;
 using IMovieApiClient = Movie.API.Client.Client.IMovieApiClient;
+using DomainBookingStatus = Booking.API.Entities.BookingStatus;
 
 namespace Booking.API.Hubs.Services;
 
@@ -48,7 +48,7 @@ public class AdminDashboardNotificationService : IAdminDashboardNotificationServ
             return;
         }
 
-        if (booking.Status is not BookingStatus.Confirmed and not BookingStatus.CheckedIn)
+        if (booking.Status is not DomainBookingStatus.Confirmed and not DomainBookingStatus.CheckedIn)
         {
             _logger.LogInformation(
                 "Skipping dashboard activity broadcast for booking {BookingId} because status is {Status}.",
@@ -90,4 +90,3 @@ public class AdminDashboardNotificationService : IAdminDashboardNotificationServ
             .NewBooking(activity);
     }
 }
-#endif

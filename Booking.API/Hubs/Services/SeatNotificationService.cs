@@ -1,9 +1,8 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 using Booking.API.Hubs;
 using Booking.API.Hubs.Builders;
 using Booking.API.Hubs.Constants;
 using Booking.API.Hubs.Interfaces;
-using Booking.API.Infrastructure.Hubs.Models;
+using Booking.API.Hubs.Models;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Booking.API.Hubs.Services;
@@ -190,4 +189,3 @@ public class SeatNotificationService : ISeatNotificationService
         }
     }
 }
-#endif

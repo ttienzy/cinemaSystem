@@ -1,4 +1,5 @@
 
+using Booking.API.Notifications.Email;
 using Booking.API.Services;
 using Cinema.Contracts.Events;
 using MassTransit;
@@ -8,15 +9,18 @@ namespace Booking.API.Consumers;
 public class PaymentCompletedConsumer : IConsumer<PaymentCompletedEvent>
 {
     private readonly IBookingService _bookingService;
+    private readonly IBookingConfirmationEmailService _bookingConfirmationEmailService;
     //private readonly IAdminDashboardNotificationService _adminDashboardNotificationService;
     private readonly ILogger<PaymentCompletedConsumer> _logger;
 
     public PaymentCompletedConsumer(
         IBookingService bookingService,
+        IBookingConfirmationEmailService bookingConfirmationEmailService,
         //IAdminDashboardNotificationService adminDashboardNotificationService,
         ILogger<PaymentCompletedConsumer> logger)
     {
         _bookingService = bookingService;
+        _bookingConfirmationEmailService = bookingConfirmationEmailService;
         //_adminDashboardNotificationService = adminDashboardNotificationService;
         _logger = logger;
     }
@@ -43,6 +47,7 @@ public class PaymentCompletedConsumer : IConsumer<PaymentCompletedEvent>
                     "Successfully confirmed booking {BookingId} after payment completion",
                     message.BookingId);
 
+                await SendConfirmationEmailAsync(message, context.CancellationToken);
                 await PublishDashboardActivityAsync(message);
             }
             else
@@ -66,6 +71,24 @@ public class PaymentCompletedConsumer : IConsumer<PaymentCompletedEvent>
                 message.BookingId);
 
             throw; // Re-throw to trigger MassTransit retry
+        }
+    }
+
+    private async Task SendConfirmationEmailAsync(
+        PaymentCompletedEvent message,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _bookingConfirmationEmailService.SendPaymentCompletedEmailAsync(message, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Booking {BookingId} was confirmed but confirmation email could not be sent to {CustomerEmail}",
+                message.BookingId,
+                message.CustomerEmail);
         }
     }
 

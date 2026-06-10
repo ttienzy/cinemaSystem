@@ -1,11 +1,14 @@
 import { ArrowLeftOutlined, ShoppingCartOutlined } from '@ant-design/icons';
 import { Alert, App, Badge, Button, Empty, Skeleton, Space, Statistic, Tag, Typography } from 'antd';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import dayjs from 'dayjs';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { bookingApi, type SeatStatusDto } from '../../features/booking/bookingApi';
 import { useBookingStore } from '../../features/booking/bookingStore';
+import { getAccessToken } from '../../shared/auth/tokenStorage';
+import { getApiGatewayBaseUrl } from '../../shared/utils/apiConfig';
 
 const { Title, Text } = Typography;
 
@@ -38,6 +41,44 @@ export default function SeatSelectionPage() {
     enabled: Boolean(showtimeId),
     refetchInterval: 10000,
   });
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!showtimeId || !token) return;
+
+    const connection = new HubConnectionBuilder()
+      .withUrl(`${getApiGatewayBaseUrl()}/hubs/seats`, {
+        accessTokenFactory: () => getAccessToken() ?? '',
+      })
+      .withAutomaticReconnect()
+      .configureLogging(LogLevel.Warning)
+      .build();
+
+    const refreshSeats = () => {
+      void availabilityQuery.refetch();
+    };
+
+    connection.on('SeatLocked', refreshSeats);
+    connection.on('SeatUnlocked', refreshSeats);
+    connection.on('SeatBooked', refreshSeats);
+    connection.on('SeatReleased', refreshSeats);
+
+    void connection
+      .start()
+      .then(() => connection.invoke('JoinShowtime', showtimeId))
+      .catch(() => {
+        // Polling remains the fallback if realtime cannot connect.
+      });
+
+    return () => {
+      void connection
+        .invoke('LeaveShowtime', showtimeId)
+        .catch(() => undefined)
+        .finally(() => {
+          void connection.stop();
+        });
+    };
+  }, [availabilityQuery.refetch, showtimeId]);
 
   const availability = availabilityQuery.data?.data;
   const seats = availability?.seats ?? [];

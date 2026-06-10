@@ -1,4 +1,3 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 namespace Booking.API.Hubs.Models;
 
 public sealed class HubOperationResult
@@ -22,4 +21,3 @@ public sealed class HubOperationResult
             Message = message
         };
 }
-#endif

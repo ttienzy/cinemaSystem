@@ -1,4 +1,3 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 namespace Booking.API.Hubs.Constants;
 
 public static class HubOperationErrorCodes
@@ -10,4 +9,3 @@ public static class HubOperationErrorCodes
     public const string JoinBookingGroupFailed = "join_booking_group_failed";
     public const string LeaveBookingGroupFailed = "leave_booking_group_failed";
 }
-#endif

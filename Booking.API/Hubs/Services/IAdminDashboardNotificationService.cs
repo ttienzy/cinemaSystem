@@ -1,4 +1,3 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 namespace Booking.API.Hubs.Services;
 
 public interface IAdminDashboardNotificationService
@@ -10,4 +9,3 @@ public interface IAdminDashboardNotificationService
         DateTime occurredAtUtc,
         CancellationToken cancellationToken = default);
 }
-#endif

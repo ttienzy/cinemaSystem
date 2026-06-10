@@ -32,6 +32,13 @@ var cloudinaryApiSecret = builder.AddParameter("cloudinary-api-secret", secret: 
 var sepayMerchantId = builder.AddParameter("sepay-merchant-id");
 var sepayApiKey = builder.AddParameter("sepay-secret-key", secret: true);
 
+// Email shared configuration: SMTP settings for booking confirmation emails.
+var emailSmtpHost = builder.AddParameter("email-smtp-host");
+var emailSmtpPort = builder.AddParameter("email-smtp-port");
+var emailSmtpUsername = builder.AddParameter("email-smtp-username");
+var emailSmtpPassword = builder.AddParameter("email-smtp-password", secret: true);
+var emailFrom = builder.AddParameter("email-from");
+
 var identity = builder.AddProject<Projects.Identity_API>("identity")
     .WithReference(identityDb)
     .WithEnvironment("Jwt__Key", jwtKey)
@@ -78,6 +85,11 @@ var booking = builder.AddProject<Projects.Booking_API>("booking")
     .WithEnvironment("Jwt__Key", jwtKey)
     .WithEnvironment("Jwt__Issuer", jwtIssuer)
     .WithEnvironment("Jwt__Audience", jwtAudience)
+    .WithEnvironment("Email__Smtp__Host", emailSmtpHost)
+    .WithEnvironment("Email__Smtp__Port", emailSmtpPort)
+    .WithEnvironment("Email__Smtp__Username", emailSmtpUsername)
+    .WithEnvironment("Email__Smtp__Password", emailSmtpPassword)
+    .WithEnvironment("Email__Smtp__From", emailFrom)
     .WaitFor(bookingDb)
     .WaitFor(redis)
     .WaitFor(rabbitmq);

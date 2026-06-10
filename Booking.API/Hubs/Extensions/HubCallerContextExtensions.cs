@@ -1,4 +1,3 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 using Booking.API.Hubs.Constants;
 using Microsoft.AspNetCore.SignalR;
 
@@ -11,4 +10,3 @@ public static class HubCallerContextExtensions
             ? HubConstants.AnonymousUser
             : context.UserIdentifier;
 }
-#endif

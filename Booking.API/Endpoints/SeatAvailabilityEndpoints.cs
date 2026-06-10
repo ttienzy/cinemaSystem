@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Booking.API.Client;
+using Booking.API.Hubs.Services;
 using Booking.API.Infrastructure.Caching.Services;
 using Booking.API.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -69,6 +70,8 @@ public static class SeatAvailabilityEndpoints
         [FromBody] LockSeatsRequest request,
         ClaimsPrincipal user,
         [FromServices] ISeatStatusService seatStatusService,
+        [FromServices] ISeatNotificationService seatNotificationService,
+        [FromServices] IConfiguration configuration,
         [FromServices] ILogger<Program> logger)
     {
         var userId = GetUserId(user);
@@ -87,6 +90,14 @@ public static class SeatAvailabilityEndpoints
         try
         {
             var result = await seatStatusService.LockSeatsAsync(showtimeId, request.SeatIds, request.UserId);
+            if (result.Success)
+            {
+                await seatNotificationService.NotifySeatLockedAsync(
+                    showtimeId,
+                    result.LockedSeats.Count > 0 ? result.LockedSeats : request.SeatIds,
+                    request.UserId,
+                    DateTime.UtcNow.AddMinutes(configuration.GetValue<int>("SeatLock:LockDurationMinutes", 10)));
+            }
 
             return result.Success
                 ? ApiResponse<SeatLockResult>.SuccessResponse(result, "Seats locked successfully").ToResult()
@@ -106,6 +117,7 @@ public static class SeatAvailabilityEndpoints
         [FromBody] UnlockSeatsRequest request,
         ClaimsPrincipal user,
         [FromServices] ISeatStatusService seatStatusService,
+        [FromServices] ISeatNotificationService seatNotificationService,
         [FromServices] ILogger<Program> logger)
     {
         var userId = GetUserId(user);
@@ -129,6 +141,10 @@ public static class SeatAvailabilityEndpoints
         try
         {
             var success = await seatStatusService.UnlockSeatsAsync(showtimeId, request.SeatIds, request.UserId);
+            if (success)
+            {
+                await seatNotificationService.NotifySeatUnlockedAsync(showtimeId, request.SeatIds);
+            }
 
             return success
                 ? ApiResponse<bool>.SuccessResponse(true, "Seats unlocked successfully").ToResult()

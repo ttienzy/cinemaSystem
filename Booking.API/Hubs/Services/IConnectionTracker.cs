@@ -1,4 +1,3 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 namespace Booking.API.Hubs.Services;
 
 /// <summary>
@@ -31,4 +30,3 @@ public interface IConnectionTracker
     /// </summary>
     Task<List<Guid>> GetShowtimesForConnectionAsync(string connectionId);
 }
-#endif

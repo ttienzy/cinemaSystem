@@ -1,5 +1,6 @@
 using Booking.API.Client;
 using Booking.API.Exceptions;
+using Booking.API.Hubs.Services;
 using Booking.API.Repositories;
 using Cinema.Contracts.Events;
 using MassTransit;
@@ -21,6 +22,7 @@ public class BookingService : IBookingService
     private readonly ISeatStatusService _seatStatusService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPublishEndpoint _publishEndpoint;
+    private readonly ISeatNotificationService _seatNotificationService;
     private readonly ILogger<BookingService> _logger;
     private readonly IConfiguration _configuration;
 
@@ -31,6 +33,7 @@ public class BookingService : IBookingService
         ISeatStatusService seatStatusService,
         IUnitOfWork unitOfWork,
         IPublishEndpoint publishEndpoint,
+        ISeatNotificationService seatNotificationService,
         ILogger<BookingService> logger,
         IConfiguration configuration)
     {
@@ -40,6 +43,7 @@ public class BookingService : IBookingService
         _seatStatusService = seatStatusService ?? throw new ArgumentNullException(nameof(seatStatusService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
+        _seatNotificationService = seatNotificationService ?? throw new ArgumentNullException(nameof(seatNotificationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
@@ -100,6 +104,7 @@ public class BookingService : IBookingService
 
         _logger.LogInformation("Booking {BookingId} created successfully", booking.Id);
 
+        await _seatNotificationService.NotifySeatBookedAsync(booking.ShowtimeId, booking.GetSeatIds());
         await TryPublishBookingCreatedEventAsync(booking, request);
         var response = await _bookingResponseFactory.CreateAsync(booking);
 
@@ -355,7 +360,10 @@ public class BookingService : IBookingService
                     "Seat release returned false for booking operation {OperationName}, showtime {ShowtimeId}",
                     operationName,
                     showtimeId);
+                return;
             }
+
+            await _seatNotificationService.NotifySeatReleasedAsync(showtimeId, seatIds);
         }
         catch (Exception ex)
         {

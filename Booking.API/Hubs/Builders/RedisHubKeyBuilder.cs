@@ -1,4 +1,3 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 namespace Booking.API.Hubs.Builders;
 
 public static class RedisHubKeyBuilder
@@ -9,4 +8,3 @@ public static class RedisHubKeyBuilder
     public static string ForConnectionShowtimes(string keyPrefix, string connectionId)
         => $"{keyPrefix}:signalr:connection:{connectionId}:showtimes";
 }
-#endif

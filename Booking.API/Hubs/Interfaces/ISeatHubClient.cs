@@ -1,4 +1,3 @@
-#if false // Disabled during Booking refactor: Redis/SignalR/RabbitMQ integration is paused.
 using Booking.API.Hubs.Models;
 
 namespace Booking.API.Hubs.Interfaces;
@@ -34,4 +33,3 @@ public interface ISeatHubClient
     /// </summary>
     Task ViewerCountUpdated(ViewerCountNotification notification);
 }
-#endif

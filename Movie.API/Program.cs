@@ -43,6 +43,8 @@ builder.Services.AddScoped<IGenreRepository, GenreRepository>();
 builder.Services.AddScoped<IShowtimeRepository, ShowtimeRepository>();
 builder.Services.AddScoped<IMovieService, MovieService>();
 builder.Services.AddScoped<IMovieAIService, MovieAIService>();
+builder.Services.AddScoped<IMovieAIBackfillService, MovieAIBackfillService>();
+builder.Services.AddScoped<IMovieSearchService, MovieSearchService>();
 builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<IFileStorageService, CloudinaryFileStorageService>();

@@ -47,6 +47,12 @@ public class Movie
         SetBasicInfo(title, description, duration, language, releaseDate, posterUrl);
     }
 
+    public void SetEmbedding(Vector? embedding)
+    {
+        Embedding = embedding;
+        EmbeddingUpdatedAt = embedding is null ? null : DateTime.UtcNow;
+    }
+
     public void SetGenres(IEnumerable<Guid> genreIds)
     {
         MovieGenres = genreIds

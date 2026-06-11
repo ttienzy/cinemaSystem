@@ -1,6 +1,7 @@
 using Movie.API.Client;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Movie.API.AI;
 using Movie.API.Exceptions;
 using Movie.API.Mappers;
 using Movie.API.Repositories;
@@ -14,17 +15,20 @@ public class MovieService : IMovieService
     private readonly IMovieRepository _movieRepository;
     private readonly IGenreRepository _genreRepository;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IMovieAIService _movieAIService;
     private readonly ILogger<MovieService> _logger;
 
     public MovieService(
         IMovieRepository movieRepository,
         IGenreRepository genreRepository,
         IFileStorageService fileStorageService,
+        IMovieAIService movieAIService,
         ILogger<MovieService> logger)
     {
         _movieRepository = movieRepository;
         _genreRepository = genreRepository;
         _fileStorageService = fileStorageService;
+        _movieAIService = movieAIService;
         _logger = logger;
     }
 
@@ -176,6 +180,9 @@ public class MovieService : IMovieService
             posterUrlResult.Data,
             normalizedGenreIds);
 
+        var embedding = await _movieAIService.GenerateMovieEmbeddingAsync(request.Title, request.Description);
+        movie.SetEmbedding(embedding);
+
         var created = await _movieRepository.CreateAsync(movie);
         var dto = created.MovieMapToDto(DateTime.UtcNow);
 
@@ -225,6 +232,7 @@ public class MovieService : IMovieService
             posterUrl = posterUrlResult.Data;
         }
 
+        var shouldUpdateEmbedding = HasEmbeddingInputChanged(existing, request.Title, request.Description);
         var movie = new MovieEntity();
         movie.UpdateDetails(
             request.Title,
@@ -234,7 +242,13 @@ public class MovieService : IMovieService
             request.ReleaseDate,
             posterUrl);
 
-        var updated = await _movieRepository.UpdateAsync(id, movie, normalizedGenreIds);
+        if (shouldUpdateEmbedding)
+        {
+            var embedding = await _movieAIService.GenerateMovieEmbeddingAsync(request.Title, request.Description);
+            movie.SetEmbedding(embedding);
+        }
+
+        var updated = await _movieRepository.UpdateAsync(id, movie, normalizedGenreIds, shouldUpdateEmbedding);
         var dto = updated!.MovieMapToDto(DateTime.UtcNow);
 
         return ApiResponse<MovieDto>.SuccessResponse(dto, MovieException.MOVIE_UPDATED_SUCCESSFULLY);
@@ -321,6 +335,12 @@ public class MovieService : IMovieService
                 [new ErrorDetail(value.Item1, value.Item2, value.Item3)]
             );
         }
+    }
+
+    private static bool HasEmbeddingInputChanged(MovieEntity existing, string title, string? description)
+    {
+        return !string.Equals(existing.Title, title, StringComparison.Ordinal) ||
+            !string.Equals(existing.Description ?? string.Empty, description ?? string.Empty, StringComparison.Ordinal);
     }
 }
 

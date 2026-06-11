@@ -22,6 +22,21 @@ public class MovieApiClient : IMovieApiClient
         return GetAsync<PaginatedResponse<MovieDto>>($"{ApiPrefix}/movies?pageNumber={pageNumber}&pageSize={pageSize}", cancellationToken);
     }
 
+    public Task<ApiResponse<MovieSearchResponseDto>> SearchMoviesAsync(
+        string query,
+        int pageNumber = 1,
+        int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var queryString = new QueryStringBuilder()
+            .Add("query", query)
+            .Add("pageNumber", pageNumber.ToString(CultureInfo.InvariantCulture))
+            .Add("pageSize", pageSize.ToString(CultureInfo.InvariantCulture))
+            .ToString();
+
+        return GetAsync<MovieSearchResponseDto>($"{ApiPrefix}/movies/search{queryString}", cancellationToken);
+    }
+
     public Task<ApiResponse<MovieDetailDto>> GetMovieByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return GetAsync<MovieDetailDto>($"{ApiPrefix}/movies/{id}", cancellationToken);
@@ -49,6 +64,15 @@ public class MovieApiClient : IMovieApiClient
     public Task<ApiResponse<MovieAdminSummaryDto>> GetMovieAdminSummaryAsync(CancellationToken cancellationToken = default)
     {
         return GetAsync<MovieAdminSummaryDto>($"{ApiPrefix}/movies/admin/summary", cancellationToken);
+    }
+
+    public Task<ApiResponse<MovieEmbeddingRebuildResponseDto>> RebuildMovieEmbeddingsAsync(
+        int limit = 50,
+        CancellationToken cancellationToken = default)
+    {
+        return SendAsync<MovieEmbeddingRebuildResponseDto>(
+            new HttpRequestMessage(HttpMethod.Post, $"{ApiPrefix}/movies/admin/embeddings/rebuild?limit={limit}"),
+            cancellationToken);
     }
 
     public Task<ApiResponse<List<MovieDto>>> GetMoviesByGenreAsync(Guid genreId, CancellationToken cancellationToken = default)

@@ -1,11 +1,18 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Card, Col, Empty, Image, Row, Skeleton, Space, Tabs, Tag } from 'antd';
-import { CalendarOutlined, ClockCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { Button, Card, Col, Empty, Image, Input, Row, Skeleton, Space, Tabs, Tag } from 'antd';
+import { CalendarOutlined, ClockCircleOutlined, PlayCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { movieApi, type Movie } from '../../features/movies/movieApi';
 import { formatDate } from '../../shared/utils/format';
+
+const searchSuggestions = [
+  'space adventure',
+  'family drama',
+  'light horror',
+  'animated weekend',
+];
 
 function isShowing(movie: Movie): boolean {
   return dayjs(movie.releaseDate).isBefore(dayjs()) || dayjs(movie.releaseDate).isSame(dayjs(), 'day');
@@ -53,6 +60,7 @@ function MovieGrid({ movies }: { movies: Movie[] }) {
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const [search, setSearch] = useState('');
   const moviesQuery = useQuery({
     queryKey: ['customer-movies'],
     queryFn: () => movieApi.getMovies(1, 100),
@@ -62,6 +70,16 @@ export default function HomePage() {
   const showingMovies = useMemo(() => movies.filter(isShowing), [movies]);
   const comingSoonMovies = useMemo(() => movies.filter((movie) => !isShowing(movie)), [movies]);
   const featuredMovie = showingMovies[0] ?? movies[0];
+
+  const openSearch = (value: string) => {
+    const query = value.trim();
+    if (!query) {
+      navigate('/movies');
+      return;
+    }
+
+    navigate(`/movies?query=${encodeURIComponent(query)}`);
+  };
 
   if (moviesQuery.isLoading) {
     return (
@@ -80,6 +98,25 @@ export default function HomePage() {
         <div>
           <h1>{featuredMovie?.title ?? 'Cinema Web'}</h1>
           <p>{featuredMovie?.description ?? 'Find movies, choose seats, and book tickets online.'}</p>
+          <div className="home-search">
+            <Input.Search
+              size="large"
+              allowClear
+              enterButton="Search"
+              prefix={<SearchOutlined />}
+              placeholder="What kind of movie do you want?"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onSearch={openSearch}
+            />
+            <Space wrap className="home-search-chips">
+              {searchSuggestions.map((suggestion) => (
+                <Button key={suggestion} ghost size="small" onClick={() => openSearch(suggestion)}>
+                  {suggestion}
+                </Button>
+              ))}
+            </Space>
+          </div>
           <Space>
             <Button type="primary" size="large" icon={<PlayCircleOutlined />} onClick={() => featuredMovie && navigate(`/movies/${featuredMovie.id}`)}>
               Book now

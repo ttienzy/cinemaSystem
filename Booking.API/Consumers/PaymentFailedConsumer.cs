@@ -1,5 +1,6 @@
 
 using Booking.API.Client;
+using Booking.API.Hubs.Services;
 using Booking.API.Repositories;
 using Booking.API.Services;
 using Cinema.Contracts.Events;
@@ -11,15 +12,18 @@ public class PaymentFailedConsumer : IConsumer<PaymentFailedEvent>
 {
     private readonly IBookingService _bookingService;
     private readonly IBookingRepository _bookingRepository;
+    private readonly IBookingNotificationService _bookingNotificationService;
     private readonly ILogger<PaymentFailedConsumer> _logger;
 
     public PaymentFailedConsumer(
         IBookingService bookingService,
         IBookingRepository bookingRepository,
+        IBookingNotificationService bookingNotificationService,
         ILogger<PaymentFailedConsumer> logger)
     {
         _bookingService = bookingService;
         _bookingRepository = bookingRepository;
+        _bookingNotificationService = bookingNotificationService;
         _logger = logger;
     }
 
@@ -68,6 +72,11 @@ public class PaymentFailedConsumer : IConsumer<PaymentFailedEvent>
                 _logger.LogInformation(
                     "Successfully cancelled booking {BookingId} after payment failure. Seats released.",
                     message.BookingId);
+
+                await _bookingNotificationService.NotifyBookingFailedAsync(
+                    message.BookingId,
+                    message.Reason,
+                    context.CancellationToken);
             }
             else
             {

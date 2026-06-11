@@ -1,4 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { useEffect } from 'react';
 import {
   CalendarOutlined,
   DollarOutlined,
@@ -10,6 +12,8 @@ import {
 import { Button, Card, Col, Empty, Progress, Row, Space, Statistic, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { dashboardApi, type RevenuePoint } from '../../features/dashboard/dashboardApi';
+import { getAccessToken } from '../../shared/auth/tokenStorage';
+import { getApiGatewayBaseUrl } from '../../shared/utils/apiConfig';
 import { formatDateTime, formatMoney } from '../../shared/utils/format';
 
 const { Text } = Typography;
@@ -30,6 +34,42 @@ export default function DashboardPage() {
   const summary = summaryQuery.data?.data;
   const kpi = kpiQuery.data?.data ?? summary?.kpi;
   const loading = summaryQuery.isLoading || kpiQuery.isLoading;
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    const connection = new HubConnectionBuilder()
+      .withUrl(`${getApiGatewayBaseUrl()}/hubs/admin-dashboard`, {
+        accessTokenFactory: () => getAccessToken() ?? '',
+      })
+      .withAutomaticReconnect()
+      .configureLogging(LogLevel.Warning)
+      .build();
+
+    const refreshDashboard = () => {
+      void summaryQuery.refetch();
+      void kpiQuery.refetch();
+    };
+
+    connection.on('NewBooking', refreshDashboard);
+
+    void connection
+      .start()
+      .then(() => connection.invoke('JoinDashboard'))
+      .catch(() => {
+        // Polling remains the fallback if realtime cannot connect.
+      });
+
+    return () => {
+      void connection
+        .invoke('LeaveDashboard')
+        .catch(() => undefined)
+        .finally(() => {
+          void connection.stop();
+        });
+    };
+  }, [kpiQuery.refetch, summaryQuery.refetch]);
 
   const revenueColumns: ColumnsType<RevenuePoint> = [
     { title: 'Period', dataIndex: 'label' },

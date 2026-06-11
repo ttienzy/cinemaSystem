@@ -1,4 +1,5 @@
 
+using Booking.API.Hubs.Services;
 using Booking.API.Notifications.Email;
 using Booking.API.Services;
 using Cinema.Contracts.Events;
@@ -10,18 +11,21 @@ public class PaymentCompletedConsumer : IConsumer<PaymentCompletedEvent>
 {
     private readonly IBookingService _bookingService;
     private readonly IBookingConfirmationEmailService _bookingConfirmationEmailService;
-    //private readonly IAdminDashboardNotificationService _adminDashboardNotificationService;
+    private readonly IBookingNotificationService _bookingNotificationService;
+    private readonly IAdminDashboardNotificationService _adminDashboardNotificationService;
     private readonly ILogger<PaymentCompletedConsumer> _logger;
 
     public PaymentCompletedConsumer(
         IBookingService bookingService,
         IBookingConfirmationEmailService bookingConfirmationEmailService,
-        //IAdminDashboardNotificationService adminDashboardNotificationService,
+        IBookingNotificationService bookingNotificationService,
+        IAdminDashboardNotificationService adminDashboardNotificationService,
         ILogger<PaymentCompletedConsumer> logger)
     {
         _bookingService = bookingService;
         _bookingConfirmationEmailService = bookingConfirmationEmailService;
-        //_adminDashboardNotificationService = adminDashboardNotificationService;
+        _bookingNotificationService = bookingNotificationService;
+        _adminDashboardNotificationService = adminDashboardNotificationService;
         _logger = logger;
     }
 
@@ -47,8 +51,9 @@ public class PaymentCompletedConsumer : IConsumer<PaymentCompletedEvent>
                     "Successfully confirmed booking {BookingId} after payment completion",
                     message.BookingId);
 
+                await NotifyBookingConfirmedAsync(message, context.CancellationToken);
                 await SendConfirmationEmailAsync(message, context.CancellationToken);
-                await PublishDashboardActivityAsync(message);
+                await PublishDashboardActivityAsync(message, context.CancellationToken);
             }
             else
             {
@@ -74,6 +79,16 @@ public class PaymentCompletedConsumer : IConsumer<PaymentCompletedEvent>
         }
     }
 
+    private async Task NotifyBookingConfirmedAsync(
+        PaymentCompletedEvent message,
+        CancellationToken cancellationToken)
+    {
+        await _bookingNotificationService.NotifyBookingConfirmedAsync(
+            message.BookingId,
+            "Confirmed",
+            cancellationToken);
+    }
+
     private async Task SendConfirmationEmailAsync(
         PaymentCompletedEvent message,
         CancellationToken cancellationToken)
@@ -92,29 +107,22 @@ public class PaymentCompletedConsumer : IConsumer<PaymentCompletedEvent>
         }
     }
 
-    private async Task PublishDashboardActivityAsync(PaymentCompletedEvent message)
+    private async Task PublishDashboardActivityAsync(
+        PaymentCompletedEvent message,
+        CancellationToken cancellationToken)
     {
         try
         {
-            // SignalR dashboard notification is intentionally skipped in the RabbitMQ phase.
-            //await _adminDashboardNotificationService.PublishBookingCompletedAsync(
-            //    message.BookingId,
-            //    message.Amount,
-            //    message.CustomerName,
-            //    message.CompletedAt);
-
-            _logger.LogInformation(
-                "Dashboard activity skipped for completed booking {BookingId}, customer {CustomerName}, amount {Amount}, completed at {CompletedAt}",
+            await _adminDashboardNotificationService.PublishBookingCompletedAsync(
                 message.BookingId,
-                message.CustomerName,
                 message.Amount,
-                message.CompletedAt);
-
-            await Task.CompletedTask;
+                message.CustomerName,
+                message.CompletedAt,
+                cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex,
+            _logger.LogWarning(ex,
                 "Error publishing dashboard activity for booking {BookingId}",
                 message.BookingId);
         }

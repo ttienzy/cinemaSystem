@@ -1,5 +1,6 @@
 using Booking.API.Data;
 using Booking.API.Entities;
+using Booking.API.Hubs.Services;
 using Cinema.Contracts.Events;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
@@ -60,6 +61,7 @@ public class ExpiredBookingCleanupService : BackgroundService
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<BookingDbContext>();
         var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+        var bookingNotificationService = scope.ServiceProvider.GetRequiredService<IBookingNotificationService>();
 
         var now = DateTime.UtcNow;
         var expiredBookings = await dbContext.Bookings
@@ -86,6 +88,10 @@ public class ExpiredBookingCleanupService : BackgroundService
         foreach (var booking in expiredBookings)
         {
             await PublishBookingExpiredAsync(publishEndpoint, booking, now, cancellationToken);
+            await bookingNotificationService.NotifyBookingFailedAsync(
+                booking.Id,
+                "Booking expired",
+                cancellationToken);
         }
     }
 

@@ -73,6 +73,7 @@ builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IBookingConfirmationEmailService, BookingConfirmationEmailService>();
 builder.Services.AddScoped<IConnectionTracker, RedisConnectionTracker>();
 builder.Services.AddSingleton<ISeatNotificationService, SeatNotificationService>();
+builder.Services.AddSingleton<IBookingNotificationService, BookingNotificationService>();
 builder.Services.AddScoped<IAdminDashboardNotificationService, AdminDashboardNotificationService>();
 builder.Services.AddSingleton<IUserIdProvider, ClaimBasedUserIdProvider>();
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>

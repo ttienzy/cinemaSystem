@@ -1,10 +1,12 @@
 import { LoadingOutlined } from '@ant-design/icons';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { Alert, Button, Result, Skeleton, Space, Steps, Typography } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { bookingApi } from '../../features/booking/bookingApi';
 import { useBookingStore } from '../../features/booking/bookingStore';
+import { getAccessToken } from '../../shared/auth/tokenStorage';
 import { getApiGatewayBaseUrl } from '../../shared/utils/apiConfig';
 
 const { Text, Title } = Typography;
@@ -30,6 +32,43 @@ export default function BookingStatusPage() {
     enabled: Boolean(bookingId),
     refetchInterval: (query) => (query.state.data ? false : 1200),
   });
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!bookingId || !token) return;
+
+    const connection = new HubConnectionBuilder()
+      .withUrl(`${getApiGatewayBaseUrl()}/hubs/booking`, {
+        accessTokenFactory: () => getAccessToken() ?? '',
+      })
+      .withAutomaticReconnect()
+      .configureLogging(LogLevel.Warning)
+      .build();
+
+    const refreshBooking = () => {
+      void bookingQuery.refetch();
+      void paymentQuery.refetch();
+    };
+
+    connection.on('BookingConfirmed', refreshBooking);
+    connection.on('BookingFailed', refreshBooking);
+
+    void connection
+      .start()
+      .then(() => connection.invoke('JoinBookingGroup', bookingId))
+      .catch(() => {
+        // Payment polling remains the fallback if realtime cannot connect.
+      });
+
+    return () => {
+      void connection
+        .invoke('LeaveBookingGroup', bookingId)
+        .catch(() => undefined)
+        .finally(() => {
+          void connection.stop();
+        });
+    };
+  }, [bookingId, bookingQuery.refetch, paymentQuery.refetch]);
 
   useEffect(() => {
     if (!paymentQuery.data?.id) return;

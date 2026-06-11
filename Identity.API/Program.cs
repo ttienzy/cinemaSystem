@@ -1,78 +1,98 @@
-using Cinema.Shared.Extensions;
-using Identity.API.Api.Endpoints;
-using Identity.API.Application;
-using Identity.API.Infrastructure;
+using Cys.ServiceDefaults;
+using Identity.API;
+using Identity.API.Data;
+using Identity.API.Enpoints;
+using Identity.API.Interfaces;
+using Identity.API.Models;
+using Identity.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
+builder.AddServiceDefaults();
+
+builder.AddNpgsqlDbContext<IdentityDbContext>("identitydb");
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "Identity API",
-        Version = "v1",
-        Description = "Authentication and Authorization API"
-    });
+    options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.SignIn.RequireConfirmedAccount = false;
+})
+.AddEntityFrameworkStores<IdentityDbContext>()
+.AddDefaultTokenProviders();
 
-    // Add JWT Bearer Authorization
-    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme. Enter your token in the text input below."
-    });
-
-    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
-        {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
+builder.Services.Configure<IdentityPasskeyOptions>(options =>
+{
+    options.AuthenticatorTimeout = TimeSpan.FromMinutes(2);
 });
 
-builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 
-// Add JWT Authentication AFTER AddIdentity to ensure JWT is the default scheme
-builder.Services.AddJwtAuthentication(builder.Configuration);
-builder.Services.AddAuthorization();
-builder.Services.AddHealthChecks();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
+
+var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>() ?? new JwtOptions();
+
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwt.Issuer,
+            ValidAudience = jwt.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                string.IsNullOrEmpty(jwt.Key) ? new byte[32] : Convert.FromBase64String(jwt.Key)),
+            ClockSkew = TimeSpan.FromSeconds(30),
+            NameClaimType = "name",
+            RoleClaimType = "role"
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", p => p.RequireAuthenticatedUser().RequireRole(Identity.API.IdentityConstants.AdminRole));
+});
+
+builder.Services.AddOpenApi();
+
 
 var app = builder.Build();
-
-if (args.IsMigrationOnlyCommand())
-{
-    await app.MigrateAndStopAsync<Identity.API.Infrastructure.Persistence.IdentityDbContext>();
-    await app.InitializeDatabaseAsync();
-    return;
-}
-
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
 }
-
-app.UseHttpsRedirection();
+app.MapDefaultEndpoints();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapAuthEndpoints();
+app.MapIdentityEndpoints();
 
-app.MapHealthChecks("/health");
+// Migrate and seed on startup. The Identity service owns identitydb's schema.
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    await IdentitySeeder.SeedAsync(context, userManager, roleManager);
+}
+
 
 app.Run();

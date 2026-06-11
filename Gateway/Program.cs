@@ -1,0 +1,104 @@
+using Cys.ServiceDefaults;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
+
+const string CorsPolicyName = "CinemaWebCors";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicyName, policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:19876",
+                "https://localhost:19876",
+                "http://127.0.0.1:19876",
+                "https://127.0.0.1:19876",
+                "http://localhost:19877",
+                "https://localhost:19877",
+                "http://127.0.0.1:19877",
+                "https://127.0.0.1:19877",
+                "http://localhost:5000",
+                "https://localhost:5000",
+                "http://127.0.0.1:5000",
+                "https://127.0.0.1:5000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
+// Shared JWT config (Jwt__Key / Jwt__Issuer / Jwt__Audience env vars are injected by AppHost).
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? string.Empty;
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? string.Empty;
+var jwtKey = builder.Configuration["Jwt:Key"] ?? string.Empty;
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                string.IsNullOrEmpty(jwtKey) ? new byte[32] : Convert.FromBase64String(jwtKey)),
+            ClockSkew = TimeSpan.FromSeconds(30),
+            NameClaimType = "name",
+            RoleClaimType = "role"
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrWhiteSpace(accessToken) &&
+                    path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AuthenticatedUser", p => p.RequireAuthenticatedUser());
+    options.AddPolicy("CustomerOrAdmin", p => p.RequireAuthenticatedUser().RequireRole("Customer", "Admin"));
+    options.AddPolicy("Admin", p => p.RequireAuthenticatedUser().RequireRole("Admin"));
+});
+
+builder.Services
+    .AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+    .AddServiceDiscoveryDestinationResolver();
+
+
+builder.Services.AddOpenApi();
+
+var app = builder.Build();
+
+
+
+app.MapDefaultEndpoints();
+
+app.UseCors(CorsPolicyName);
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapReverseProxy();
+
+app.Run();

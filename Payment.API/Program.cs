@@ -1,40 +1,103 @@
-using Cinema.Shared.Extensions;
-using Payment.API.Api.Endpoints;
-using Payment.API.Application;
-using Payment.API.Infrastructure;
+using Cys.ServiceDefaults;
+using MassTransit;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Payment.API.Configuration;
+using Payment.API.Data;
+using Payment.API.Endpoints;
+using Payment.API.Integrations.SePay;
+using Payment.API.Messaging.Consumers;
+using Payment.API.Messaging.EventPublishers;
+using Payment.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.AddServiceDefaults();
+builder.AddNpgsqlDbContext<PaymentDbContext>("paymentdb");
 
-builder.Services.AddJwtAuthentication(builder.Configuration);
-builder.Services.AddAuthorization();
-builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.Configure<SePayOptions>(
+    builder.Configuration.GetSection(SePayOptions.SectionName));
+
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<ISePayService, SePayService>();
+builder.Services.AddScoped<ISePayIpnProcessor, SePayIpnProcessor>();
+builder.Services.AddScoped<IPaymentIntegrationEventPublisher, PaymentIntegrationEventPublisher>();
+
+builder.Services.AddMassTransit(bus =>
+{
+    bus.AddConsumer<BookingCreatedConsumer>();
+    bus.AddConsumer<BookingCancelledConsumer>();
+    bus.AddConsumer<BookingExpiredConsumer>();
+
+    bus.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("payment", false));
+
+    bus.AddConfigureEndpointsCallback((_, _, endpoint) =>
+    {
+        endpoint.UseMessageRetry(retry => retry.Interval(3, TimeSpan.FromSeconds(2)));
+
+        if (endpoint is IRabbitMqReceiveEndpointConfigurator rabbitEndpoint)
+        {
+            rabbitEndpoint.Durable = true;
+            rabbitEndpoint.AutoDelete = false;
+        }
+    });
+
+    bus.UsingRabbitMq((context, rabbit) =>
+    {
+        var rabbitMqConnectionString = builder.Configuration.GetConnectionString("rabbitmq")
+            ?? throw new InvalidOperationException("RabbitMQ connection string 'rabbitmq' is not configured.");
+
+        rabbit.Host(new Uri(rabbitMqConnectionString));
+        rabbit.UseMessageRetry(retry => retry.Interval(3, TimeSpan.FromSeconds(2)));
+        rabbit.ConfigureEndpoints(context);
+    });
+});
+
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? string.Empty;
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? string.Empty;
+var jwtKey = builder.Configuration["Jwt:Key"] ?? string.Empty;
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                string.IsNullOrEmpty(jwtKey) ? new byte[32] : Convert.FromBase64String(jwtKey)),
+            ClockSkew = TimeSpan.FromSeconds(30),
+            NameClaimType = "sub",
+            RoleClaimType = "role"
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireAuthenticatedUser().RequireRole("Admin"));
+});
 
 var app = builder.Build();
 
-if (args.IsMigrationOnlyCommand())
-{
-    await app.MigrateAndStopAsync<Payment.API.Infrastructure.Persistence.PaymentDbContext>();
-    return;
-}
+app.MapDefaultEndpoints();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseCors(Payment.API.Infrastructure.DependencyInjection.CorsPolicyName);
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapPaymentEndpoints();
 app.MapSePayIpnEndpoints();
-app.MapSePayTestEndpoints();  // ✅ Test endpoints for SePay
-app.MapHealthChecks("/health");
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<PaymentDbContext>();
+    await context.Database.MigrateAsync();
+}
 
 app.Run();

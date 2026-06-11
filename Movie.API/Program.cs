@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Movie.API.AI;
 using Movie.API.Data;
 using Movie.API.Endpoints;
 using Movie.API.Repositories;
@@ -28,6 +29,8 @@ builder.AddNpgsqlDbContext<MovieDbContext>(
 
 builder.Services.Configure<CloudinaryOptions>(
     builder.Configuration.GetSection(CloudinaryOptions.SectionName));
+builder.Services.Configure<MovieAIOptions>(
+    builder.Configuration.GetSection(MovieAIOptions.SectionName));
 builder.Services.AddSingleton(provider =>
 {
     var options = provider.GetRequiredService<IOptions<CloudinaryOptions>>().Value;
@@ -39,6 +42,7 @@ builder.Services.AddScoped<IMovieRepository, MovieRepository>();
 builder.Services.AddScoped<IGenreRepository, GenreRepository>();
 builder.Services.AddScoped<IShowtimeRepository, ShowtimeRepository>();
 builder.Services.AddScoped<IMovieService, MovieService>();
+builder.Services.AddScoped<IMovieAIService, MovieAIService>();
 builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IShowtimeService, ShowtimeService>();
 builder.Services.AddScoped<IFileStorageService, CloudinaryFileStorageService>();

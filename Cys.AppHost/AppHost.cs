@@ -3,6 +3,7 @@ using Projects;
 var builder = DistributedApplication.CreateBuilder(args);
 
 var postgres = builder.AddPostgres("postgres")
+    .WithImage("pgvector/pgvector", "pg17")
     .WithDataVolume("cinema-postgres-data")
     .WithPgWeb();
 
@@ -27,6 +28,9 @@ var jwtAudience = builder.AddParameter("jwt-audience");
 var cloudinaryCloudName = builder.AddParameter("cloudinary-cloud-name");
 var cloudinaryApiKey = builder.AddParameter("cloudinary-api-key", secret: true);
 var cloudinaryApiSecret = builder.AddParameter("cloudinary-api-secret", secret: true);
+
+// Movie semantic search configuration: OpenAI embeddings are used for Title + Description vectors.
+var openAiApiKey = builder.AddParameter("openai-api-key", secret: true);
 
 //Payment shared configuration: shared Sepay credentials for processing payments.
 var sepayMerchantId = builder.AddParameter("sepay-merchant-id");
@@ -61,6 +65,10 @@ var movie = builder.AddProject<Projects.Movie_API>("movie")
     .WithEnvironment("Cloudinary__CloudName", cloudinaryCloudName)
     .WithEnvironment("Cloudinary__ApiKey", cloudinaryApiKey)
     .WithEnvironment("Cloudinary__ApiSecret", cloudinaryApiSecret)
+    .WithEnvironment("OpenAI__ApiKey", openAiApiKey)
+    .WithEnvironment("OpenAI__EmbeddingModel", "text-embedding-3-small")
+    .WithEnvironment("OpenAI__EmbeddingDimensions", "1536")
+    .WithEnvironment("MovieSearch__SemanticEnabled", "true")
     .WaitFor(movieDb);
 
 var payment = builder.AddProject<Payment_API>("payment")

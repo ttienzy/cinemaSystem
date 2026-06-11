@@ -90,6 +90,8 @@ dotnet user-secrets set "Parameters:cloudinary-api-secret" "<api-secret>" --proj
 
 dotnet user-secrets set "Parameters:sepay-merchant-id" "<merchant-id>" --project Cys.AppHost
 dotnet user-secrets set "Parameters:sepay-secret-key" "<secret-key>" --project Cys.AppHost
+
+dotnet user-secrets set "Parameters:openai-api-key" "<openai-api-key>" --project Cys.AppHost
 ```
 
 ### Optional Email Parameters

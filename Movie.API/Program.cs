@@ -11,13 +11,17 @@ using Movie.API.Endpoints;
 using Movie.API.Repositories;
 using Movie.API.Services;
 using Movie.API.Storage.Cloudinary;
+using Pgvector.EntityFrameworkCore;
 using CloudinaryClient = CloudinaryDotNet.Cloudinary;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.AddNpgsqlDbContext<MovieDbContext>("moviedb");
+builder.AddNpgsqlDbContext<MovieDbContext>(
+    "moviedb",
+    configureDbContextOptions: options =>
+        options.UseNpgsql(npgsqlOptions => npgsqlOptions.UseVector()));
 
 
 

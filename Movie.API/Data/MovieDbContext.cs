@@ -19,6 +19,12 @@ public class MovieDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.HasPostgresExtension("vector");
+
+        modelBuilder.Entity<MovieEntity>()
+            .Property(movie => movie.Embedding)
+            .HasColumnType("vector(1536)");
+
         modelBuilder.Entity<MovieGenre>()
             .HasKey(mg => new { mg.MovieId, mg.GenreId });
 

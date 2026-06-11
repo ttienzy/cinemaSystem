@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Pgvector.EntityFrameworkCore;
 
 namespace Movie.API.Data;
 
@@ -11,7 +12,7 @@ public class MovieDbContextDesignTimeFactory : IDesignTimeDbContextFactory<Movie
             ?? "Host=localhost;Database=moviedb;Username=postgres;Password=postgres";
 
         var optionsBuilder = new DbContextOptionsBuilder<MovieDbContext>()
-            .UseNpgsql(connectionString);
+            .UseNpgsql(connectionString, options => options.UseVector());
 
         return new MovieDbContext(optionsBuilder.Options);
     }

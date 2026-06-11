@@ -70,6 +70,15 @@ a {
   font-size: 18px;
 }
 
+.home-search {
+  width: min(560px, 100%);
+  margin-bottom: 22px;
+}
+
+.home-search-chips {
+  margin-top: 10px;
+}
+
 .page-shell {
   padding: 28px;
 }
@@ -100,6 +109,18 @@ a {
 
 .movie-card {
   height: 100%;
+}
+
+.movie-search-toolbar {
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.movie-search-chips {
+  margin-bottom: 18px;
 }
 
 .movie-title {
@@ -361,6 +382,11 @@ a {
 
   .movie-detail-hero h1 {
     font-size: 30px;
+  }
+
+  .movie-search-toolbar .ant-input-affix-wrapper,
+  .movie-search-toolbar .ant-select {
+    width: 100% !important;
   }
 
   .showtime-group,

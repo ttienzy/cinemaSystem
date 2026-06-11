@@ -3,9 +3,11 @@ namespace Movie.API.Client.Client;
 public interface IMovieApiClient
 {
     Task<ApiResponse<PaginatedResponse<MovieDto>>> GetMoviesAsync(int pageNumber = 1, int pageSize = 20, CancellationToken cancellationToken = default);
+    Task<ApiResponse<MovieSearchResponseDto>> SearchMoviesAsync(string query, int pageNumber = 1, int pageSize = 20, CancellationToken cancellationToken = default);
     Task<ApiResponse<MovieDetailDto>> GetMovieByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<ApiResponse<PaginatedResponse<MovieAdminListItemDto>>> GetAdminMoviesAsync(string? search = null, string? status = null, Guid? genreId = null, int pageNumber = 1, int pageSize = 20, CancellationToken cancellationToken = default);
     Task<ApiResponse<MovieAdminSummaryDto>> GetMovieAdminSummaryAsync(CancellationToken cancellationToken = default);
+    Task<ApiResponse<MovieEmbeddingRebuildResponseDto>> RebuildMovieEmbeddingsAsync(int limit = 50, CancellationToken cancellationToken = default);
     Task<ApiResponse<List<MovieDto>>> GetMoviesByGenreAsync(Guid genreId, CancellationToken cancellationToken = default);
     Task<ApiResponse<MovieDto>> CreateMovieAsync(CreateMovieRequest request, CancellationToken cancellationToken = default);
     Task<ApiResponse<MovieDto>> UpdateMovieAsync(Guid id, UpdateMovieRequest request, CancellationToken cancellationToken = default);

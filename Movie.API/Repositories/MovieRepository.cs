@@ -42,7 +42,11 @@ public class MovieRepository : IMovieRepository
             ?? throw new InvalidOperationException("Created movie could not be reloaded.");
     }
 
-    public async Task<MovieEntity?> UpdateAsync(Guid id, MovieEntity movie, IEnumerable<Guid> genreIds)
+    public async Task<MovieEntity?> UpdateAsync(
+        Guid id,
+        MovieEntity movie,
+        IEnumerable<Guid> genreIds,
+        bool updateEmbedding = false)
     {
         var existing = await _context.Movies
             .Include(m => m.MovieGenres)
@@ -57,6 +61,11 @@ public class MovieRepository : IMovieRepository
             movie.Language,
             movie.ReleaseDate,
             movie.PosterUrl);
+
+        if (updateEmbedding)
+        {
+            existing.SetEmbedding(movie.Embedding);
+        }
 
         var requestedGenreIds = genreIds
             .Distinct()

@@ -18,6 +18,8 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="OpenAI" Version="2.11.0" />
+		<PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
 	</ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Booking.API.Client\Booking.API.Client.csproj" />

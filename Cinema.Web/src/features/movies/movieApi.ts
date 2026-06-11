@@ -23,6 +23,20 @@ export interface MovieDetail extends Movie {
   showtimes: ShowtimeSummary[];
 }
 
+export interface MovieSearchResult extends Movie {
+  distance?: number | null;
+  similarityScore?: number | null;
+}
+
+export interface MovieSearchResponse {
+  query: string;
+  searchType: 'Semantic' | 'KeywordFallback';
+  items: MovieSearchResult[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+}
+
 export interface ShowtimeSummary {
   id: string;
   movieId: string;
@@ -41,6 +55,11 @@ export const movieApi = {
   getMovies(pageNumber = 1, pageSize = 100) {
     return axiosClient.get<never, ApiResponse<PaginatedResponse<Movie>>>('/api/v1/movies', {
       params: { pageNumber, pageSize },
+    });
+  },
+  searchMovies(query: string, pageNumber = 1, pageSize = 100) {
+    return axiosClient.get<never, ApiResponse<MovieSearchResponse>>('/api/v1/movies/search', {
+      params: { query, pageNumber, pageSize },
     });
   },
   getMovieById(id: string) {

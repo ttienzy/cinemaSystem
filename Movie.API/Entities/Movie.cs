@@ -1,5 +1,6 @@
 
 using Movie.API.Client;
+using Pgvector;
 
 namespace Movie.API.Entities;
 
@@ -13,6 +14,8 @@ public class Movie
     public string? Language { get; set; }
     public DateTime ReleaseDate { get; set; }
     public string? PosterUrl { get; set; }
+    public Vector? Embedding { get; set; }
+    public DateTime? EmbeddingUpdatedAt { get; set; }
 
     public ICollection<MovieGenre> MovieGenres { get; set; } = new List<MovieGenre>();
     public ICollection<Showtime> Showtimes { get; set; } = new List<Showtime>();
@@ -42,6 +45,12 @@ public class Movie
         string? posterUrl)
     {
         SetBasicInfo(title, description, duration, language, releaseDate, posterUrl);
+    }
+
+    public void SetEmbedding(Vector? embedding)
+    {
+        Embedding = embedding;
+        EmbeddingUpdatedAt = embedding is null ? null : DateTime.UtcNow;
     }
 
     public void SetGenres(IEnumerable<Guid> genreIds)

@@ -1,29 +1,64 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card, Col, Empty, Image, Input, Row, Select, Space, Tag } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { movieApi } from '../../features/movies/movieApi';
 import { formatDate } from '../../shared/utils/format';
 
+const searchSuggestions = [
+  'space adventure',
+  'family drama',
+  'light horror',
+  'animated weekend',
+  'emotional romance',
+];
+
 export default function MoviesPage() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get('query') ?? '');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [status, setStatus] = useState<string | undefined>();
+
+  useEffect(() => {
+    setSearch(searchParams.get('query') ?? '');
+  }, [searchParams]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 350);
+
+    return () => window.clearTimeout(timeout);
+  }, [search]);
 
   const moviesQuery = useQuery({
     queryKey: ['customer-movies'],
     queryFn: () => movieApi.getMovies(1, 100),
+    enabled: debouncedSearch.length === 0,
+  });
+
+  const searchQuery = useQuery({
+    queryKey: ['customer-movie-search', debouncedSearch],
+    queryFn: () => movieApi.searchMovies(debouncedSearch, 1, 100),
+    enabled: debouncedSearch.length > 0,
   });
 
   const movies = useMemo(() => {
-    const source = moviesQuery.data?.data.items ?? [];
+    const source = debouncedSearch
+      ? (searchQuery.data?.data.items ?? [])
+      : (moviesQuery.data?.data.items ?? []);
+
     return source.filter((movie) => {
-      const matchSearch = movie.title.toLowerCase().includes(search.trim().toLowerCase());
       const matchStatus = !status || movie.status === status;
-      return matchSearch && matchStatus;
+      return matchStatus;
     });
-  }, [moviesQuery.data?.data.items, search, status]);
+  }, [debouncedSearch, moviesQuery.data?.data.items, searchQuery.data?.data.items, status]);
+
+  const isLoading = debouncedSearch ? searchQuery.isLoading : moviesQuery.isLoading;
+  const searchType = searchQuery.data?.data.searchType;
+  const hasSemanticResult = debouncedSearch.length > 0 && searchType === 'Semantic';
 
   return (
     <main className="page-shell">
@@ -34,14 +69,14 @@ export default function MoviesPage() {
         </div>
 
         <Card>
-          <Space wrap style={{ marginBottom: 18 }}>
+          <div className="movie-search-toolbar">
             <Input
               allowClear
               prefix={<SearchOutlined />}
-              placeholder="Search movie"
+              placeholder="What kind of movie do you want?"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              style={{ width: 260 }}
+              style={{ width: 340, maxWidth: '100%' }}
             />
             <Select
               allowClear
@@ -55,9 +90,18 @@ export default function MoviesPage() {
               ]}
               style={{ width: 180 }}
             />
+            {hasSemanticResult && <Tag color="blue">Semantic</Tag>}
+          </div>
+
+          <Space wrap className="movie-search-chips">
+            {searchSuggestions.map((suggestion) => (
+              <Button key={suggestion} size="small" onClick={() => setSearch(suggestion)}>
+                {suggestion}
+              </Button>
+            ))}
           </Space>
 
-          {movies.length === 0 && !moviesQuery.isLoading ? (
+          {movies.length === 0 && !isLoading ? (
             <Empty />
           ) : (
             <Row gutter={[18, 18]}>
@@ -65,7 +109,7 @@ export default function MoviesPage() {
                 <Col xs={24} sm={12} md={8} lg={6} key={movie.id}>
                   <Card
                     hoverable
-                    loading={moviesQuery.isLoading}
+                    loading={isLoading}
                     className="movie-card"
                     cover={
                       <div className="poster-frame">

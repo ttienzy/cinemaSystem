@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Movie.API.AI;
 using Movie.API.Client;
 using Movie.API.Services;
 
@@ -24,20 +25,22 @@ public static class MovieEndpoints
         var admin = movies.MapGroup("/admin").RequireAuthorization(AdminOnly());
 
         movies.MapGet("", GetAllMovies);
-        movies.MapGet("/{id}", GetMovieById);
+        movies.MapGet("/search", SearchMovies);
+        movies.MapGet("/{id:guid}", GetMovieById);
         movies.MapGet("/genre/{genreId}", GetMoviesByGenre);
         movies.MapPost("", CreateMovie)
             .RequireAuthorization(AdminOnly())
             .Accepts<CreateMovieRequest>("multipart/form-data")
             .DisableAntiforgery();
-        movies.MapPut("/{id}", UpdateMovie)
+        movies.MapPut("/{id:guid}", UpdateMovie)
             .RequireAuthorization(AdminOnly())
             .Accepts<UpdateMovieRequest>("multipart/form-data")
             .DisableAntiforgery();
-        movies.MapDelete("/{id}", DeleteMovie).RequireAuthorization(AdminOnly());
+        movies.MapDelete("/{id:guid}", DeleteMovie).RequireAuthorization(AdminOnly());
 
         admin.MapGet("/list", GetAdminMovies);
         admin.MapGet("/summary", GetAdminMovieSummary);
+        admin.MapPost("/embeddings/rebuild", RebuildMovieEmbeddings);
     }
 
     private static void MapGenreRoutes(RouteGroupBuilder group)
@@ -90,6 +93,19 @@ public static class MovieEndpoints
         return response.ToResult();
     }
 
+    private static async Task<IResult> SearchMovies(
+        IMovieSearchService service,
+        HttpContext context,
+        string? query = null,
+        int pageNumber = 1,
+        int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await service.SearchAsync(query, pageNumber, pageSize, cancellationToken);
+        response.SetTraceId(context);
+        return response.ToResult();
+    }
+
     private static async Task<IResult> GetAdminMovies(
         IMovieService service,
         HttpContext context,
@@ -107,6 +123,17 @@ public static class MovieEndpoints
     private static async Task<IResult> GetAdminMovieSummary(IMovieService service, HttpContext context)
     {
         var response = await service.GetAdminSummaryAsync();
+        response.SetTraceId(context);
+        return response.ToResult();
+    }
+
+    private static async Task<IResult> RebuildMovieEmbeddings(
+        IMovieAIBackfillService service,
+        HttpContext context,
+        int limit = 50,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await service.RebuildMissingEmbeddingsAsync(limit, cancellationToken);
         response.SetTraceId(context);
         return response.ToResult();
     }

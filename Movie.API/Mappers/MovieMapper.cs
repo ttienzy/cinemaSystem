@@ -68,6 +68,24 @@ public static class MovieMapper
         };
     }
 
+    public static MovieSearchResultDto MovieMapToSearchResultDto(this MovieEntity movie, DateTime now, double? distance)
+    {
+        return new MovieSearchResultDto
+        {
+            Id = movie.Id,
+            Title = movie.Title,
+            Description = movie.Description,
+            Duration = movie.Duration,
+            Language = movie.Language,
+            ReleaseDate = movie.ReleaseDate,
+            PosterUrl = movie.PosterUrl,
+            Status = movie.GetStatus(now),
+            Genres = MapGenres(movie),
+            Distance = distance,
+            SimilarityScore = distance.HasValue ? Math.Clamp(1d - distance.Value, 0d, 1d) : null
+        };
+    }
+
     private static List<GenreDto> MapGenres(MovieEntity movie)
     {
         return movie.MovieGenres
